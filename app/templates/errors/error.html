@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ error_status }} — {{ error_title }}{% endblock %}
+{% block body %}
+<div class="cn-error-page">
+  <div>
+    <div class="cn-error-page__code">{{ error_status }}</div>
+    <h1 class="cn-error-page__title">{{ error_title }}</h1>
+    <p class="cn-error-page__desc">{{ error_message }}</p>
+    <div style="display:flex;gap:var(--cn-space-3);justify-content:center;flex-wrap:wrap;">
+      <a href="{% if current_user and current_user.is_teacher %}{{ url_for('teacher.dashboard') }}{% elif current_user %}{{ url_for('student.dashboard') }}{% else %}{{ url_for('auth.login') }}{% endif %}"
+         class="cn-btn cn-btn--primary">
+        <i class="bi bi-house"></i> {% if current_user %}Go to dashboard{% else %}Go to login{% endif %}
+      </a>
+      <a href="#" class="cn-btn cn-btn--outline" data-go-back>
+        <i class="bi bi-arrow-left"></i> Go back
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

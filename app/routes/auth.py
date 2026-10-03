@@ -1,51 +1,67 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from email_validator import validate_email, EmailNotValidError
+from flask import (Blueprint, flash, redirect, render_template, request,
+                   session, url_for)
+from email_validator import EmailNotValidError, validate_email
 
 from app.extensions import db, limiter
 from app.models.user import User
+from app.services.decorators import safe_next_url
 
 auth_bp = Blueprint('auth', __name__)
+
+MIN_PASSWORD_LENGTH = 6
+
+
+def _home_for_role(role):
+    return url_for('teacher.dashboard') if role == 'teacher' else url_for('student.dashboard')
+
+
+def _dashboard_for(user):
+    return _home_for_role(user.role)
 
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
 def login():
     if 'user_id' in session:
-        if session.get('user_role') == 'teacher':
-            return redirect(url_for('teacher.dashboard'))
-        return redirect(url_for('student.dashboard'))
+        return redirect(_home_for_role(session.get('user_role')))
 
+    email = ''
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         password = request.form.get('password', '')
+        remember = request.form.get('remember') == 'on'
 
         if not email or not password:
             flash('Please enter both email and password.', 'error')
-            return render_template('public/login.html')
+            return render_template('public/login.html', email=email), 400
 
         user = User.query.filter_by(email=email).first()
-        if user and user.check_password(password):
-            session.clear()
-            session.permanent = True
-            session['user_id'] = user.id
-            session['user_role'] = user.role
-            session['user_name'] = user.name
+        if user is None or not user.check_password(password):
+            flash('Invalid email or password.', 'error')
+            return render_template('public/login.html', email=email), 401
 
-            if user.is_teacher:
-                return redirect(url_for('teacher.dashboard'))
-            return redirect(url_for('student.dashboard'))
+        session.clear()
+        session.permanent = bool(remember)
+        session['user_id'] = user.id
+        session['user_role'] = user.role
+        session['user_name'] = user.name
 
-        flash('Invalid email or password.', 'error')
+        target = safe_next_url(request.args.get('next'), None)
+        if target:
+            return redirect(target)
+        return redirect(_dashboard_for(user))
 
-    return render_template('public/login.html')
+    return render_template('public/login.html', email=email)
 
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
 @limiter.limit("5 per minute")
 def register():
     if 'user_id' in session:
-        return redirect(url_for('student.dashboard'))
+        return redirect(_home_for_role(session.get('user_role')))
 
+    name = ''
+    email = ''
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip().lower()
@@ -53,27 +69,26 @@ def register():
         confirm = request.form.get('confirm_password', '')
 
         errors = []
-        if not name or len(name) < 2:
+        if len(name) < 2:
             errors.append('Name must be at least 2 characters.')
         if not email:
             errors.append('Email is required.')
         else:
             try:
-                validate_email(email)
+                validate_email(email, check_deliverability=False)
             except EmailNotValidError:
                 errors.append('Please enter a valid email address.')
-        if not password or len(password) < 6:
-            errors.append('Password must be at least 6 characters.')
+        if len(password) < MIN_PASSWORD_LENGTH:
+            errors.append(f'Password must be at least {MIN_PASSWORD_LENGTH} characters.')
         if password != confirm:
             errors.append('Passwords do not match.')
-
-        if User.query.filter_by(email=email).first():
+        if email and User.query.filter_by(email=email).first():
             errors.append('An account with this email already exists.')
 
         if errors:
-            for e in errors:
-                flash(e, 'error')
-            return render_template('public/register.html', name=name, email=email)
+            for message in errors:
+                flash(message, 'error')
+            return render_template('public/register.html', name=name, email=email), 400
 
         user = User(name=name, email=email, role='student')
         user.set_password(password)
@@ -83,10 +98,10 @@ def register():
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('auth.login'))
 
-    return render_template('public/register.html')
+    return render_template('public/register.html', name=name, email=email)
 
 
-@auth_bp.route('/logout')
+@auth_bp.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     flash('You have been logged out.', 'info')

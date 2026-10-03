@@ -40,5 +40,18 @@ class User(db.Model):
     def is_student(self):
         return self.role == 'student'
 
+    @property
+    def role_label(self):
+        return 'Teacher' if self.is_teacher else 'Student'
+
+    @property
+    def initials(self):
+        parts = [p for p in (self.name or '').split() if p]
+        if not parts:
+            return '?'
+        if len(parts) == 1:
+            return parts[0][:2].upper()
+        return (parts[0][0] + parts[-1][0]).upper()
+
     def __repr__(self):
         return f'<User {self.email}>'

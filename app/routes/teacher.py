@@ -1,20 +1,90 @@
-import os
 from datetime import datetime, timezone
 
-from flask import (Blueprint, render_template, request, redirect,
-                   url_for, flash, session, current_app, send_from_directory, abort)
+from flask import (Blueprint, abort, flash, redirect, render_template,
+                   request, session, url_for)
 
 from app.extensions import db
-from app.models.user import User
-from app.models.subject import Subject
-from app.models.content import Content
 from app.models.announcement import Announcement
+from app.models.content import CONTENT_TYPE_LABELS, Content
+from app.models.subject import Subject
 from app.models.uploaded_file import UploadedFile
+from app.models.user import User
+from app.services.accounts import change_password, update_profile
 from app.services.decorators import teacher_required
-from app.services.uploads import save_upload
 from app.services.sanitizer import sanitize_html
+from app.services.uploads import delete_stored_file, save_upload
 
 teacher_bp = Blueprint('teacher', __name__)
+
+CONTENT_PER_PAGE = 12
+FILE_PER_PAGE = 20
+STUDENT_PER_PAGE = 20
+
+
+# ── Shared helpers ─────────────────────────────────────────
+def _handle_upload(kind, file_storage, item, user_id):
+    """Persist an uploaded file and register its metadata."""
+    if not file_storage or not file_storage.filename:
+        return None
+
+    metadata, error = save_upload(file_storage)
+    if error:
+        flash(f'{kind.capitalize()}: {error}', 'error')
+        return None
+
+    setattr(item, kind, metadata['stored_name'])
+    db.session.add(
+        UploadedFile(
+            original_name=metadata['original_name'],
+            stored_name=metadata['stored_name'],
+            mime_type=metadata['mime_type'],
+            size_bytes=metadata['size_bytes'],
+            uploaded_by=user_id,
+            content_id=item.id,
+        )
+    )
+    return metadata
+
+
+def _purge_item_files(item):
+    for stored in (item.thumbnail, item.attachment):
+        if stored:
+            delete_stored_file(stored)
+
+
+def _content_form_payload():
+    return {
+        'title': request.form.get('title', '').strip(),
+        'description': request.form.get('description', '').strip(),
+        'subject_id': request.form.get('subject_id', type=int),
+        'topic': request.form.get('topic', '').strip(),
+        'content_type': request.form.get('content_type', 'notes').strip(),
+        'body_html': sanitize_html(request.form.get('body_html', '')),
+        'video_url': request.form.get('video_url', '').strip(),
+        'resource_url': request.form.get('resource_url', '').strip(),
+        'tags': request.form.get('tags', '').strip(),
+        'status': 'published' if request.form.get('status') == 'published' else 'draft',
+    }
+
+
+def _validate_content_payload(payload):
+    """Return a list of human-readable validation errors."""
+    errors = []
+    if not payload['title']:
+        errors.append('Title is required.')
+    elif len(payload['title']) > 300:
+        errors.append('Title must be 300 characters or fewer.')
+    if not payload['subject_id']:
+        errors.append('Please select a subject.')
+    elif db.session.get(Subject, payload['subject_id']) is None:
+        errors.append('The selected subject no longer exists.')
+    if payload['content_type'] not in CONTENT_TYPE_LABELS:
+        errors.append('Please choose a valid content type.')
+    for field, label in (('video_url', 'Video URL'), ('resource_url', 'Resource URL')):
+        value = payload[field]
+        if value and not value.startswith(('http://', 'https://')):
+            errors.append(f'{label} must start with http:// or https://')
+    return errors
 
 
 # ── Dashboard ──────────────────────────────────────────────
@@ -26,17 +96,26 @@ def dashboard():
     drafts = Content.query.filter_by(status='draft').count()
     total_subjects = Subject.query.count()
     total_students = User.query.filter_by(role='student').count()
+    total_files = UploadedFile.query.count()
 
     recent_content = Content.query.order_by(Content.updated_at.desc()).limit(5).all()
-    recent_drafts = Content.query.filter_by(status='draft').order_by(Content.updated_at.desc()).limit(5).all()
+    recent_drafts = Content.query.filter_by(status='draft').order_by(
+        Content.updated_at.desc()
+    ).limit(5).all()
     announcements = Announcement.query.order_by(Announcement.created_at.desc()).limit(3).all()
 
-    return render_template('teacher/dashboard.html',
-                           total_content=total_content, published=published,
-                           drafts=drafts, total_subjects=total_subjects,
-                           total_students=total_students,
-                           recent_content=recent_content, recent_drafts=recent_drafts,
-                           announcements=announcements)
+    return render_template(
+        'teacher/dashboard.html',
+        total_content=total_content,
+        published=published,
+        drafts=drafts,
+        total_subjects=total_subjects,
+        total_students=total_students,
+        total_files=total_files,
+        recent_content=recent_content,
+        recent_drafts=recent_drafts,
+        announcements=announcements,
+    )
 
 
 # ── Subjects ───────────────────────────────────────────────
@@ -53,70 +132,81 @@ def create_subject():
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
-        icon = request.form.get('icon', 'bi-book').strip()
+        icon = request.form.get('icon', 'bi-book').strip() or 'bi-book'
 
-        if not name:
-            flash('Subject name is required.', 'error')
-            return render_template('teacher/subject_form.html')
+        if len(name) < 2:
+            flash('Subject name must be at least 2 characters.', 'error')
+            return render_template(
+                'teacher/subject_form.html', form_data=request.form
+            ), 400
 
-        slug = Subject.generate_slug(name)
+        slug = Subject.unique_slug(name)
         if Subject.query.filter_by(slug=slug).first():
             flash('A subject with this name already exists.', 'error')
-            return render_template('teacher/subject_form.html', name=name, description=description)
+            return render_template(
+                'teacher/subject_form.html', form_data=request.form
+            ), 400
 
-        subj = Subject(name=name, slug=slug, description=description, icon=icon,
-                       created_by=session['user_id'])
-        db.session.add(subj)
+        subject = Subject(
+            name=name,
+            slug=slug,
+            description=description,
+            icon=icon,
+            created_by=session['user_id'],
+        )
+        db.session.add(subject)
         db.session.commit()
         flash('Subject created successfully!', 'success')
         return redirect(url_for('teacher.subjects'))
 
-    return render_template('teacher/subject_form.html')
+    return render_template('teacher/subject_form.html', form_data=request.form)
 
 
 @teacher_bp.route('/subjects/<int:id>/edit', methods=['GET', 'POST'])
 @teacher_required
 def edit_subject(id):
-    subj = db.session.get(Subject, id)
-    if not subj:
+    subject = db.session.get(Subject, id)
+    if subject is None:
         abort(404)
 
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
-        icon = request.form.get('icon', 'bi-book').strip()
+        icon = request.form.get('icon', 'bi-book').strip() or 'bi-book'
 
-        if not name:
-            flash('Subject name is required.', 'error')
-            return render_template('teacher/subject_form.html', subject=subj)
+        if len(name) < 2:
+            flash('Subject name must be at least 2 characters.', 'error')
+            return render_template(
+                'teacher/subject_form.html', subject=subject, form_data=request.form
+            ), 400
 
-        new_slug = Subject.generate_slug(name)
-        existing = Subject.query.filter(Subject.slug == new_slug, Subject.id != id).first()
-        if existing:
-            flash('A subject with this name already exists.', 'error')
-            return render_template('teacher/subject_form.html', subject=subj)
-
-        subj.name = name
-        subj.slug = new_slug
-        subj.description = description
-        subj.icon = icon
+        subject.name = name
+        subject.slug = Subject.unique_slug(name, exclude_id=subject.id)
+        subject.description = description
+        subject.icon = icon
         db.session.commit()
         flash('Subject updated!', 'success')
         return redirect(url_for('teacher.subjects'))
 
-    return render_template('teacher/subject_form.html', subject=subj)
+    return render_template(
+        'teacher/subject_form.html', subject=subject, form_data=request.form
+    )
 
 
 @teacher_bp.route('/subjects/<int:id>/delete', methods=['POST'])
 @teacher_required
 def delete_subject(id):
-    subj = db.session.get(Subject, id)
-    if not subj:
+    subject = db.session.get(Subject, id)
+    if subject is None:
         abort(404)
-    if subj.content.count() > 0:
-        flash('Cannot delete subject with existing content. Remove content first.', 'error')
+    if subject.total_count:
+        flash(
+            f'Cannot delete "{subject.name}" while it still has content. '
+            'Remove or move the content first.',
+            'error',
+        )
         return redirect(url_for('teacher.subjects'))
-    db.session.delete(subj)
+    db.session.delete(subject)
     db.session.commit()
     flash('Subject deleted.', 'success')
     return redirect(url_for('teacher.subjects'))
@@ -127,9 +217,10 @@ def delete_subject(id):
 @teacher_required
 def content_list():
     page = request.args.get('page', 1, type=int)
-    status_filter = request.args.get('status', '')
-    subject_filter = request.args.get('subject', '', type=str)
+    status_filter = request.args.get('status', '').strip()
+    subject_filter = request.args.get('subject', '', type=int)
     search = request.args.get('q', '').strip()
+    type_filter = request.args.get('type', '').strip()
     sort = request.args.get('sort', 'newest')
 
     query = Content.query
@@ -137,28 +228,37 @@ def content_list():
     if status_filter in ('draft', 'published'):
         query = query.filter_by(status=status_filter)
     if subject_filter:
-        query = query.filter_by(subject_id=int(subject_filter))
+        query = query.filter_by(subject_id=subject_filter)
+    if type_filter in CONTENT_TYPE_LABELS:
+        query = query.filter_by(content_type=type_filter)
     if search:
+        pattern = f'%{search}%'
         query = query.filter(
             db.or_(
-                Content.title.ilike(f'%{search}%'),
-                Content.description.ilike(f'%{search}%'),
-                Content.tags.ilike(f'%{search}%'),
+                Content.title.ilike(pattern),
+                Content.description.ilike(pattern),
+                Content.tags.ilike(pattern),
+                Content.topic.ilike(pattern),
             )
         )
 
-    if sort == 'oldest':
-        query = query.order_by(Content.created_at.asc())
-    else:
-        query = query.order_by(Content.created_at.desc())
+    query = query.order_by(
+        Content.created_at.asc() if sort == 'oldest' else Content.created_at.desc()
+    )
 
-    pagination = query.paginate(page=page, per_page=12, error_out=False)
+    pagination = query.paginate(page=page, per_page=CONTENT_PER_PAGE, error_out=False)
     subjects = Subject.query.order_by(Subject.name).all()
 
-    return render_template('teacher/content_list.html',
-                           pagination=pagination, subjects=subjects,
-                           status_filter=status_filter, subject_filter=subject_filter,
-                           search=search, sort=sort)
+    return render_template(
+        'teacher/content_list.html',
+        pagination=pagination,
+        subjects=subjects,
+        status_filter=status_filter,
+        subject_filter=subject_filter,
+        type_filter=type_filter,
+        search=search,
+        sort=sort,
+    )
 
 
 @teacher_bp.route('/content/create', methods=['GET', 'POST'])
@@ -167,135 +267,115 @@ def create_content():
     subjects = Subject.query.order_by(Subject.name).all()
 
     if request.method == 'POST':
-        title = request.form.get('title', '').strip()
-        description = request.form.get('description', '').strip()
-        subject_id = request.form.get('subject_id', type=int)
-        topic = request.form.get('topic', '').strip()
-        content_type = request.form.get('content_type', 'notes')
-        body_html = sanitize_html(request.form.get('body_html', ''))
-        video_url = request.form.get('video_url', '').strip()
-        resource_url = request.form.get('resource_url', '').strip()
-        tags = request.form.get('tags', '').strip()
-        status = request.form.get('status', 'draft')
-
-        if not title:
-            flash('Title is required.', 'error')
-            return render_template('teacher/content_form.html', subjects=subjects)
-        if not subject_id:
-            flash('Please select a subject.', 'error')
-            return render_template('teacher/content_form.html', subjects=subjects)
-
-        slug = Content.generate_slug(title)
-        existing = Content.query.filter_by(slug=slug).first()
-        if existing:
-            slug = f"{slug}-{Content.query.count() + 1}"
+        payload = _content_form_payload()
+        errors = _validate_content_payload(payload)
+        if errors:
+            for message in errors:
+                flash(message, 'error')
+            return render_template(
+                'teacher/content_form.html',
+                subjects=subjects,
+                content=None,
+                form_data=request.form,
+            ), 400
 
         item = Content(
-            title=title, slug=slug, description=description,
-            subject_id=subject_id, topic=topic, content_type=content_type,
-            body_html=body_html, video_url=video_url, resource_url=resource_url,
-            tags=tags, status=status, created_by=session['user_id']
+            title=payload['title'],
+            slug=Content.unique_slug(payload['title']),
+            description=payload['description'],
+            subject_id=payload['subject_id'],
+            topic=payload['topic'],
+            content_type=payload['content_type'],
+            body_html=payload['body_html'],
+            video_url=payload['video_url'] or None,
+            resource_url=payload['resource_url'] or None,
+            tags=payload['tags'],
+            status=payload['status'],
+            created_by=session['user_id'],
         )
+        if payload['status'] == 'published':
+            item.publish()
 
-        # Handle thumbnail
-        thumb = request.files.get('thumbnail')
-        if thumb and thumb.filename:
-            result, err = save_upload(thumb)
-            if err:
-                flash(f'Thumbnail: {err}', 'error')
-            else:
-                item.thumbnail = result['stored_name']
+        db.session.add(item)
+        db.session.flush()
 
-        # Handle attachment
-        attach = request.files.get('attachment')
-        if attach and attach.filename:
-            result, err = save_upload(attach)
-            if err:
-                flash(f'Attachment: {err}', 'error')
-            else:
-                item.attachment = result['stored_name']
-                db.session.add(item)
-                db.session.flush()
-                uf = UploadedFile(
-                    original_name=result['original_name'],
-                    stored_name=result['stored_name'],
-                    mime_type=result['mime_type'],
-                    size_bytes=result['size_bytes'],
-                    uploaded_by=session['user_id'],
-                    content_id=item.id,
-                )
-                db.session.add(uf)
+        _handle_upload('thumbnail', request.files.get('thumbnail'), item, session['user_id'])
+        _handle_upload('attachment', request.files.get('attachment'), item, session['user_id'])
 
-        if not item.id:
-            db.session.add(item)
         db.session.commit()
         flash('Content created successfully!', 'success')
         return redirect(url_for('teacher.content_list'))
 
-    return render_template('teacher/content_form.html', subjects=subjects)
+    return render_template(
+        'teacher/content_form.html', subjects=subjects, content=None, form_data=request.form
+    )
 
 
 @teacher_bp.route('/content/<int:id>/edit', methods=['GET', 'POST'])
 @teacher_required
 def edit_content(id):
     item = db.session.get(Content, id)
-    if not item:
+    if item is None:
         abort(404)
     subjects = Subject.query.order_by(Subject.name).all()
 
     if request.method == 'POST':
-        item.title = request.form.get('title', '').strip()
-        item.description = request.form.get('description', '').strip()
-        item.subject_id = request.form.get('subject_id', type=int)
-        item.topic = request.form.get('topic', '').strip()
-        item.content_type = request.form.get('content_type', 'notes')
-        item.body_html = sanitize_html(request.form.get('body_html', ''))
-        item.video_url = request.form.get('video_url', '').strip()
-        item.resource_url = request.form.get('resource_url', '').strip()
-        item.tags = request.form.get('tags', '').strip()
-        item.status = request.form.get('status', 'draft')
+        payload = _content_form_payload()
+        errors = _validate_content_payload(payload)
+        if errors:
+            for message in errors:
+                flash(message, 'error')
+            return render_template(
+                'teacher/content_form.html',
+                content=item,
+                subjects=subjects,
+                form_data=request.form,
+            ), 400
 
-        if not item.title:
-            flash('Title is required.', 'error')
-            return render_template('teacher/content_form.html', content=item, subjects=subjects)
+        was_published = item.is_published
+        item.title = payload['title']
+        item.slug = Content.unique_slug(payload['title'], exclude_id=item.id)
+        item.description = payload['description']
+        item.subject_id = payload['subject_id']
+        item.topic = payload['topic']
+        item.content_type = payload['content_type']
+        item.body_html = payload['body_html']
+        item.video_url = payload['video_url'] or None
+        item.resource_url = payload['resource_url'] or None
+        item.tags = payload['tags']
 
-        thumb = request.files.get('thumbnail')
-        if thumb and thumb.filename:
-            result, err = save_upload(thumb)
-            if err:
-                flash(f'Thumbnail: {err}', 'error')
-            else:
-                item.thumbnail = result['stored_name']
+        if payload['status'] == 'published':
+            item.publish()
+        else:
+            item.unpublish()
 
-        attach = request.files.get('attachment')
-        if attach and attach.filename:
-            result, err = save_upload(attach)
-            if err:
-                flash(f'Attachment: {err}', 'error')
-            else:
-                item.attachment = result['stored_name']
-                uf = UploadedFile(
-                    original_name=result['original_name'],
-                    stored_name=result['stored_name'],
-                    mime_type=result['mime_type'],
-                    size_bytes=result['size_bytes'],
-                    uploaded_by=session['user_id'],
-                    content_id=item.id,
-                )
-                db.session.add(uf)
+        db.session.flush()
+
+        _handle_upload('thumbnail', request.files.get('thumbnail'), item, session['user_id'])
+        _handle_upload('attachment', request.files.get('attachment'), item, session['user_id'])
 
         db.session.commit()
-        flash('Content updated!', 'success')
+        message = 'Content updated!'
+        if was_published and not item.is_published:
+            message = 'Content updated and unpublished.'
+        elif not was_published and item.is_published:
+            message = 'Content updated and published.'
+        flash(message, 'success')
         return redirect(url_for('teacher.content_list'))
 
-    return render_template('teacher/content_form.html', content=item, subjects=subjects)
+    return render_template(
+        'teacher/content_form.html',
+        content=item,
+        subjects=subjects,
+        form_data=request.form,
+    )
 
 
 @teacher_bp.route('/content/<int:id>/preview')
 @teacher_required
 def preview_content(id):
     item = db.session.get(Content, id)
-    if not item:
+    if item is None:
         abort(404)
     return render_template('teacher/content_preview.html', content=item)
 
@@ -304,11 +384,14 @@ def preview_content(id):
 @teacher_required
 def toggle_content(id):
     item = db.session.get(Content, id)
-    if not item:
+    if item is None:
         abort(404)
-    item.status = 'draft' if item.status == 'published' else 'published'
+    now_published = item.toggle_published()
     db.session.commit()
-    flash(f'Content {"published" if item.status == "published" else "unpublished"}.', 'success')
+    flash(
+        f'Content {"published" if now_published else "moved back to drafts"}.',
+        'success',
+    )
     return redirect(url_for('teacher.content_list'))
 
 
@@ -316,11 +399,14 @@ def toggle_content(id):
 @teacher_required
 def delete_content(id):
     item = db.session.get(Content, id)
-    if not item:
+    if item is None:
         abort(404)
+    _purge_item_files(item)
+    for uploaded in list(item.files):
+        delete_stored_file(uploaded.stored_name)
     db.session.delete(item)
     db.session.commit()
-    flash('Content deleted.', 'success')
+    flash('Content and its attachments were deleted.', 'success')
     return redirect(url_for('teacher.content_list'))
 
 
@@ -328,8 +414,11 @@ def delete_content(id):
 @teacher_bp.route('/announcements')
 @teacher_required
 def announcements():
-    items = Announcement.query.order_by(Announcement.created_at.desc()).all()
-    return render_template('teacher/announcements.html', announcements=items)
+    page = request.args.get('page', 1, type=int)
+    pagination = Announcement.query.order_by(Announcement.created_at.desc()).paginate(
+        page=page, per_page=FILE_PER_PAGE, error_out=False
+    )
+    return render_template('teacher/announcements.html', pagination=pagination)
 
 
 @teacher_bp.route('/announcements/create', methods=['GET', 'POST'])
@@ -337,55 +426,75 @@ def announcements():
 def create_announcement():
     if request.method == 'POST':
         title = request.form.get('title', '').strip()
-        body = request.form.get('body', '').strip()
-        is_published = request.form.get('is_published') == 'on'
+        body = sanitize_html(request.form.get('body', '').strip())
+        publish = request.form.get('is_published') == 'on'
 
         if not title or not body:
-            flash('Title and body are required.', 'error')
-            return render_template('teacher/announcement_form.html')
+            flash('Title and message are both required.', 'error')
+            return render_template(
+                'teacher/announcement_form.html', announcement=None, form_data=request.form
+            ), 400
 
-        ann = Announcement(
-            title=title, body=sanitize_html(body),
-            is_published=is_published, created_by=session['user_id'],
-            published_at=datetime.now(timezone.utc) if is_published else None
+        announcement = Announcement(
+            title=title,
+            body=body,
+            is_published=publish,
+            created_by=session['user_id'],
         )
-        db.session.add(ann)
+        if publish:
+            announcement.publish()
+        db.session.add(announcement)
         db.session.commit()
         flash('Announcement created!', 'success')
         return redirect(url_for('teacher.announcements'))
 
-    return render_template('teacher/announcement_form.html')
+    return render_template(
+        'teacher/announcement_form.html', announcement=None, form_data=request.form
+    )
 
 
 @teacher_bp.route('/announcements/<int:id>/edit', methods=['GET', 'POST'])
 @teacher_required
 def edit_announcement(id):
-    ann = db.session.get(Announcement, id)
-    if not ann:
+    announcement = db.session.get(Announcement, id)
+    if announcement is None:
         abort(404)
 
     if request.method == 'POST':
-        ann.title = request.form.get('title', '').strip()
-        ann.body = sanitize_html(request.form.get('body', '').strip())
-        was_published = ann.is_published
-        ann.is_published = request.form.get('is_published') == 'on'
-        if ann.is_published and not was_published:
-            ann.published_at = datetime.now(timezone.utc)
+        title = request.form.get('title', '').strip()
+        body = sanitize_html(request.form.get('body', '').strip())
+        publish = request.form.get('is_published') == 'on'
 
+        if not title or not body:
+            flash('Title and message are both required.', 'error')
+            return render_template(
+                'teacher/announcement_form.html',
+                announcement=announcement,
+                form_data=request.form,
+            ), 400
+
+        announcement.title = title
+        announcement.body = body
+        if publish:
+            announcement.publish()
+        else:
+            announcement.unpublish()
         db.session.commit()
         flash('Announcement updated!', 'success')
         return redirect(url_for('teacher.announcements'))
 
-    return render_template('teacher/announcement_form.html', announcement=ann)
+    return render_template(
+        'teacher/announcement_form.html', announcement=announcement, form_data=request.form
+    )
 
 
 @teacher_bp.route('/announcements/<int:id>/delete', methods=['POST'])
 @teacher_required
 def delete_announcement(id):
-    ann = db.session.get(Announcement, id)
-    if not ann:
+    announcement = db.session.get(Announcement, id)
+    if announcement is None:
         abort(404)
-    db.session.delete(ann)
+    db.session.delete(announcement)
     db.session.commit()
     flash('Announcement deleted.', 'success')
     return redirect(url_for('teacher.announcements'))
@@ -396,52 +505,19 @@ def delete_announcement(id):
 @teacher_required
 def students():
     page = request.args.get('page', 1, type=int)
-    pagination = User.query.filter_by(role='student').order_by(
-        User.created_at.desc()
-    ).paginate(page=page, per_page=20, error_out=False)
-    return render_template('teacher/students.html', pagination=pagination)
-
-
-# ── Profile ────────────────────────────────────────────────
-@teacher_bp.route('/profile', methods=['GET', 'POST'])
-@teacher_required
-def profile():
-    user = db.session.get(User, session['user_id'])
-
-    if request.method == 'POST':
-        action = request.form.get('action')
-
-        if action == 'update_profile':
-            user.name = request.form.get('name', '').strip() or user.name
-            new_email = request.form.get('email', '').strip().lower()
-            if new_email and new_email != user.email:
-                if User.query.filter_by(email=new_email).first():
-                    flash('Email already in use.', 'error')
-                    return render_template('teacher/profile.html', user=user)
-                user.email = new_email
-            db.session.commit()
-            session['user_name'] = user.name
-            flash('Profile updated!', 'success')
-
-        elif action == 'change_password':
-            current = request.form.get('current_password', '')
-            new_pw = request.form.get('new_password', '')
-            confirm = request.form.get('confirm_password', '')
-
-            if not user.check_password(current):
-                flash('Current password is incorrect.', 'error')
-            elif len(new_pw) < 6:
-                flash('New password must be at least 6 characters.', 'error')
-            elif new_pw != confirm:
-                flash('New passwords do not match.', 'error')
-            else:
-                user.set_password(new_pw)
-                db.session.commit()
-                flash('Password changed successfully!', 'success')
-
-        return redirect(url_for('teacher.profile'))
-
-    return render_template('teacher/profile.html', user=user)
+    search = request.args.get('q', '').strip()
+    query = User.query.filter_by(role='student')
+    if search:
+        pattern = f'%{search}%'
+        query = query.filter(
+            db.or_(User.name.ilike(pattern), User.email.ilike(pattern))
+        )
+    pagination = query.order_by(User.created_at.desc()).paginate(
+        page=page, per_page=STUDENT_PER_PAGE, error_out=False
+    )
+    return render_template(
+        'teacher/students.html', pagination=pagination, search=search
+    )
 
 
 # ── Files ──────────────────────────────────────────────────
@@ -449,22 +525,54 @@ def profile():
 @teacher_required
 def files():
     page = request.args.get('page', 1, type=int)
-    pagination = UploadedFile.query.order_by(
-        UploadedFile.created_at.desc()
-    ).paginate(page=page, per_page=20, error_out=False)
+    pagination = UploadedFile.query.order_by(UploadedFile.created_at.desc()).paginate(
+        page=page, per_page=FILE_PER_PAGE, error_out=False
+    )
     return render_template('teacher/files.html', pagination=pagination)
 
 
 @teacher_bp.route('/files/<int:id>/delete', methods=['POST'])
 @teacher_required
 def delete_file(id):
-    f = db.session.get(UploadedFile, id)
-    if not f:
+    uploaded = db.session.get(UploadedFile, id)
+    if uploaded is None:
         abort(404)
-    filepath = os.path.join(current_app.config['UPLOAD_FOLDER'], f.stored_name)
-    if os.path.exists(filepath):
-        os.remove(filepath)
-    db.session.delete(f)
+    delete_stored_file(uploaded.stored_name)
+    content = uploaded.content
+    if content is not None:
+        if content.thumbnail == uploaded.stored_name:
+            content.thumbnail = None
+        if content.attachment == uploaded.stored_name:
+            content.attachment = None
+    db.session.delete(uploaded)
     db.session.commit()
     flash('File deleted.', 'success')
     return redirect(url_for('teacher.files'))
+
+
+# ── Profile ────────────────────────────────────────────────
+@teacher_bp.route('/profile', methods=['GET', 'POST'])
+@teacher_required
+def profile():
+    user = db.session.get(User, session['user_id'])
+    if user is None:
+        abort(403)
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'update_profile':
+            ok, message = update_profile(user, request.form)
+            flash(message, 'success' if ok else 'error')
+            if ok:
+                db.session.commit()
+                session['user_name'] = user.name
+        elif action == 'change_password':
+            ok, message = change_password(user, request.form)
+            flash(message, 'success' if ok else 'error')
+            if ok:
+                db.session.commit()
+        else:
+            flash('Unknown profile action.', 'error')
+        return redirect(url_for('teacher.profile'))
+
+    return render_template('teacher/profile.html', user=user)

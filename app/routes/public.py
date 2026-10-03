@@ -11,3 +11,9 @@ def index():
             return redirect(url_for('teacher.dashboard'))
         return redirect(url_for('student.dashboard'))
     return redirect(url_for('auth.login'))
+
+
+@public_bp.route('/offline')
+def offline():
+    """Offline fallback page used by the service worker."""
+    return render_template('public/offline.html')

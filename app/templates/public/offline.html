@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Offline — {{ app_name }}{% endblock %}
+{% block body %}
+<div class="cn-error-page">
+  <div>
+    <div class="cn-error-page__icon"><i class="bi bi-wifi-off"></i></div>
+    <h1 class="cn-error-page__title">You are offline</h1>
+    <p class="cn-error-page__desc">
+      This page needs a connection. Reconnect and try again — your account and
+      saved work are safe.
+    </p>
+    <a href="/" class="cn-btn cn-btn--primary">
+      <i class="bi bi-arrow-clockwise"></i> Retry
+    </a>
+  </div>
+</div>
+{% endblock %}

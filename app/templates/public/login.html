@@ -13,33 +13,40 @@
 
     {% include 'partials/alerts.html' %}
 
-    <form method="POST" class="cn-form">
+    <form method="POST" class="cn-form" novalidate>
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
       <div class="cn-form-group">
-        <label class="cn-label">Email</label>
-        <input type="email" class="cn-input" name="email" required autofocus>
+        <label class="cn-label" for="email">Email</label>
+        <input type="email" class="cn-input" id="email" name="email" value="{{ email or '' }}"
+               required autofocus autocomplete="email" inputmode="email">
       </div>
 
       <div class="cn-form-group">
-        <label class="cn-label">Password</label>
+        <label class="cn-label" for="password">Password</label>
         <div class="cn-password-wrap">
-          <input type="password" class="cn-input" name="password" required id="password">
-          <button type="button" class="cn-password-toggle" tabindex="-1">
+          <input type="password" class="cn-input" name="password" id="password" required
+                 autocomplete="current-password">
+          <button type="button" class="cn-password-toggle" aria-label="Show password" tabindex="-1">
             <i class="bi bi-eye"></i>
           </button>
         </div>
       </div>
 
-      <button type="submit" class="cn-btn cn-btn--primary" style="width:100%;justify-content:center;">
+      <div class="cn-form-group cn-form-inline">
+        <label class="cn-checkbox" for="remember">
+          <input type="checkbox" id="remember" name="remember" value="on">
+          <span>Keep me signed in</span>
+        </label>
+      </div>
+
+      <button type="submit" class="cn-btn cn-btn--primary cn-btn--block">
         <i class="bi bi-box-arrow-in-right"></i> Sign in
       </button>
     </form>
 
-    <hr style="margin: var(--cn-space-6) 0; border: none; border-top: 1px solid var(--cn-border);">
-
-    <div style="text-align: center; font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
-      <p>Don't have an account? <a href="{{ url_for('auth.register') }}" style="color: var(--cn-indigo); font-weight: 500;">Sign up</a></p>
+    <div class="cn-auth__footer">
+      <p>Don't have an account? <a href="{{ url_for('auth.register') }}">Sign up</a></p>
     </div>
   </div>
 </div>
