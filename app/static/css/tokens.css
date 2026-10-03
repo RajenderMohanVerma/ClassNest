@@ -1,26 +1,42 @@
-/* ═══════════════════════════════════════════════
-   ClassNest Design Tokens — Single source of truth
-   ═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════
+   ClassNest Design Tokens — single source of truth
+   Light theme is the default; [data-theme="dark"] overrides it.
+   ═══════════════════════════════════════════════════════════ */
 :root {
-  /* Colors */
+  /* Brand */
   --cn-navy: #172554;
   --cn-indigo: #4F46E5;
   --cn-indigo-hover: #4338CA;
-  --cn-indigo-light: #EEF2FF;
+
+  /* Surfaces */
   --cn-bg: #F8FAFC;
-  --cn-card: #FFFFFF;
+  --cn-surface: #FFFFFF;
+  --cn-surface-alt: #F1F5F9;
+  --cn-surface-inverse: var(--cn-navy);
+
+  /* Text */
   --cn-text: #0F172A;
   --cn-text-secondary: #64748B;
+  --cn-text-inverse: #FFFFFF;
+
+  /* Status */
   --cn-success: #10B981;
   --cn-success-bg: #ECFDF5;
+  --cn-success-text: #065F46;
   --cn-warning: #F59E0B;
   --cn-warning-bg: #FFFBEB;
+  --cn-warning-text: #92400E;
   --cn-error: #EF4444;
   --cn-error-bg: #FEF2F2;
+  --cn-error-text: #991B1B;
   --cn-info: #3B82F6;
   --cn-info-bg: #EFF6FF;
+  --cn-info-text: #1E40AF;
+
+  /* Borders & focus */
   --cn-border: #E2E8F0;
-  --cn-border-hover: #CBD5E1;
+  --cn-border-strong: #CBD5E1;
+  --cn-focus-ring: rgba(79, 70, 229, .25);
 
   /* Typography */
   --cn-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -31,6 +47,7 @@
   --cn-font-size-xl: 1.25rem;
   --cn-font-size-2xl: 1.5rem;
   --cn-font-size-3xl: 1.875rem;
+  --cn-font-size-4xl: 2.25rem;
 
   /* Spacing */
   --cn-space-1: 0.25rem;
@@ -51,19 +68,50 @@
   --cn-radius-full: 50%;
 
   /* Shadows */
-  --cn-shadow-sm: 0 1px 2px rgba(0,0,0,.05);
-  --cn-shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
-  --cn-shadow-md: 0 4px 6px -1px rgba(0,0,0,.08), 0 2px 4px -2px rgba(0,0,0,.04);
-  --cn-shadow-lg: 0 10px 15px -3px rgba(0,0,0,.08), 0 4px 6px -4px rgba(0,0,0,.04);
+  --cn-shadow-sm: 0 1px 2px rgba(15, 23, 42, .06);
+  --cn-shadow: 0 1px 3px rgba(15, 23, 42, .08), 0 1px 2px rgba(15, 23, 42, .04);
+  --cn-shadow-md: 0 4px 6px -1px rgba(15, 23, 42, .08), 0 2px 4px -2px rgba(15, 23, 42, .05);
+  --cn-shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, .10), 0 4px 6px -4px rgba(15, 23, 42, .05);
 
   /* Transitions */
   --cn-transition: 200ms ease;
   --cn-transition-fast: 150ms ease;
 
-  /* Sidebar */
+  /* Layout */
   --cn-sidebar-width: 260px;
-  --cn-sidebar-collapsed: 70px;
   --cn-topbar-height: 64px;
+  --cn-content-max: 1320px;
+  --cn-touch-target: 40px;
+}
+
+[data-theme='dark'] {
+  --cn-bg: #0B1120;
+  --cn-surface: #131C31;
+  --cn-surface-alt: #1B2540;
+  --cn-surface-inverse: #E2E8F0;
+
+  --cn-text: #E8EDF7;
+  --cn-text-secondary: #94A3B8;
+  --cn-text-inverse: #0F172A;
+
+  --cn-success-bg: rgba(16, 185, 129, .14);
+  --cn-success-text: #6EE7B7;
+  --cn-warning-bg: rgba(245, 158, 11, .14);
+  --cn-warning-text: #FCD34D;
+  --cn-error-bg: rgba(239, 68, 68, .14);
+  --cn-error-text: #FCA5A5;
+  --cn-info-bg: rgba(59, 130, 246, .14);
+  --cn-info-text: #93C5FD;
+  --cn-indigo-light: rgba(79, 70, 229, .18);
+
+  --cn-border: #26324C;
+  --cn-border-strong: #33415F;
+  --cn-focus-ring: rgba(129, 140, 248, .40);
+
+  --cn-shadow-sm: 0 1px 2px rgba(0, 0, 0, .40);
+  --cn-shadow: 0 1px 3px rgba(0, 0, 0, .45);
+  --cn-shadow-md: 0 4px 8px rgba(0, 0, 0, .50);
+  --cn-shadow-lg: 0 12px 24px rgba(0, 0, 0, .55);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,39 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Students — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Students' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
-  <h1 class="cn-page-header__title">Students</h1>
+<main class="cn-main" id="main-content">
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">Students</h1>
+      <p class="cn-page-header__subtitle">
+        {{ pagination.total }} registered student{{ '' if pagination.total == 1 else 's' }}
+      </p>
+    </div>
+  </div>
+
+  <form method="GET" class="cn-filter-bar" role="search">
+    <div class="cn-filter-bar__field cn-filter-bar__field--grow">
+      <label class="cn-sr-only" for="student-search">Search students</label>
+      <div class="cn-search">
+        <i class="bi bi-search cn-search__icon" aria-hidden="true"></i>
+        <input type="search" class="cn-search__input" id="student-search" name="q"
+               value="{{ search or '' }}" placeholder="Search by name or email...">
+      </div>
+    </div>
+    <button type="submit" class="cn-btn cn-btn--primary"><i class="bi bi-search"></i> Search</button>
+    {% if search %}
+    <a href="{{ url_for('teacher.students') }}" class="cn-btn cn-btn--ghost">
+      <i class="bi bi-x-circle"></i> Clear
+    </a>
+    {% endif %}
+  </form>
 
   {% if pagination.items %}
   <div class="cn-table-wrap">
     <table class="cn-table">
       <thead>
         <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Joined</th>
+          <th scope="col">Student</th>
+          <th scope="col">Email</th>
+          <th scope="col">Joined</th>
         </tr>
       </thead>
       <tbody>
         {% for student in pagination.items %}
         <tr>
-          <td>{{ student.name }}</td>
+          <td>
+            <span class="cn-table__user">
+              <span class="cn-topbar__avatar cn-topbar__avatar--sm" aria-hidden="true">{{ student.initials }}</span>
+              {{ student.name }}
+            </span>
+          </td>
           <td>{{ student.email }}</td>
-          <td>{{ student.created_at.strftime('%b %d, %Y') }}</td>
+          <td><small>{{ student.created_at.strftime('%b %d, %Y') }}</small></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-  {% include 'partials/pagination.html' %}
+  {% include 'partials/pagination.html' with extra_args = pagination_args(request.args) %}
   {% else %}
   <div class="cn-card">
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-people"></i></div>
-      <div class="cn-empty__title">No students yet</div>
+      <div class="cn-empty__title">{% if search %}No students match "{{ search }}"{% else %}No students registered yet{% endif %}</div>
+      <p>Students appear here after they sign up from the registration page.</p>
     </div>
   </div>
   {% endif %}

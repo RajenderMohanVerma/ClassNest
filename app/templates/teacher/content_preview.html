@@ -1,71 +1,94 @@
 {% extends "base.html" %}
 {% block title %}Preview: {{ content.title }} — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Preview' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
-  <div style="max-width: 900px; margin: 0 auto;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--cn-space-5);">
-      <h1 style="margin: 0;">Preview: {{ content.title }}</h1>
-      <a href="{{ url_for('teacher.edit_content', id=content.id) }}" class="cn-btn cn-btn--outline">
+<main class="cn-main" id="main-content">
+  <div class="cn-page-header">
+    <div>
+      <p class="cn-eyebrow"><a href="{{ url_for('teacher.content_list') }}">Back to content</a></p>
+      <h1 class="cn-page-header__title">Preview</h1>
+      <p class="cn-page-header__subtitle">This is exactly what a student sees for this lesson.</p>
+    </div>
+    <div class="cn-btn-row">
+      <a href="{{ url_for('teacher.edit_content', id=content.id) }}" class="cn-btn cn-btn--primary">
         <i class="bi bi-pencil"></i> Edit
       </a>
+      <form method="POST" action="{{ url_for('teacher.toggle_content', id=content.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="cn-btn cn-btn--outline">
+          <i class="bi {{ 'bi-eye-slash' if content.is_published else 'bi-send' }}"></i>
+          {{ 'Unpublish' if content.is_published else 'Publish' }}
+        </button>
+      </form>
     </div>
+  </div>
 
-    <!-- Meta -->
-    <div style="display: flex; gap: var(--cn-space-4); margin-bottom: var(--cn-space-5); flex-wrap: wrap;">
-      <div>
-        <span class="cn-badge {% if content.status == 'published' %}cn-badge--success{% else %}cn-badge--warning{% endif %}">
-          {{ content.status|capitalize }}
-        </span>
-      </div>
-      <div style="font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
-        Subject: <strong>{{ content.subject.name }}</strong>
-      </div>
-      <div style="font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
-        Type: <strong>{{ content.content_type|replace('_', ' ')|title }}</strong>
-      </div>
-    </div>
+  <div class="cn-reading-wrap">
+    <article class="cn-card cn-reading">
+      <header class="cn-reading__header">
+        <div class="cn-chip-row cn-chip-row--compact">
+          <span class="cn-badge {{ 'cn-badge--success' if content.is_published else 'cn-badge--warning' }}">
+            {{ 'Published' if content.is_published else 'Draft' }}
+          </span>
+          <span class="cn-badge cn-badge--primary">{{ content.content_type_label }}</span>
+          <span class="cn-badge">{{ content.subject.name }}</span>
+          {% if content.topic %}<span class="cn-badge">{{ content.topic }}</span>{% endif %}
+        </div>
+        <h1 class="cn-reading__title">{{ content.title }}</h1>
+        {% if content.description %}
+        <p class="cn-reading__subtitle">{{ content.description }}</p>
+        {% endif %}
+        <p class="cn-muted cn-text-sm">
+          Published
+          <time datetime="{{ content.published_at or content.created_at }}">
+            {{ (content.published_at or content.created_at).strftime('%B %d, %Y') }}
+          </time>
+        </p>
+      </header>
 
-    <!-- Content -->
-    <div class="cn-card cn-reading">
       {% if content.thumbnail %}
-      <img src="{{ url_for('static', filename='uploads/' + content.thumbnail) }}" alt="Thumbnail"
-           style="width: 100%; max-height: 400px; object-fit: cover; border-radius: var(--cn-radius-lg); margin-bottom: var(--cn-space-6);">
-      {% endif %}
-
-      {% if content.description %}
-      <p style="font-size: var(--cn-font-size-lg); color: var(--cn-text-secondary); margin: 0 0 var(--cn-space-6);">
-        {{ content.description }}
-      </p>
+      <img class="cn-reading__cover" src="{{ url_for('files.serve_file', stored_name=content.thumbnail) }}"
+           alt="Cover image for {{ content.title }}" width="900" height="400">
       {% endif %}
 
       {% if content.body_html %}
-      <div class="cn-reading__body">
-        {{ content.body_html|safe }}
-      </div>
+      <div class="cn-reading__body">{{ content.body_html | safe }}</div>
+      {% else %}
+      <p class="cn-muted">This lesson has no written content yet.</p>
       {% endif %}
 
-      {% if content.attachment %}
-      <div style="margin-top: var(--cn-space-6); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-success);">
-        <i class="bi bi-file-earmark-pdf"></i> Attachment:
-        <a href="#" class="cn-btn cn-btn--ghost cn-btn--sm">Download File</a>
-      </div>
+      {% if content.attachment or content.video_url or content.resource_url %}
+      <section class="cn-resources">
+        <h2 class="cn-section__title"><i class="bi bi-paperclip"></i> Resources</h2>
+        <div class="cn-resource-list">
+          {% if content.attachment %}
+          <a class="cn-resource" href="{{ url_for('files.serve_file', stored_name=content.attachment, download=1) }}">
+            <i class="bi bi-file-earmark-arrow-down"></i>
+            <span><strong>Download material</strong><small class="cn-muted">Stored attachment</small></span>
+            <i class="bi bi-arrow-right" aria-hidden="true"></i>
+          </a>
+          {% endif %}
+          {% if content.video_url %}
+          <a class="cn-resource" href="{{ content.video_url }}" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-play-circle"></i>
+            <span><strong>Video lesson</strong><small class="cn-muted">{{ content.video_url }}</small></span>
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+          </a>
+          {% endif %}
+          {% if content.resource_url %}
+          <a class="cn-resource" href="{{ content.resource_url }}" target="_blank" rel="noopener noreferrer">
+            <i class="bi bi-link-45deg"></i>
+            <span><strong>External resource</strong><small class="cn-muted">{{ content.resource_url }}</small></span>
+            <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+          </a>
+          {% endif %}
+        </div>
+      </section>
       {% endif %}
-
-      {% if content.video_url %}
-      <div style="margin-top: var(--cn-space-6); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-info);">
-        <i class="bi bi-play-circle"></i> Video: <a href="{{ content.video_url }}" target="_blank">Open video</a>
-      </div>
-      {% endif %}
-
-      {% if content.resource_url %}
-      <div style="margin-top: var(--cn-space-3); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-warning);">
-        <i class="bi bi-link-45deg"></i> Resource: <a href="{{ content.resource_url }}" target="_blank">Open link</a>
-      </div>
-      {% endif %}
-    </div>
+    </article>
   </div>
 </main>
 {% endblock %}

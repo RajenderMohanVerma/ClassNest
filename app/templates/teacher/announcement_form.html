@@ -1,46 +1,60 @@
 {% extends "base.html" %}
 {% block title %}{% if announcement %}Edit Announcement{% else %}New Announcement{% endif %} — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Announcements' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
+<main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
+  {% set f = form_data %}
+  {% set current_title = f.get('title') if f and f.get('title') else (announcement.title if announcement else '') %}
+  {% set current_body = f.get('body') if f and f.get('body') else (announcement.body if announcement else '') %}
+  {% set is_published = (f.get('is_published') is not none) if f and f.get('title') else (announcement.is_published if announcement else false) %}
+
   <div class="cn-page-header">
-    <h1 class="cn-page-header__title">{% if announcement %}Edit Announcement{% else %}New Announcement{% endif %}</h1>
-  </div>
-
-  <div style="max-width: 800px;">
-    <div class="cn-card">
-      <form method="POST" class="cn-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="cn-form-group">
-          <label class="cn-label">Title *</label>
-          <input type="text" class="cn-input" name="title" value="{{ announcement.title if announcement else '' }}" required autofocus>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">Message *</label>
-          <textarea class="cn-textarea" name="body" placeholder="Write your announcement..." required>{{ announcement.body if announcement else '' }}</textarea>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">
-            <input type="checkbox" name="is_published" {% if announcement and announcement.is_published %}checked{% endif %}>
-            Publish now
-          </label>
-        </div>
-
-        <div style="display: flex; gap: var(--cn-space-3);">
-          <button type="submit" class="cn-btn cn-btn--primary">
-            <i class="bi bi-check-lg"></i> Save
-          </button>
-          <a href="{{ url_for('teacher.announcements') }}" class="cn-btn cn-btn--outline">Cancel</a>
-        </div>
-      </form>
+    <div>
+      <h1 class="cn-page-header__title">{% if announcement %}Edit announcement{% else %}New announcement{% endif %}</h1>
+      <p class="cn-page-header__subtitle">Published announcements appear on every student dashboard.</p>
     </div>
+    <a href="{{ url_for('teacher.announcements') }}" class="cn-btn cn-btn--ghost">
+      <i class="bi bi-arrow-left"></i> All announcements
+    </a>
   </div>
+
+  <form method="POST" class="cn-card cn-form cn-form--narrow" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="cn-form-group">
+      <label class="cn-label" for="title">Title <span class="cn-required">*</span></label>
+      <input type="text" class="cn-input" id="title" name="title" value="{{ current_title }}"
+             required maxlength="300" autofocus>
+    </div>
+
+    <div class="cn-form-group">
+      <label class="cn-label" for="body">Message <span class="cn-required">*</span></label>
+      <textarea class="cn-textarea cn-textarea--tall" id="body" name="body" required
+                placeholder="Write your announcement…">{{ current_body }}</textarea>
+      <small class="cn-hint">
+        Basic HTML is allowed (paragraphs, lists, bold, links). Scripts and styles are removed.
+      </small>
+    </div>
+
+    <label class="cn-checkbox" for="is_published">
+      <input type="checkbox" id="is_published" name="is_published" {% if is_published %}checked{% endif %}>
+      <span>
+        <strong>Publish now</strong>
+        <small class="cn-muted">Students see this immediately on their dashboard.</small>
+      </span>
+    </label>
+
+    <div class="cn-btn-row">
+      <button type="submit" class="cn-btn cn-btn--primary cn-btn--lg">
+        <i class="bi bi-check-lg"></i> Save announcement
+      </button>
+      <a href="{{ url_for('teacher.announcements') }}" class="cn-btn cn-btn--outline cn-btn--lg">Cancel</a>
+    </div>
+  </form>
 </main>
 {% endblock %}

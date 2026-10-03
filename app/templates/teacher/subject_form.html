@@ -1,46 +1,63 @@
 {% extends "base.html" %}
 {% block title %}{% if subject %}Edit Subject{% else %}New Subject{% endif %} — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Subjects' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
+<main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
+  {% set f = form_data %}
+  {% set current_name = f.get('name') if f and f.get('name') else (subject.name if subject else '') %}
+  {% set current_description = f.get('description') if f and f.get('description') else (subject.description if subject else '') %}
+  {% set current_icon = f.get('icon') if f and f.get('icon') else (subject.icon if subject else 'bi-book') %}
+
   <div class="cn-page-header">
-    <h1 class="cn-page-header__title">{% if subject %}Edit Subject{% else %}Create Subject{% endif %}</h1>
-  </div>
-
-  <div style="max-width: 600px;">
-    <div class="cn-card">
-      <form method="POST" class="cn-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="cn-form-group">
-          <label class="cn-label">Subject Name *</label>
-          <input type="text" class="cn-input" name="name" value="{{ subject.name if subject else name or '' }}" required autofocus>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">Description</label>
-          <textarea class="cn-textarea" name="description" placeholder="Brief description of the subject...">{{ subject.description if subject else '' }}</textarea>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">Icon (Bootstrap Icon class)</label>
-          <input type="text" class="cn-input" name="icon" placeholder="e.g. bi-book, bi-laptop, bi-flask" 
-                 value="{{ subject.icon if subject else 'bi-book' }}">
-          <small style="color: var(--cn-text-secondary);">Visit <a href="https://icons.getbootstrap.com" target="_blank">Bootstrap Icons</a> to find more.</small>
-        </div>
-
-        <div style="display: flex; gap: var(--cn-space-3);">
-          <button type="submit" class="cn-btn cn-btn--primary">
-            <i class="bi bi-check-lg"></i> Save Subject
-          </button>
-          <a href="{{ url_for('teacher.subjects') }}" class="cn-btn cn-btn--outline">Cancel</a>
-        </div>
-      </form>
+    <div>
+      <h1 class="cn-page-header__title">{% if subject %}Edit subject{% else %}New subject{% endif %}</h1>
+      <p class="cn-page-header__subtitle">Subjects group lessons and power the student library.</p>
     </div>
+    <a href="{{ url_for('teacher.subjects') }}" class="cn-btn cn-btn--ghost">
+      <i class="bi bi-arrow-left"></i> All subjects
+    </a>
   </div>
+
+  <form method="POST" class="cn-card cn-form cn-form--narrow" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="cn-form-group">
+      <label class="cn-label" for="name">Subject name <span class="cn-required">*</span></label>
+      <input type="text" class="cn-input" id="name" name="name" value="{{ current_name }}"
+             required minlength="2" maxlength="200" autofocus>
+    </div>
+
+    <div class="cn-form-group">
+      <label class="cn-label" for="description">Description</label>
+      <textarea class="cn-textarea cn-textarea--sm" id="description" name="description"
+                maxlength="500">{{ current_description }}</textarea>
+      <small class="cn-hint">Shown on subject cards in the student portal.</small>
+    </div>
+
+    <div class="cn-form-group">
+      <label class="cn-label" for="icon">Icon</label>
+      <div class="cn-icon-preview">
+        <span class="cn-subject-card__icon"><i class="bi {{ current_icon }}" aria-hidden="true"></i></span>
+        <input type="text" class="cn-input" id="icon" name="icon" value="{{ current_icon }}"
+               placeholder="bi-book" pattern="bi-[a-z0-9-]+">
+      </div>
+      <small class="cn-hint">
+        Any <a href="https://icons.getbootstrap.com" target="_blank" rel="noopener">Bootstrap Icons</a>
+        class, e.g. <code>bi-calculator</code>.
+      </small>
+    </div>
+
+    <div class="cn-btn-row">
+      <button type="submit" class="cn-btn cn-btn--primary cn-btn--lg">
+        <i class="bi bi-check-lg"></i> Save subject
+      </button>
+      <a href="{{ url_for('teacher.subjects') }}" class="cn-btn cn-btn--outline cn-btn--lg">Cancel</a>
+    </div>
+  </form>
 </main>
 {% endblock %}

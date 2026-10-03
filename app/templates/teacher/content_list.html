@@ -1,89 +1,127 @@
 {% extends "base.html" %}
 {% block title %}Content — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Content' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
+<main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
   <div class="cn-page-header">
-    <h1 class="cn-page-header__title">Content Management</h1>
+    <div>
+      <h1 class="cn-page-header__title">Content Management</h1>
+      <p class="cn-page-header__subtitle">{{ pagination.total }} content item{{ '' if pagination.total == 1 else 's' }}</p>
+    </div>
     <a href="{{ url_for('teacher.create_content') }}" class="cn-btn cn-btn--primary">
       <i class="bi bi-plus-lg"></i> Create Content
     </a>
   </div>
 
-  <!-- Filters -->
-  <div class="cn-filter-bar">
-    <form method="GET" class="cn-form" style="display: flex; gap: var(--cn-space-2); flex: 1; flex-wrap: wrap; margin: 0;">
-      <input type="text" class="cn-input" name="q" placeholder="Search..." value="{{ search or '' }}" 
-             style="flex: 1; min-width: 200px;">
-      <select class="cn-select" name="status" style="flex: 0 1 150px;">
-        <option value="">All Status</option>
-        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Drafts</option>
+  <form method="GET" class="cn-filter-bar" role="search">
+    <div class="cn-filter-bar__field cn-filter-bar__field--grow">
+      <label class="cn-sr-only" for="content-search">Search content</label>
+      <div class="cn-search">
+        <i class="bi bi-search cn-search__icon" aria-hidden="true"></i>
+        <input type="search" class="cn-search__input" id="content-search" name="q"
+               value="{{ search or '' }}" placeholder="Search title, topic, tag...">
+      </div>
+    </div>
+
+    <div class="cn-filter-bar__field">
+      <label class="cn-sr-only" for="status-filter">Status</label>
+      <select class="cn-select" id="status-filter" name="status">
+        <option value="">All statuses</option>
         <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Drafts</option>
       </select>
-      <select class="cn-select" name="subject" style="flex: 0 1 150px;">
-        <option value="">All Subjects</option>
+    </div>
+
+    <div class="cn-filter-bar__field">
+      <label class="cn-sr-only" for="content-subject">Subject</label>
+      <select class="cn-select" id="content-subject" name="subject">
+        <option value="">All subjects</option>
         {% for s in subjects %}
-        <option value="{{ s.id }}" {% if subject_filter == s.id|string %}selected{% endif %}>{{ s.name }}</option>
+        <option value="{{ s.id }}" {% if subject_filter == s.id %}selected{% endif %}>{{ s.name }}</option>
         {% endfor %}
       </select>
-      <select class="cn-select" name="sort" style="flex: 0 1 120px;">
+    </div>
+
+    <div class="cn-filter-bar__field">
+      <label class="cn-sr-only" for="content-type">Type</label>
+      <select class="cn-select" id="content-type" name="type">
+        <option value="">All types</option>
+        {% for value, label in content_type_labels.items() %}
+        <option value="{{ value }}" {% if type_filter == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="cn-filter-bar__field">
+      <label class="cn-sr-only" for="content-sort">Sort</label>
+      <select class="cn-select" id="content-sort" name="sort">
         <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
         <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest</option>
       </select>
-      <button type="submit" class="cn-btn cn-btn--primary">
-        <i class="bi bi-search"></i> Filter
-      </button>
-    </form>
-  </div>
+    </div>
 
-  <!-- Content List -->
+    <button type="submit" class="cn-btn cn-btn--primary"><i class="bi bi-funnel"></i> Apply</button>
+    <a href="{{ url_for('teacher.content_list') }}" class="cn-btn cn-btn--ghost">
+      <i class="bi bi-x-circle"></i> Clear
+    </a>
+  </form>
+
   {% if pagination.items %}
   <div class="cn-table-wrap">
     <table class="cn-table">
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Subject</th>
-          <th>Type</th>
-          <th>Status</th>
-          <th>Created</th>
-          <th>Actions</th>
+          <th scope="col">Title</th>
+          <th scope="col">Subject</th>
+          <th scope="col">Type</th>
+          <th scope="col">Status</th>
+          <th scope="col">Published</th>
+          <th scope="col" class="cn-table__actions">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for item in pagination.items %}
         <tr>
-          <td><strong>{{ item.title }}</strong></td>
-          <td>{{ item.subject.name }}</td>
-          <td><small>{{ item.content_type|replace('_', ' ')|title }}</small></td>
           <td>
-            <span class="cn-badge {% if item.status == 'published' %}cn-badge--success{% else %}cn-badge--warning{% endif %}">
-              {{ item.status|capitalize }}
+            <strong>{{ item.title }}</strong>
+            {% if item.topic %}<small class="cn-muted cn-block">{{ item.topic }}</small>{% endif %}
+          </td>
+          <td>{{ item.subject.name }}</td>
+          <td><small>{{ item.content_type_label }}</small></td>
+          <td>
+            <span class="cn-badge {{ 'cn-badge--success' if item.is_published else 'cn-badge--warning' }}">
+              {{ 'Published' if item.is_published else 'Draft' }}
             </span>
           </td>
-          <td><small>{{ item.created_at.strftime('%b %d, %Y') }}</small></td>
-          <td>
-            <div style="display: flex; gap: var(--cn-space-2);">
-              <a href="{{ url_for('teacher.preview_content', id=item.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm" title="Preview">
+          <td><small>{{ item.published_at.strftime('%b %d, %Y') if item.published_at else '—' }}</small></td>
+          <td class="cn-table__actions">
+            <div class="cn-btn-group">
+              <a href="{{ url_for('teacher.preview_content', id=item.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm"
+                 title="Preview" aria-label="Preview {{ item.title }}">
                 <i class="bi bi-eye"></i>
               </a>
-              <a href="{{ url_for('teacher.edit_content', id=item.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm" title="Edit">
+              <a href="{{ url_for('teacher.edit_content', id=item.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm"
+                 title="Edit" aria-label="Edit {{ item.title }}">
                 <i class="bi bi-pencil"></i>
               </a>
-              <form method="POST" action="{{ url_for('teacher.toggle_content', id=item.id) }}" style="display: inline;">
+              <form method="POST" action="{{ url_for('teacher.toggle_content', id=item.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm" title="{% if item.status == 'published' %}Unpublish{% else %}Publish{% endif %}">
-                  <i class="bi {% if item.status == 'published' %}bi-eye-slash{% else %}bi-eye-fill{% endif %}"></i>
+                <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm"
+                        title="{{ 'Unpublish' if item.is_published else 'Publish' }}"
+                        aria-label="{{ 'Unpublish' if item.is_published else 'Publish' }} {{ item.title }}">
+                  <i class="bi {{ 'bi-eye-slash' if item.is_published else 'bi-send' }}"></i>
                 </button>
               </form>
-              <form method="POST" action="{{ url_for('teacher.delete_content', id=item.id) }}" style="display: inline;">
+              <form method="POST" action="{{ url_for('teacher.delete_content', id=item.id) }}"
+                    data-confirm="Delete &quot;{{ item.title }}&quot; and its attachments?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm" style="color: var(--cn-error);" 
-                        onclick="return confirm('Delete this content?')">
+                <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm cn-btn--danger-ghost"
+                        title="Delete" aria-label="Delete {{ item.title }}">
                   <i class="bi bi-trash"></i>
                 </button>
               </form>
@@ -94,13 +132,13 @@
       </tbody>
     </table>
   </div>
-  {% include 'partials/pagination.html' %}
+  {% include 'partials/pagination.html' with extra_args = pagination_args(request.args) %}
   {% else %}
   <div class="cn-card">
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-inbox"></i></div>
       <div class="cn-empty__title">No content found</div>
-      <p>Create your first educational content to get started.</p>
+      <p>{% if search or status_filter or subject_filter or type_filter %}No items match these filters.{% else %}Create your first lesson to get started.{% endif %}</p>
     </div>
   </div>
   {% endif %}

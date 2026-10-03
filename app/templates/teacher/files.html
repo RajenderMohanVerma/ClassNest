@@ -1,38 +1,67 @@
 {% extends "base.html" %}
 {% block title %}Files — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Files' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
-  <h1 class="cn-page-header__title">Uploaded Files</h1>
+<main class="cn-main" id="main-content">
+  {% include 'partials/alerts.html' %}
+
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">Uploaded files</h1>
+      <p class="cn-page-header__subtitle">
+        {{ pagination.total }} file{{ '' if pagination.total == 1 else 's' }} stored for your lessons.
+      </p>
+    </div>
+  </div>
 
   {% if pagination.items %}
   <div class="cn-table-wrap">
     <table class="cn-table">
       <thead>
         <tr>
-          <th>Filename</th>
-          <th>Type</th>
-          <th>Size</th>
-          <th>Uploaded</th>
-          <th>Actions</th>
+          <th scope="col">File</th>
+          <th scope="col">Type</th>
+          <th scope="col">Size</th>
+          <th scope="col">Lesson</th>
+          <th scope="col">Uploaded</th>
+          <th scope="col" class="cn-table__actions">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for f in pagination.items %}
         <tr>
-          <td>{{ f.original_name }}</td>
-          <td><small>{{ f.mime_type }}</small></td>
-          <td><small>{{ (f.size_bytes / 1024) | round(2) }} KB</small></td>
-          <td><small>{{ f.created_at.strftime('%b %d, %Y') }}</small></td>
           <td>
-            <form method="POST" action="{{ url_for('teacher.delete_file', id=f.id) }}" style="display: inline;">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm" style="color: var(--cn-error);" onclick="return confirm('Delete?')">
-                <i class="bi bi-trash"></i>
-              </button>
-            </form>
+            <strong>{{ f.original_name }}</strong>
+            <small class="cn-muted cn-block">{{ f.stored_name }}</small>
+          </td>
+          <td><small>{{ f.mime_type }}</small></td>
+          <td><small>{{ f.size_display }}</small></td>
+          <td>
+            {% if f.content %}
+            <a href="{{ url_for('teacher.edit_content', id=f.content_id) }}">{{ f.content.title }}</a>
+            {% else %}
+            <span class="cn-muted">—</span>
+            {% endif %}
+          </td>
+          <td><small>{{ f.created_at.strftime('%b %d, %Y') }}</small></td>
+          <td class="cn-table__actions">
+            <div class="cn-btn-group">
+              <a href="{{ url_for('files.download_by_id', id=f.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm"
+                 title="Download" aria-label="Download {{ f.original_name }}">
+                <i class="bi bi-download"></i>
+              </a>
+              <form method="POST" action="{{ url_for('teacher.delete_file', id=f.id) }}"
+                    data-confirm="Delete &quot;{{ f.original_name }}&quot; permanently?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm cn-btn--danger-ghost"
+                        title="Delete" aria-label="Delete {{ f.original_name }}">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -45,6 +74,7 @@
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-folder2-open"></i></div>
       <div class="cn-empty__title">No files uploaded</div>
+      <p>Attach PDFs, documents or images while creating a lesson.</p>
     </div>
   </div>
   {% endif %}

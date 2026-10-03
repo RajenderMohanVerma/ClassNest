@@ -1,65 +1,94 @@
 {% extends "base.html" %}
 {% block title %}Profile — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Profile' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
+<main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
-  <h1 class="cn-page-header__title">Profile & Settings</h1>
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">Profile &amp; Settings</h1>
+      <p class="cn-page-header__subtitle">
+        {{ user.role_label }} account since {{ user.created_at.strftime('%B %Y') }}
+      </p>
+    </div>
+  </div>
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--cn-space-5);">
-    <!-- Update Profile -->
-    <div class="cn-card">
-      <h2 style="margin: 0 0 var(--cn-space-4); font-size: var(--cn-font-size-lg); font-weight: 600;">Personal Info</h2>
+  <div class="cn-two-column">
+    <section class="cn-card">
+      <h2 class="cn-card__title"><i class="bi bi-person-badge"></i> Personal info</h2>
       <form method="POST" class="cn-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="action" value="update_profile">
 
         <div class="cn-form-group">
-          <label class="cn-label">Name</label>
-          <input type="text" class="cn-input" name="name" value="{{ user.name }}" required>
+          <label class="cn-label" for="profile-name">Full name</label>
+          <input type="text" class="cn-input" id="profile-name" name="name" value="{{ user.name }}"
+                 required minlength="2" autocomplete="name">
         </div>
 
         <div class="cn-form-group">
-          <label class="cn-label">Email</label>
-          <input type="email" class="cn-input" name="email" value="{{ user.email }}" required>
+          <label class="cn-label" for="profile-email">Email</label>
+          <input type="email" class="cn-input" id="profile-email" name="email" value="{{ user.email }}"
+                 required autocomplete="email">
+        </div>
+
+        <div class="cn-form-group">
+          <span class="cn-label">Role</span>
+          <p class="cn-muted">
+            You are registered as a <strong>{{ user.role_label }}</strong> and can publish content.
+          </p>
         </div>
 
         <button type="submit" class="cn-btn cn-btn--primary">
-          <i class="bi bi-check-lg"></i> Update Profile
+          <i class="bi bi-check-lg"></i> Save changes
         </button>
       </form>
-    </div>
+    </section>
 
-    <!-- Change Password -->
-    <div class="cn-card">
-      <h2 style="margin: 0 0 var(--cn-space-4); font-size: var(--cn-font-size-lg); font-weight: 600;">Change Password</h2>
+    <section class="cn-card">
+      <h2 class="cn-card__title"><i class="bi bi-shield-lock"></i> Change password</h2>
       <form method="POST" class="cn-form">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="action" value="change_password">
 
         <div class="cn-form-group">
-          <label class="cn-label">Current Password</label>
-          <input type="password" class="cn-input" name="current_password" required>
+          <label class="cn-label" for="current-password">Current password</label>
+          <div class="cn-password-wrap">
+            <input type="password" class="cn-input" id="current-password" name="current_password" required
+                   autocomplete="current-password">
+            <button type="button" class="cn-password-toggle" aria-label="Show password" tabindex="-1">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
         </div>
 
         <div class="cn-form-group">
-          <label class="cn-label">New Password</label>
-          <input type="password" class="cn-input" name="new_password" required>
+          <label class="cn-label" for="new-password">New password</label>
+          <div class="cn-password-wrap">
+            <input type="password" class="cn-input" id="new-password" name="new_password" required
+                   autocomplete="new-password" minlength="6">
+            <button type="button" class="cn-password-toggle" aria-label="Show password" tabindex="-1">
+              <i class="bi bi-eye"></i>
+            </button>
+          </div>
+          <small class="cn-hint">At least 6 characters, different from the current one.</small>
         </div>
 
         <div class="cn-form-group">
-          <label class="cn-label">Confirm Password</label>
-          <input type="password" class="cn-input" name="confirm_password" required>
+          <label class="cn-label" for="confirm-password">Confirm new password</label>
+          <input type="password" class="cn-input" id="confirm-password" name="confirm_password" required
+                 autocomplete="new-password">
         </div>
 
         <button type="submit" class="cn-btn cn-btn--primary">
-          <i class="bi bi-lock"></i> Change Password
+          <i class="bi bi-shield-lock"></i> Update password
         </button>
       </form>
-    </div>
+    </section>
   </div>
 </main>
 {% endblock %}

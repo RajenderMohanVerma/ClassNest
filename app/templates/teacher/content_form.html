@@ -1,109 +1,214 @@
 {% extends "base.html" %}
 {% block title %}{% if content %}Edit Content{% else %}Create Content{% endif %} — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Create Content' if not content else 'Edit Content' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
+<main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
+  {% set f = form_data %}
+  {% set current_title = f.get('title') if f and f.get('title') else (content.title if content else '') %}
+  {% set current_description = f.get('description') if f and f.get('description') else (content.description if content else '') %}
+  {% set current_topic = f.get('topic') if f and f.get('topic') else (content.topic if content else '') %}
+  {% set current_type = f.get('content_type') if f and f.get('content_type') else (content.content_type if content else 'notes') %}
+  {% set current_body = f.get('body_html') if f and f.get('body_html') else (content.body_html if content else '') %}
+  {% set current_video = f.get('video_url') if f and f.get('video_url') else (content.video_url if content else '') %}
+  {% set current_resource = f.get('resource_url') if f and f.get('resource_url') else (content.resource_url if content else '') %}
+  {% set current_tags = f.get('tags') if f and f.get('tags') else (content.tags if content else '') %}
+  {% set current_subject = f.get('subject_id') if f and f.get('subject_id') else (content.subject_id if content else '') %}
+  {% set is_published = (f.get('status') == 'published') if f and f.get('status') else (content.is_published if content else false) %}
+
   <div class="cn-page-header">
-    <h1 class="cn-page-header__title">{% if content %}Edit Content{% else %}Create Content{% endif %}</h1>
+    <div>
+      <h1 class="cn-page-header__title">{% if content %}Edit content{% else %}Create content{% endif %}</h1>
+      <p class="cn-page-header__subtitle">
+        Saved lessons can stay as drafts until you are ready to publish them.
+      </p>
+    </div>
+    {% if content %}
+    <a href="{{ url_for('teacher.preview_content', id=content.id) }}" class="cn-btn cn-btn--outline">
+      <i class="bi bi-eye"></i> Preview
+    </a>
+    {% endif %}
   </div>
 
-  <div style="max-width: 800px;">
-    <div class="cn-card">
-      <form method="POST" enctype="multipart/form-data" class="cn-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-        <div class="cn-form-group">
-          <label class="cn-label">Title *</label>
-          <input type="text" class="cn-input" name="title" value="{{ content.title if content else '' }}" required autofocus>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">Subject *</label>
-          <select class="cn-select" name="subject_id" required>
-            <option value="">Select a subject...</option>
-            {% for s in subjects %}
-            <option value="{{ s.id }}" {% if content and content.subject_id == s.id %}selected{% endif %}>{{ s.name }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--cn-space-4);">
-          <div class="cn-form-group">
-            <label class="cn-label">Topic/Chapter</label>
-            <input type="text" class="cn-input" name="topic" value="{{ content.topic if content else '' }}">
-          </div>
-
-          <div class="cn-form-group">
-            <label class="cn-label">Content Type *</label>
-            <select class="cn-select" name="content_type" required>
-              <option value="notes" {% if content and content.content_type == 'notes' %}selected{% endif %}>Notes</option>
-              <option value="study_material" {% if content and content.content_type == 'study_material' %}selected{% endif %}>Study Material</option>
-              <option value="pdf_resource" {% if content and content.content_type == 'pdf_resource' %}selected{% endif %}>PDF Resource</option>
-              <option value="video_lesson" {% if content and content.content_type == 'video_lesson' %}selected{% endif %}>Video Lesson</option>
-              <option value="reference_link" {% if content and content.content_type == 'reference_link' %}selected{% endif %}>Reference Link</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">Description</label>
-          <textarea class="cn-textarea" name="description" placeholder="Brief description...">{{ content.description if content else '' }}</textarea>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">Content Body (HTML allowed)</label>
-          <textarea class="cn-textarea" name="body_html" placeholder="Write or paste your content...">{{ content.body_html if content else '' }}</textarea>
-          <small style="color: var(--cn-text-secondary);">Markdown will be converted to HTML.</small>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--cn-space-4);">
-          <div class="cn-form-group">
-            <label class="cn-label">Video URL</label>
-            <input type="url" class="cn-input" name="video_url" value="{{ content.video_url if content else '' }}" placeholder="https://...">
-          </div>
-
-          <div class="cn-form-group">
-            <label class="cn-label">Resource URL</label>
-            <input type="url" class="cn-input" name="resource_url" value="{{ content.resource_url if content else '' }}" placeholder="https://...">
-          </div>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">Tags (comma-separated)</label>
-          <input type="text" class="cn-input" name="tags" value="{{ content.tags if content else '' }}" placeholder="python, fundamentals, beginners">
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--cn-space-4);">
-          <div class="cn-form-group">
-            <label class="cn-label">Thumbnail Image</label>
-            <input type="file" class="cn-input" name="thumbnail" accept="image/*">
-          </div>
-
-          <div class="cn-form-group">
-            <label class="cn-label">Attachment (PDF/Doc)</label>
-            <input type="file" class="cn-input" name="attachment" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
-          </div>
-        </div>
-
-        <div class="cn-form-group">
-          <label class="cn-label">
-            <input type="checkbox" name="status" value="published" {% if content and content.status == 'published' %}checked{% endif %}>
-            Publish immediately
-          </label>
-        </div>
-
-        <div style="display: flex; gap: var(--cn-space-3);">
-          <button type="submit" class="cn-btn cn-btn--primary">
-            <i class="bi bi-check-lg"></i> Save Content
-          </button>
-          <a href="{{ url_for('teacher.content_list') }}" class="cn-btn cn-btn--outline">Cancel</a>
-        </div>
-      </form>
+  {% if not subjects %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-bookmark"></i></div>
+      <div class="cn-empty__title">Create a subject first</div>
+      <p>Every lesson belongs to a subject, so students can find it.</p>
+      <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_subject') }}">
+        <i class="bi bi-plus-lg"></i> New subject
+      </a>
     </div>
   </div>
+  {% else %}
+
+  <div class="cn-form-layout">
+    <form method="POST" enctype="multipart/form-data" class="cn-form" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <section class="cn-card">
+        <h2 class="cn-card__title"><i class="bi bi-file-text"></i> Lesson details</h2>
+
+        <div class="cn-form-group">
+          <label class="cn-label" for="title">Title <span class="cn-required">*</span></label>
+          <input type="text" class="cn-input" id="title" name="title" value="{{ current_title }}"
+                 required maxlength="300" autofocus>
+        </div>
+
+        <div class="cn-form-row">
+          <div class="cn-form-group">
+            <label class="cn-label" for="subject_id">Subject <span class="cn-required">*</span></label>
+            <select class="cn-select" id="subject_id" name="subject_id" required>
+              <option value="">Select a subject…</option>
+              {% for s in subjects %}
+              <option value="{{ s.id }}" {% if current_subject | string == s.id | string %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="cn-form-group">
+            <label class="cn-label" for="topic">Topic / chapter</label>
+            <input type="text" class="cn-input" id="topic" name="topic" value="{{ current_topic }}" maxlength="200">
+          </div>
+        </div>
+
+        <div class="cn-form-row">
+          <div class="cn-form-group">
+            <label class="cn-label" for="content_type">Content type <span class="cn-required">*</span></label>
+            <select class="cn-select" id="content_type" name="content_type" required>
+              {% for value, label in content_type_labels.items() %}
+              <option value="{{ value }}" {% if current_type == value %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="cn-form-group">
+            <label class="cn-label" for="tags">Tags</label>
+            <input type="text" class="cn-input" id="tags" name="tags" value="{{ current_tags }}"
+                   placeholder="python, fundamentals, beginner">
+            <small class="cn-hint">Comma separated. Used by search and filters.</small>
+          </div>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label" for="description">Short description</label>
+          <textarea class="cn-textarea cn-textarea--sm" id="description" name="description"
+                    maxlength="600">{{ current_description }}</textarea>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label" for="body_html">Lesson body</label>
+          <textarea class="cn-textarea cn-textarea--tall" id="body_html" name="body_html"
+                    placeholder="&lt;h2&gt;Heading&lt;/h2&gt;&lt;p&gt;Your lesson text…&lt;/p&gt;">{{ current_body }}</textarea>
+          <small class="cn-hint">
+            Basic HTML is allowed (headings, paragraphs, lists, tables, links, code).
+            Scripts, inline styles and unknown tags are removed automatically.
+          </small>
+        </div>
+      </section>
+
+      <section class="cn-card">
+        <h2 class="cn-card__title"><i class="bi bi-paperclip"></i> Attachments &amp; links</h2>
+
+        <div class="cn-form-row">
+          <div class="cn-form-group">
+            <label class="cn-label" for="thumbnail">Thumbnail image</label>
+            <input type="file" class="cn-input" id="thumbnail" name="thumbnail" accept="image/png,image/jpeg,image/gif,image/webp">
+            {% if content and content.thumbnail %}
+            <img class="cn-thumb-preview" src="{{ url_for('files.serve_file', stored_name=content.thumbnail) }}" alt="Current thumbnail">
+            {% endif %}
+          </div>
+          <div class="cn-form-group">
+            <label class="cn-label" for="attachment">Attachment (PDF / document)</label>
+            <input type="file" class="cn-input" id="attachment" name="attachment"
+                   accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.csv,.rtf">
+            {% if content and content.attachment %}
+            <a class="cn-hint" href="{{ url_for('files.serve_file', stored_name=content.attachment, download=1) }}">
+              Download the current attachment — upload a new file to replace it.
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="cn-form-row">
+          <div class="cn-form-group">
+            <label class="cn-label" for="video_url">External video URL</label>
+            <input type="url" class="cn-input" id="video_url" name="video_url" value="{{ current_video }}"
+                   placeholder="https://www.youtube.com/watch?v=…">
+          </div>
+          <div class="cn-form-group">
+            <label class="cn-label" for="resource_url">External resource URL</label>
+            <input type="url" class="cn-input" id="resource_url" name="resource_url" value="{{ current_resource }}"
+                   placeholder="https://…">
+          </div>
+        </div>
+      </section>
+
+      <section class="cn-card">
+        <label class="cn-checkbox" for="status">
+          <input type="checkbox" id="status" name="status" value="published" {% if is_published %}checked{% endif %}>
+          <span>
+            <strong>Publish immediately</strong>
+            <small class="cn-muted">Published lessons become visible to every student.</small>
+          </span>
+        </label>
+
+        <div class="cn-btn-row">
+          <button type="submit" class="cn-btn cn-btn--primary cn-btn--lg">
+            <i class="bi bi-check-lg"></i> Save lesson
+          </button>
+          <a href="{{ url_for('teacher.content_list') }}" class="cn-btn cn-btn--outline cn-btn--lg">Cancel</a>
+          {% if content %}
+          <a href="{{ url_for('teacher.edit_content', id=content.id) }}" class="cn-btn cn-btn--ghost cn-btn--lg">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset form
+          </a>
+          {% endif %}
+        </div>
+      </section>
+    </form>
+
+    <aside class="cn-form-aside">
+      <section class="cn-card">
+        <h2 class="cn-card__title"><i class="bi bi-eye"></i> Student preview</h2>
+        {% if content %}
+        <p class="cn-muted cn-text-sm">{{ content.summary(180) }}</p>
+        <div class="cn-chip-row cn-chip-row--compact">
+          <span class="cn-badge {{ 'cn-badge--success' if content.is_published else 'cn-badge--warning' }}">
+            {{ 'Published' if content.is_published else 'Draft' }}
+          </span>
+          <span class="cn-badge">{{ content.content_type_label }}</span>
+        </div>
+        <div class="cn-btn-row">
+          <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('teacher.preview_content', id=content.id) }}">
+            <i class="bi bi-eye"></i> Full preview
+          </a>
+          {% if content.is_published %}
+          <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('student.content_detail', slug=content.slug) }}">
+            <i class="bi bi-box-arrow-up-right"></i> Student view
+          </a>
+          {% endif %}
+        </div>
+        {% else %}
+        <p class="cn-muted cn-text-sm">
+          Save the lesson first, then preview exactly how students will see it.
+        </p>
+        {% endif %}
+      </section>
+
+      <section class="cn-card">
+        <h2 class="cn-card__title"><i class="bi bi-shield-check"></i> Publishing rules</h2>
+        <ul class="cn-check-list">
+          <li>Drafts are never visible to students.</li>
+          <li>Publishing sets the publication date automatically.</li>
+          <li>Uploaded files are only served to signed-in users.</li>
+          <li>Authored HTML is sanitized before it is stored.</li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+  {% endif %}
 </main>
 {% endblock %}

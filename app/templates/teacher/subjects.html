@@ -1,14 +1,18 @@
 {% extends "base.html" %}
-{% block title %}Manage Subjects — {{ app_name }}{% endblock %}
+{% block title %}Subjects — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Subjects' %}
 {% include 'partials/teacher_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
+<main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
   <div class="cn-page-header">
-    <h1 class="cn-page-header__title">Subjects</h1>
+    <div>
+      <h1 class="cn-page-header__title">Subjects</h1>
+      <p class="cn-page-header__subtitle">{{ subjects | length }} subject{{ '' if subjects | length == 1 else 's' }}</p>
+    </div>
     <a href="{{ url_for('teacher.create_subject') }}" class="cn-btn cn-btn--primary">
       <i class="bi bi-plus-lg"></i> New Subject
     </a>
@@ -17,32 +21,41 @@
   {% if subjects %}
   <div class="cn-content-grid">
     {% for subj in subjects %}
-    <div class="cn-card">
-      <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--cn-space-3);">
-        <div style="font-size: 2rem; color: var(--cn-indigo);">
-          <i class="bi {{ subj.icon }}"></i>
-        </div>
-        <div style="display: flex; gap: var(--cn-space-2);">
-          <a href="{{ url_for('teacher.edit_subject', id=subj.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm">
+    <article class="cn-card cn-subject-card cn-subject-card--admin">
+      <div class="cn-subject-card__top">
+        <span class="cn-subject-card__icon"><i class="bi {{ subj.icon }}" aria-hidden="true"></i></span>
+        <div class="cn-btn-group">
+          <a href="{{ url_for('teacher.edit_subject', id=subj.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm"
+             aria-label="Edit {{ subj.name }}" title="Edit">
             <i class="bi bi-pencil"></i>
           </a>
-          <form method="POST" action="{{ url_for('teacher.delete_subject', id=subj.id) }}" style="display: inline;"
-                onsubmit="return confirm('Delete this subject? Content will not be affected.')">
+          <form method="POST" action="{{ url_for('teacher.delete_subject', id=subj.id) }}"
+                data-confirm="Delete the subject &quot;{{ subj.name }}&quot;?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm" style="color: var(--cn-error);">
+            <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm cn-btn--danger-ghost"
+                    aria-label="Delete {{ subj.name }}" title="Delete">
               <i class="bi bi-trash"></i>
             </button>
           </form>
         </div>
       </div>
-      <h3 style="margin: 0 0 var(--cn-space-1); font-size: var(--cn-font-size-base); font-weight: 600;">{{ subj.name }}</h3>
-      <p style="margin: 0; font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
-        {{ subj.description or 'No description' }}
-      </p>
-      <p style="margin: var(--cn-space-3) 0 0; font-size: var(--cn-font-size-xs); color: var(--cn-text-secondary);">
-        {{ subj.content.count() }} content item{{ 's' if subj.content.count() != 1 else '' }}
-      </p>
-    </div>
+      <h2 class="cn-subject-card__name">{{ subj.name }}</h2>
+      <p class="cn-subject-card__desc">{{ subj.description or 'No description provided.' }}</p>
+      <div class="cn-subject-card__meta">
+        <span class="cn-badge cn-badge--success">{{ subj.published_count }} published</span>
+        <span class="cn-badge {{ 'cn-badge--warning' if subj.total_count - subj.published_count else '' }}">
+          {{ subj.total_count - subj.published_count }} draft{{ '' if subj.total_count - subj.published_count == 1 else 's' }}
+        </span>
+      </div>
+      <div class="cn-btn-row">
+        <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('teacher.create_content') }}">
+          <i class="bi bi-plus-lg"></i> Add lesson
+        </a>
+        <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('teacher.content_list', subject=subj.id) }}">
+          View lessons
+        </a>
+      </div>
+    </article>
     {% endfor %}
   </div>
   {% else %}
@@ -50,7 +63,10 @@
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-bookmark"></i></div>
       <div class="cn-empty__title">No subjects yet</div>
-      <p>Create your first subject to start organizing content.</p>
+      <p>Create your first subject to start organizing lessons.</p>
+      <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_subject') }}">
+        <i class="bi bi-plus-lg"></i> New subject
+      </a>
     </div>
   </div>
   {% endif %}
