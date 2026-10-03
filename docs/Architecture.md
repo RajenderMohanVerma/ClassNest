@@ -11,7 +11,7 @@ read lessons, download permitted attachments, and manage their profiles.
 
 - **Backend:** Flask 3.1 application factory
 - **ORM:** Flask-SQLAlchemy / SQLAlchemy 2.x
-- **Database:** SQLite for local development; PostgreSQL for production
+- **Database:** Supabase PostgreSQL for development and production
 - **Templates:** Jinja2 server-rendered HTML
 - **Frontend:** Vanilla JavaScript and custom CSS
 - **Forms/security:** Flask-WTF CSRF protection, Werkzeug password hashing,
@@ -93,7 +93,7 @@ metadata in PostgreSQL.
 Browser
   │
   ├── Vercel Python function (Flask entry point)
-  ├── Neon/Supabase PostgreSQL
+  ├── Supabase PostgreSQL
   └── Object storage for uploaded files
 ```
 
@@ -105,7 +105,7 @@ that exposes `app = create_app()` and configure `vercel.json`.
 
 - Never commit `.env`, database files, or uploaded files.
 - Set a strong production `SECRET_KEY`.
-- Use PostgreSQL rather than SQLite in production.
+- Use Supabase PostgreSQL through the Session Pooler URL.
 - Keep `SESSION_COOKIE_SECURE=True` behind HTTPS.
 - Sanitize user-authored HTML before storing it.
 - Validate both upload extension and MIME type.

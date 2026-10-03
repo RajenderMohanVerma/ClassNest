@@ -13,7 +13,8 @@ content through a responsive web application.
 - Give students a searchable, filterable content library.
 - Enforce teacher/student authorization on the server.
 - Provide a secure and accessible responsive interface.
-- Support SQLite for quick local development and PostgreSQL in production.
+- Use Supabase PostgreSQL consistently across local, preview, and production
+  environments.
 - Provide an installable PWA experience for supported mobile browsers.
 
 ## Personas

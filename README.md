@@ -45,7 +45,7 @@ A modern, production-ready educational content management system built with Flas
 ## Tech Stack
 
 - **Backend**: Flask 3.1 + SQLAlchemy 2.x ORM
-- **Database**: PostgreSQL (production) / SQLite (development)
+- **Database**: Supabase PostgreSQL
 - **Frontend**: Vanilla HTML, CSS (custom + Bootstrap Icons), JavaScript
 - **Authentication**: Werkzeug password hashing + Flask session
 - **Deployment**: Gunicorn + Nginx (recommended)
@@ -53,7 +53,7 @@ A modern, production-ready educational content management system built with Flas
 ## Prerequisites
 
 - **Python 3.8+**
-- **PostgreSQL 12+** (for production; SQLite for local development)
+- **Supabase PostgreSQL** (Session Pooler connection recommended for Vercel)
 - **pip** (Python package manager)
 - **virtualenv** (recommended)
 
@@ -95,8 +95,8 @@ cp .env.example .env
 Edit `.env`:
 
 ```env
-# Database connection (PostgreSQL in production)
-DATABASE_URL=postgresql://username:password@localhost/classnest
+# Supabase PostgreSQL connection
+DATABASE_URL=postgresql://postgres.project-ref:password@pooler.supabase.com:5432/postgres?sslmode=require
 
 # Flask secret key (generate with: python -c "import secrets; print(secrets.token_hex(32))")
 SECRET_KEY=your-random-64-char-secret-key
@@ -120,21 +120,14 @@ FLASK_DEBUG=true
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
 
-### 5. Set Up Database
+### 5. Set Up Supabase PostgreSQL
 
-```bash
-# Create PostgreSQL database
-createdb classnest
+Use the Supabase Session Pooler connection URL:
 
-# Initialize Flask-Migrate and run migrations
-flask db upgrade
-
-# Or create tables directly (if no migrations exist)
-flask shell
->>> from app import create_app, db
->>> app = create_app()
->>> with app.app_context():
-...     db.create_all()
+```powershell
+$env:DATABASE_URL="postgresql://postgres.project-ref:password@pooler.supabase.com:5432/postgres?sslmode=require"
+$env:FLASK_ENV="development"
+python init_db.py
 ```
 
 ### 6. Create Teacher Account
@@ -360,7 +353,7 @@ The project is configured for Vercel through `api/index.py` and
 request to the Flask application entry point.
 
 1. Push the repository to GitHub.
-2. Create a managed PostgreSQL database, such as Neon, and copy its complete
+2. Create a Supabase PostgreSQL database, and copy its complete
    connection URL.
 3. Initialize the production schema from a local machine:
    ```powershell

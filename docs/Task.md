@@ -13,7 +13,7 @@ Mark a task complete only after the relevant check passes.
 - [x] Create Flask application factory and configuration classes.
 - [x] Initialize SQLAlchemy, Flask-Migrate, CSRF, and rate limiter.
 - [x] Register public, auth, teacher, student, and API blueprints.
-- [x] Add environment-driven SQLite/PostgreSQL configuration.
+- [x] Add environment-driven Supabase PostgreSQL configuration.
 - [x] Add `.env.example`, `.gitignore`, requirements, and entry scripts.
 
 ### Data and services

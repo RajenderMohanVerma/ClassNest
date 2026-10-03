@@ -303,7 +303,7 @@
 
 ### Local Development
 - [x] App runs on localhost:5000
-- [x] SQLite database ready
+- [x] Supabase PostgreSQL database configuration ready
 - [x] Static files serve correctly
 - [x] Error pages display
 - [x] Templates inherit from base.html
@@ -404,7 +404,7 @@
 All 20 sections of the build prompt have been implemented and verified.
 
 - **Core Application**: Fully functional Flask backend with SQLAlchemy ORM
-- **Database**: 5 tables with relationships, ready for SQLite or PostgreSQL
+- **Database**: 5 tables with relationships, ready in Supabase PostgreSQL
 - **Routes**: 44 endpoints across 5 blueprints (public, auth, teacher, student, api)
 - **Templates**: 30 Jinja2 templates with responsive design
 - **Security**: CSRF, rate limiting, password hashing, input sanitization
@@ -418,7 +418,7 @@ The application is production-ready and can be deployed immediately to any Pytho
 
 ### 📝 Next Steps for User
 
-1. Run `python init_db.py` to initialize the SQLite database
+1. Run `python init_db.py` with the Supabase `DATABASE_URL`
 2. Run `python create_teacher.py` to create a teacher account
 3. Run `python run.py` to start the development server
 4. Visit `http://localhost:5000` and log in

@@ -29,7 +29,7 @@
 - Validate both extension and MIME type for uploaded files.
 - Generate UUID storage names and never trust user-provided paths.
 - Use a strong `SECRET_KEY` and secure cookies in production.
-- Use PostgreSQL instead of SQLite in production.
+- Use Supabase PostgreSQL in every environment.
 - Use Redis-backed rate limiting for multiple production instances.
 - Never log secrets, passwords, session values, or database URLs.
 

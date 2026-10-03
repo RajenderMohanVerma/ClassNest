@@ -20,7 +20,7 @@
 | # | Change | Reason |
 |---|--------|--------|
 | 1 | **Tech stack locked: Python Flask (backend), PostgreSQL (database), HTML + CSS + vanilla JavaScript (frontend)** | Human's decision — the original prompt left the stack open |
-| 2 | **SQLite removed everywhere** — schema, migrations, init, backup and deployment notes all rewritten for PostgreSQL | One real database for dev and production |
+| 2 | PostgreSQL is used everywhere — schema, initialization, backup and deployment use one managed database | One real database for development and production |
 | 3 | **New §20: mobile "Install the app" popup (PWA)** — when a user opens the site on a phone, the first thing they see is an install prompt with proper install/dismiss behavior | New human requirement |
 | 4 | All original requirements (roles, pages, dashboards, content system, security, testing, deliverables) kept exactly as-is | Nothing dropped |
 
@@ -50,7 +50,7 @@ Keep the project name, logo, and basic branding easy to change (one config file 
 ## 2. REQUIRED TECHNOLOGY STACK (LOCKED — do not substitute)
 
 - Backend: Python Flask 3.x (application factory pattern, Blueprints per area: public, auth, teacher, student, api)
-- Database: PostgreSQL 15+ — used in development AND production (no SQLite anywhere)
+- Database: Supabase PostgreSQL — used in development AND production
 - Database access: SQLAlchemy 2.x via Flask-SQLAlchemy. All queries go through the ORM — never build SQL by string interpolation. Schema changes only through Flask-Migrate (Alembic) migrations
 - Frontend: HTML5, CSS3, vanilla JavaScript (ES6) — NO build step, NO npm, NO frontend framework
 - Templates: Flask Jinja2 (server-side rendering), with reusable partials/macros for navigation, sidebar, footer, alerts, cards, forms

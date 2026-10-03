@@ -8,14 +8,17 @@ load_dotenv()
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
-    
-    # Database configuration - use SQLite for development
-    db_url = os.environ.get('DATABASE_URL')
-    if db_url and not db_url.startswith('postgresql'):
-        SQLALCHEMY_DATABASE_URI = db_url
-    else:
-        # Default to SQLite if no DATABASE_URL or if it's not PostgreSQL
-        SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///classnest.db')
+
+    # Supabase and other managed PostgreSQL providers may return postgres://.
+    db_url = os.environ.get('DATABASE_URL', '').strip()
+    if db_url.startswith('postgres://'):
+        db_url = f'postgresql://{db_url[len("postgres://"):]}'
+    if not db_url.startswith(('postgresql://', 'postgresql+psycopg2://')):
+        raise RuntimeError(
+            'DATABASE_URL must be a PostgreSQL connection string. '
+            'Set it to the Supabase connection pooler URL.'
+        )
+    SQLALCHEMY_DATABASE_URI = db_url
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

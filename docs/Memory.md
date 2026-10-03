@@ -8,8 +8,7 @@
 - Branch: `main`
 - Vercel entry point: `api/index.py`
 - Vercel configuration: `vercel.json`
-- Local development database: SQLite
-- Production database target: PostgreSQL
+- Database provider: Supabase PostgreSQL
 - Runtime: Flask app factory with Jinja2 templates
 
 ## Implemented decisions
@@ -23,7 +22,7 @@
 - Enable global CSRF protection for mutating forms.
 - Sanitize authored HTML with Bleach before rendering it as safe content.
 - Validate uploaded files by extension and MIME type and store UUID filenames.
-- Support SQLite locally and PostgreSQL through `DATABASE_URL` in production.
+- Require a PostgreSQL `DATABASE_URL` in every environment.
 - Keep the UI server-rendered and progressively enhanced with vanilla JS.
 
 ## Current feature inventory

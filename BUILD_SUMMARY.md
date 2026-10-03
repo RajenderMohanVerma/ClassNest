@@ -13,7 +13,7 @@
 
 ### Core Application (Flask Backend)
 - ✅ **App Factory Pattern** (`app/__init__.py`) — Blueprints, error handlers, context processors
-- ✅ **Configuration Management** (`app/config.py`) — Dev/Production profiles, SQLite/PostgreSQL support
+- ✅ **Configuration Management** (`app/config.py`) — Supabase PostgreSQL configuration
 - ✅ **Extensions** (`app/extensions.py`) — SQLAlchemy, Flask-Migrate, CSRF, Rate Limiting
 
 ### Database Models (SQLAlchemy ORM)
@@ -245,7 +245,7 @@ Indexes: created_at
 ## 🚀 Deployment Ready
 
 ✅ **Environment Configuration**
-- Separate dev (SQLite) and production (PostgreSQL) configs
+- Supabase PostgreSQL connection required in every environment
 - `.env` support for sensitive values
 - Configurable upload folder and size limits
 - Customizable app name/tagline
@@ -365,7 +365,7 @@ Visit `http://localhost:5000`
 - **Documentation**: 2 (README, QUICKSTART)
 
 **Total Size**: ~350 KB (excluding venv)
-**Database Size**: ~100 KB (SQLite, empty)
+**Database**: Supabase PostgreSQL, initialized with `python init_db.py`
 **Code Quality**: Production-ready with best practices
 
 ---

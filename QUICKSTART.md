@@ -26,15 +26,12 @@ Copy output and paste into `SECRET_KEY=...` in `.env`
 
 ## 3️⃣ Initialize Database
 
-For **local development** (SQLite — no setup needed):
-```bash
-python -c "from app import create_app, db; app = create_app(); db.create_all()"
-```
-
-For **production** (PostgreSQL):
-```bash
-createdb classnest
-flask db upgrade
+Create a Supabase project, copy the PostgreSQL Session Pooler URL, and set it
+before initializing the schema:
+```powershell
+$env:DATABASE_URL="postgresql://postgres.project-ref:password@pooler.supabase.com:5432/postgres?sslmode=require"
+$env:FLASK_ENV="development"
+python init_db.py
 ```
 
 ## 4️⃣ Create Teacher Account
@@ -82,11 +79,12 @@ Visit **http://localhost:5000**
 
 ## Troubleshooting
 
-**`ImportError: No module named 'psycopg2'`**  
-→ `pip install psycopg2-binary` (only if using PostgreSQL)
+**`ImportError: No module named 'psycopg2`**
+→ Run `pip install -r requirements.txt`
 
-**`sqlite3.OperationalError: no such table`**  
-→ Run: `python -c "from app import create_app, db; app = create_app(); db.create_all()"`
+**`sqlalchemy.exc.OperationalError`**
+→ Check the Supabase `DATABASE_URL`, password, pooler host, and
+`sslmode=require`, then run `python init_db.py` again.
 
 **Port 5000 already in use**  
 → Edit `run.py` and change `port=5000` to another number, or kill process on 5000

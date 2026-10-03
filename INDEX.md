@@ -147,7 +147,7 @@ ClassNest/
 │           └── apple-touch-icon.png
 │
 └── 📊 Project Files
-    └── instance/               ← Local runtime database (ignored by Git)
+    └── app/static/uploads/     ← Local-only upload staging directory
 ```
 
 ---
@@ -189,7 +189,7 @@ ClassNest/
 | File | Purpose | Run With |
 |------|---------|----------|
 | `run.py` | Start the Flask app | `python run.py` |
-| `init_db.py` | Initialize SQLite database | `python init_db.py` |
+| `init_db.py` | Initialize Supabase PostgreSQL tables | `python init_db.py` |
 | `create_teacher.py` | Create teacher accounts | `python create_teacher.py` |
 | `api/index.py` | Vercel Flask entry point | Used by Vercel |
 
@@ -284,7 +284,7 @@ gunicorn -w 4 -b 0.0.0.0:5000 run:app
 This is a Flask serverless deployment; an `index.html` file is not required.
 Vercel routes all requests to `api/index.py`, which exposes the Flask app.
 
-1. Create a managed PostgreSQL database such as Neon.
+1. Create a managed PostgreSQL database using Supabase.
 2. Run `python init_db.py` once with the production `DATABASE_URL`.
 3. Run `python create_teacher.py` once with the same database URL.
 4. Import the GitHub repository into Vercel.
@@ -292,9 +292,9 @@ Vercel routes all requests to `api/index.py`, which exposes the Flask app.
    `APP_NAME`, `APP_TAGLINE`, and `MAX_UPLOAD_MB` as Vercel environment variables.
 6. Deploy from the `main` branch.
 
-Local `instance/` SQLite data and `app/static/uploads/` files are ignored and
-must not be used as durable production storage. Move uploads to object storage
-before enabling production file uploads.
+Local upload staging files are ignored and must not be used as durable
+production storage. Move uploads to Supabase Storage before enabling deployed
+file uploads.
 
 ---
 
@@ -304,7 +304,7 @@ Before going to production:
 - ✅ Change `SECRET_KEY` in `.env`
 - ✅ Set `FLASK_ENV=production`
 - ✅ Enable HTTPS (Let's Encrypt)
-- ✅ Use PostgreSQL (not SQLite)
+- ✅ Use Supabase PostgreSQL
 - ✅ Review `.env` file (never commit secrets)
 - ✅ Set up Redis for rate limiting
 - ✅ Monitor error logs

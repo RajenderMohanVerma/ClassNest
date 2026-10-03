@@ -2,9 +2,6 @@ __pycache__/
 *.py[cod]
 *.pyo
 .env
-*.db
-*.sqlite3
-instance/
 app/static/uploads/*
 !app/static/uploads/.gitkeep
 .vscode/
