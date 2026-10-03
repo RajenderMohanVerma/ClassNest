@@ -7,40 +7,53 @@ A modern, production-ready educational content management system built with Flas
 ### 👨‍🏫 Teacher Dashboard
 - **Dashboard** — Overview with statistics (total content, published, drafts, subjects, students)
 - **Content Management** — Create, edit, publish, preview, and delete learning materials
-- **Content Types** — Notes, video lessons, PDF resources with rich text editing
+- **Content Types** — Six types: notes, study material, PDF resources, video lessons, announcements, reference links
 - **Subject Management** — Organize content by subjects with custom icons
-- **Announcements** — Broadcast messages to all students
-- **Student Overview** — View registered students and their information
-- **File Management** — Upload and manage attachment files
+- **Announcements** — Broadcast messages to all students, with publish/unpublish
+- **Student Overview** — View and search registered students
+- **File Management** — Review every upload, delete files, clear previews
+- **Filters & Pagination** — Search by title/topic/body, filter by status, subject, type; sort newest/oldest/title
 - **Profile** — Update personal info and change password
 
 ### 👨‍🎓 Student Dashboard
 - **Dashboard** — Welcome with recently published content, subject browse, and announcements
-- **Subject Browsing** — Browse all available subjects with lesson counts
-- **Content Library** — View all published content with filtering by subject and type
-- **Search** — Full-text search across content titles, descriptions, and tags
-- **Content Reading** — Read content with support for embedded attachments, videos, and external resources
-- **Announcements** — View all published announcements
+- **Subject Browsing** — Browse all available subjects with published lesson counts
+- **Content Library** — Published content only, with subject/type filters, per-type counts, and sorting
+- **Search** — Full-text search across titles, topics, and body text
+- **Content Reading** — Sanitized rich text plus attachments, videos, and external resources
+- **Downloads** — Original file names, served only through the authenticated `/files` route
+- **Announcements** — Published announcements, newest first
 - **Profile** — Update personal info and change password
 
 ### 🔒 Security & Access Control
 - **Role-Based Access** — Teacher and student roles with proper authorization checks
-- **Secure Authentication** — Password hashing with bcrypt, session-based auth
+- **Secure Authentication** — Password hashing with Werkzeug (scrypt), session-based auth, optional "remember me"
 - **CSRF Protection** — Token-based CSRF protection on all forms
-- **Rate Limiting** — Brute-force protection on login/register (10/1min, 5/1min)
-- **Input Sanitization** — Bleach library sanitizes all HTML content
-- **File Upload Security** — MIME type validation, safe storage with UUIDs
+- **Rate Limiting** — Brute-force protection on login (10/min) and register (5/min), plus a 300/hour global default
+- **Input Sanitization** — Bleach allowlist sanitizes all HTML; `script/style/iframe/object/embed/form` content is removed
+- **File Upload Security** — Extension allowlist, MIME allowlist, and magic-byte validation; UUID storage outside `app/static`
+- **Private File Delivery** — `/files/...` requires login; students get 403 for unpublished content
+- **Response Security Headers** — CSP, `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS in production
+- **No Caching of Private Pages** — `Cache-Control: no-store` on every authenticated page
+- **Safe Redirects** — `next` parameters must stay on this site
 
 ### 📱 Progressive Web App (PWA)
-- **Service Worker** — Cache-first for static assets, network-first for HTML
-- **Install Prompt** — Mobile-only PWA install suggestion with iOS/Android detection
+- **Service Worker** — Cache-first for static assets; HTML is never cached and falls back to `/offline`
+- **Install Prompt** — Mobile-only PWA install suggestion with iOS/Android detection and dismissal memory
+- **Offline Page** — `/offline` renders a friendly cached fallback when the network is unavailable
 - **Responsive Design** — Works seamlessly on desktop, tablet, and mobile
 
 ### 🎨 Design System
 - **Design Tokens** — CSS variables for colors, typography, spacing, shadows
-- **Component Library** — Pre-built UI components (cards, forms, tables, badges)
+- **Dark Mode** — Manual light/dark toggle with system preference default and no-flash loading
+- **Component Library** — Pre-built UI components (cards, forms, tables, badges, pagination, toasts)
+- **Accessibility** — Skip link, `aria-current`/`aria-expanded` state, 40px+ touch targets, `prefers-reduced-motion` support
 - **Professional Theme** — Modern, accessible design with proper contrast ratios
 - **Customizable** — Easy to rebrand by modifying config and design tokens
+
+### 🧪 Testing
+- **77 automated tests** covering auth, roles, CRUD, publication, uploads, search, pagination, and error handling
+- **Isolated test database** — in-memory SQLite via `TestingConfig`, never touches Supabase
 
 ## Tech Stack
 
@@ -48,11 +61,11 @@ A modern, production-ready educational content management system built with Flas
 - **Database**: Supabase PostgreSQL
 - **Frontend**: Vanilla HTML, CSS (custom + Bootstrap Icons), JavaScript
 - **Authentication**: Werkzeug password hashing + Flask session
-- **Deployment**: Gunicorn + Nginx (recommended)
+- **Deployment**: Gunicorn (Procfile) or Vercel serverless (`api/index.py` + `vercel.json`)
 
 ## Prerequisites
 
-- **Python 3.8+**
+- **Python 3.9+** (Flask 3.1 requirement)
 - **Supabase PostgreSQL** (Session Pooler connection recommended for Vercel)
 - **pip** (Python package manager)
 - **virtualenv** (recommended)
@@ -101,18 +114,25 @@ DATABASE_URL=postgresql://postgres.project-ref:password@pooler.supabase.com:5432
 # Flask secret key (generate with: python -c "import secrets; print(secrets.token_hex(32))")
 SECRET_KEY=your-random-64-char-secret-key
 
-# Upload settings
-UPLOAD_FOLDER=app/static/uploads
+# Upload settings (keep uploads outside app/static)
+UPLOAD_FOLDER=instance/uploads
 MAX_UPLOAD_MB=16
+
+# Session and rate limiting
+SESSION_HOURS=8
+RATE_LIMIT_STORAGE_URI=memory://
+RATE_LIMIT_DEFAULT=300 per hour
 
 # Branding
 APP_NAME=ClassNest
-APP_TAGLINE=Learn Together
+APP_TAGLINE=Teacher & Student Learning Portal
 
 # Flask environment
 FLASK_ENV=development
 FLASK_DEBUG=true
 ```
+
+Full list of variables: see [`.env.example`](.env.example).
 
 **Generate a secure SECRET_KEY:**
 
