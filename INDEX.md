@@ -5,10 +5,10 @@
 ### I want to...
 
 #### 🚀 Get Started NOW
-→ Open **[START_HERE.md](START_HERE.md)** (3 min read)
-- 5-minute setup walkthrough
-- First-time user guide
-- Quick troubleshooting
+→ Open **[QUICKSTART.md](QUICKSTART.md)** (5 min read)
+- Installation and database setup
+- Creating the first teacher account
+- Local smoke test
 
 #### ⏱️ Understand the Build (5 minutes)
 → Open **[QUICKSTART.md](QUICKSTART.md)** (5 min read)
@@ -52,7 +52,6 @@
 ```
 ClassNest/
 ├── 📄 Documentation
-│   ├── START_HERE.md          ← Quick reference (START HERE!)
 │   ├── QUICKSTART.md          ← 5-minute setup guide
 │   ├── README.md              ← Complete documentation
 │   ├── BUILD_SUMMARY.md       ← Technical architecture
@@ -62,6 +61,10 @@ ClassNest/
 │   ├── run.py                 ← Start the app (python run.py)
 │   ├── init_db.py             ← Initialize database
 │   └── create_teacher.py      ← Create teacher account
+│
+├── ☁️ Vercel Deployment
+│   ├── api/index.py           ← Flask serverless entry point
+│   └── vercel.json            ← Vercel routing/build configuration
 │
 ├── ⚙️ Configuration
 │   ├── requirements.txt        ← Python dependencies
@@ -144,7 +147,7 @@ ClassNest/
 │           └── apple-touch-icon.png
 │
 └── 📊 Project Files
-    └── (instance/ for runtime files like SQLite DB)
+    └── instance/               ← Local runtime database (ignored by Git)
 ```
 
 ---
@@ -152,7 +155,7 @@ ClassNest/
 ## 🎯 Use Cases
 
 ### Use Case 1: "I just cloned the repo"
-1. Read [START_HERE.md](START_HERE.md)
+1. Read [QUICKSTART.md](QUICKSTART.md)
 2. Run the 5 commands
 3. Start building!
 
@@ -173,7 +176,7 @@ ClassNest/
 4. Content changes: Edit specific template files in `app/templates/`
 
 ### Use Case 5: "Something isn't working"
-1. Check [START_HERE.md](START_HERE.md) → Troubleshooting
+1. Check [QUICKSTART.md](QUICKSTART.md) → Setup steps
 2. Check [README.md](README.md) → Troubleshooting section
 3. Verify database: Run `python init_db.py` again
 4. Check logs: Look at Flask console output for errors
@@ -188,6 +191,7 @@ ClassNest/
 | `run.py` | Start the Flask app | `python run.py` |
 | `init_db.py` | Initialize SQLite database | `python init_db.py` |
 | `create_teacher.py` | Create teacher accounts | `python create_teacher.py` |
+| `api/index.py` | Vercel Flask entry point | Used by Vercel |
 
 ### Configuration
 | File | Purpose |
@@ -195,6 +199,7 @@ ClassNest/
 | `requirements.txt` | Python package dependencies (pip install) |
 | `.env.example` | Template for environment variables (copy to `.env`) |
 | `app/config.py` | Flask configuration (dev vs prod) |
+| `vercel.json` | Vercel build and route configuration |
 
 ### Application Core
 | File | Purpose | Key Sections |
@@ -215,6 +220,7 @@ ClassNest/
 | `app/static/css/*.css` | Styling (design tokens, components, pages) |
 | `app/static/js/*.js` | Client-side logic (app, PWA, service worker) |
 | `manifest.json` | PWA configuration |
+| `sw.js` | Service worker served from the application root |
 
 ---
 
@@ -273,6 +279,23 @@ python create_teacher.py
 gunicorn -w 4 -b 0.0.0.0:5000 run:app
 ```
 
+### Deploying to Vercel
+
+This is a Flask serverless deployment; an `index.html` file is not required.
+Vercel routes all requests to `api/index.py`, which exposes the Flask app.
+
+1. Create a managed PostgreSQL database such as Neon.
+2. Run `python init_db.py` once with the production `DATABASE_URL`.
+3. Run `python create_teacher.py` once with the same database URL.
+4. Import the GitHub repository into Vercel.
+5. Add `DATABASE_URL`, `SECRET_KEY`, `FLASK_ENV=production`, `FLASK_DEBUG=0`,
+   `APP_NAME`, `APP_TAGLINE`, and `MAX_UPLOAD_MB` as Vercel environment variables.
+6. Deploy from the `main` branch.
+
+Local `instance/` SQLite data and `app/static/uploads/` files are ignored and
+must not be used as durable production storage. Move uploads to object storage
+before enabling production file uploads.
+
 ---
 
 ## 🔐 Security Reminders
@@ -292,7 +315,6 @@ Before going to production:
 ## 📞 Support & Resources
 
 ### Documentation
-- [START_HERE.md](START_HERE.md) - Quick reference
 - [QUICKSTART.md](QUICKSTART.md) - Setup walkthrough
 - [README.md](README.md) - Complete guide
 - [BUILD_SUMMARY.md](BUILD_SUMMARY.md) - Technical details
@@ -305,7 +327,7 @@ Before going to production:
 - PWA: https://web.dev/progressive-web-apps/
 
 ### Troubleshooting
-1. Check [START_HERE.md → Troubleshooting](START_HERE.md#-troubleshooting)
+1. Check [README.md → Troubleshooting](README.md#troubleshooting)
 2. Check [README.md → Troubleshooting](README.md#troubleshooting)
 3. Review error message in Flask console
 4. Check database connection and initialization
@@ -315,7 +337,7 @@ Before going to production:
 ## ✅ Verification Checklist
 
 Before considering the project complete:
-- [ ] Read START_HERE.md
+- [ ] Read QUICKSTART.md
 - [ ] Run `pip install -r requirements.txt`
 - [ ] Run `python init_db.py`
 - [ ] Run `python create_teacher.py`
@@ -396,7 +418,7 @@ Before considering the project complete:
 
 ## 🚀 Next Steps
 
-1. **Read** [START_HERE.md](START_HERE.md)
+1. **Read** [QUICKSTART.md](QUICKSTART.md)
 2. **Run** the 5 setup commands
 3. **Explore** the application
 4. **Read** [README.md](README.md) for complete documentation
@@ -405,4 +427,3 @@ Before considering the project complete:
 ---
 
 **Everything is ready to go. Pick a document above and get started!** 🎉
-

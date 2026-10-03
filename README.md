@@ -353,7 +353,35 @@ Amit Academy/
 
 ## Deployment
 
-### Production Checklist
+### Vercel Deployment
+
+The project is configured for Vercel through `api/index.py` and
+`vercel.json`. Flask does not require an `index.html` file: Vercel sends every
+request to the Flask application entry point.
+
+1. Push the repository to GitHub.
+2. Create a managed PostgreSQL database, such as Neon, and copy its complete
+   connection URL.
+3. Initialize the production schema from a local machine:
+   ```powershell
+   $env:DATABASE_URL="postgresql://user:password@host/classnest_db?sslmode=require"
+   $env:FLASK_ENV="production"
+   python init_db.py
+   python create_teacher.py
+   ```
+4. Import `RajenderMohanVerma/ClassNest` into Vercel.
+5. Add these Vercel environment variables for the Production environment:
+   `DATABASE_URL`, `SECRET_KEY`, `FLASK_ENV=production`, `FLASK_DEBUG=0`,
+   `APP_NAME`, `APP_TAGLINE`, and `MAX_UPLOAD_MB`.
+6. Deploy the `main` branch and test login, registration, teacher CRUD, student
+   browsing, search, and `/api/stats`.
+
+Vercel's local filesystem is not durable. The current local upload folder is
+appropriate for development only. Use Vercel Blob, Cloudinary, S3, or
+Cloudflare R2 before relying on production uploads. Use Redis-backed storage
+for Flask-Limiter when running multiple instances.
+
+### Traditional Production Checklist
 
 1. **Environment Setup**
    ```bash

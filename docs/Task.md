@@ -48,8 +48,8 @@ Mark a task complete only after the relevant check passes.
 ## Current priority: production deployment readiness
 
 - [ ] Add and verify an initial Flask-Migrate migration.
-- [ ] Add Vercel `api/index.py` and `vercel.json` if Vercel deployment is
-      selected.
+- [x] Add Vercel `api/index.py` and `vercel.json` for the selected deployment
+      target.
 - [ ] Provision managed PostgreSQL and run schema initialization/migration.
 - [ ] Replace local uploads with durable object storage.
 - [ ] Configure production `SECRET_KEY`, secure cookies, and Redis rate limits.
@@ -89,3 +89,4 @@ git log -1 --oneline
 |------|--------|
 | 2026-10-03 | Replaced the old TypeScript foundation task list with the completed Flask implementation log |
 | 2026-10-03 | Added GitHub delivery status and production deployment follow-up tasks |
+| 2026-10-03 | Added Vercel serverless entry point and deployment configuration |

@@ -6,6 +6,8 @@
 - Status: Flask MVP implemented and pushed to GitHub
 - Repository: `https://github.com/RajenderMohanVerma/ClassNest`
 - Branch: `main`
+- Vercel entry point: `api/index.py`
+- Vercel configuration: `vercel.json`
 - Local development database: SQLite
 - Production database target: PostgreSQL
 - Runtime: Flask app factory with Jinja2 templates
@@ -38,6 +40,8 @@
 ## Known gaps and follow-up decisions
 
 - Add a real Flask-Migrate initial migration before production schema changes.
+- Complete the Vercel project import, environment variables, and production
+  smoke test.
 - Move file objects from local disk to persistent object storage for Vercel or
   other serverless hosting.
 - Configure Redis-backed Flask-Limiter storage for multiple instances.
@@ -60,3 +64,4 @@
 |------|-------------------|
 | 2026-10-03 | Reconciled project memory with the implemented Flask application |
 | 2026-10-03 | Recorded current features, GitHub state, deployment gaps, and follow-up work |
+| 2026-10-03 | Added the Vercel entry point and deployment configuration |
