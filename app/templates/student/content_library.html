@@ -84,7 +84,8 @@
     {% include 'partials/content_card.html' %}
     {% endfor %}
   </div>
-  {% include 'partials/pagination.html' with extra_args = pagination_args(request.args) %}
+  {% set extra_args = pagination_args(request.args) %}
+  {% include 'partials/pagination.html' %}
   {% else %}
   <div class="cn-card">
     <div class="cn-empty">

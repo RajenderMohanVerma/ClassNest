@@ -215,18 +215,9 @@ def test_teacher_can_fetch_draft_thumbnail(app, client, login_teacher, subject, 
 
 
 def test_student_download_uses_original_filename(
-    app, client, login_student, teacher, subject, fake_pdf
+    client, login, student, teacher, subject, fake_pdf
 ):
-    login_student()
-    client.get('/auth/logout')
-
-    # Teacher uploads the attachment.
-    with client.session_transaction() as session:
-        session.clear()
-    client.post(
-        '/auth/login',
-        data={'email': teacher.email, 'password': 'teacherpass'},
-    )
+    login(teacher.email, 'teacherpass')
     client.post(
         '/teacher/content/create',
         data={
@@ -237,16 +228,20 @@ def test_student_download_uses_original_filename(
         },
         content_type='multipart/form-data',
     )
-    client.post('/auth/logout')
 
-    client.post(
-        '/auth/login',
-        data={'email': 'student@example.com', 'password': 'studentpass'},
-    )
+    login(student.email, 'studentpass')
     item = Content.query.filter_by(title='Downloadable').first()
-    response = client.get(f'/student/content/{item.slug}/download', follow_redirects=True)
+    assert item is not None
+
+    redirect_response = client.get(f'/student/content/{item.slug}/download')
+    assert redirect_response.status_code == 302
+    stored_name = item.attachment
+
+    response = client.get(f'/files/{stored_name}')
     assert response.status_code == 200
-    assert b'semester-notes.pdf' in response.headers.get('Content-Disposition', '')
+    disposition = response.headers.get('Content-Disposition', '')
+    assert 'semester-notes.pdf' in disposition
+    assert stored_name not in disposition
 
 
 def test_file_route_rejects_path_traversal(client, login_teacher):

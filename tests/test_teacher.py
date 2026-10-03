@@ -26,8 +26,10 @@ def test_duplicate_subject_names_get_unique_slugs(client, login_teacher):
     login_teacher()
     client.post('/teacher/subjects/create', data={'name': 'Physics'})
     client.post('/teacher/subjects/create', data={'name': 'physics'})
-    assert Subject.query.filter_by(name='Physics').count() == 2
-    assert len({s.slug for s in Subject.query.all()}) == 2
+    assert Subject.query.count() == 2
+    slugs = sorted(subject.slug for subject in Subject.query.all())
+    assert slugs == ['physics', 'physics-2']
+    assert len(set(slugs)) == 2
 
 
 def test_subject_creation_requires_name(client, login_teacher):

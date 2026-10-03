@@ -1,6 +1,6 @@
 import re
 
-from flask import Blueprint, abort, current_app, request, send_from_directory
+from flask import (Blueprint, abort, request, send_from_directory, session)
 
 from app.extensions import db
 from app.models.content import Content
@@ -47,7 +47,7 @@ def serve_file(stored_name):
     if content is None:
         abort(404)
 
-    if not request.session.get('user_role') == 'teacher' and not content.is_published:
+    if session.get('user_role') != 'teacher' and not content.is_published:
         abort(403)
 
     extension = stored_name.rsplit('.', 1)[-1].lower()
@@ -71,7 +71,7 @@ def download_by_id(id):
     if record is None:
         abort(404)
     content = db.session.get(Content, record.content_id) if record.content_id else None
-    if request.session.get('user_role') != 'teacher':
+    if session.get('user_role') != 'teacher':
         if content is None or not content.is_published:
             abort(403)
     return send_from_directory(

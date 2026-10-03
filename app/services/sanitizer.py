@@ -1,4 +1,16 @@
+import re
+
 import bleach
+
+# Elements whose *content* must be discarded, not just their tags.
+UNSAFE_BLOCKS = re.compile(
+    r'<\s*(script|style|iframe|object|embed|form)\b[^>]*>.*?<\s*/\s*\1\s*>',
+    re.IGNORECASE | re.DOTALL,
+)
+UNOPENED_BLOCKS = re.compile(
+    r'<\s*(script|style|iframe|object|embed|form)\b[^>]*>.*',
+    re.IGNORECASE | re.DOTALL,
+)
 
 # Tags a teacher may use inside authored lesson content.
 ALLOWED_TAGS = [
@@ -26,8 +38,10 @@ def sanitize_html(html_content):
     """Allowlist-sanitize user-authored HTML before it is stored."""
     if not html_content:
         return ''
+    text = UNSAFE_BLOCKS.sub('', html_content)
+    text = UNOPENED_BLOCKS.sub('', text)
     return bleach.clean(
-        html_content,
+        text,
         tags=ALLOWED_TAGS,
         attributes=ALLOWED_ATTRS,
         protocols=ALLOWED_PROTOCOLS,

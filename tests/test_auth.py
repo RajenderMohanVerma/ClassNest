@@ -150,7 +150,7 @@ def test_student_cannot_open_teacher_routes(client, login_student):
 def test_student_cannot_post_teacher_mutations(client, login_student, subject):
     login_student()
     response = client.post(
-        '/teacher/subjects',
+        '/teacher/subjects/create',
         data={'name': 'Hijacked'},
         follow_redirects=False,
     )

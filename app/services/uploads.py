@@ -23,9 +23,34 @@ ALLOWED_MIME_TYPES = {
     'image/jpeg': 'image',
     'image/gif': 'image',
     'image/webp': 'image',
+    # Some browsers and OS pickers send this generic type; the file bytes are
+    # still validated strictly below.
+    'application/octet-stream': 'unknown',
 }
 
 IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+OFFICE_EXTENSIONS = {'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx'}
+
+TEXT_EXTENSIONS = {'txt', 'md', 'csv', 'rtf'}
+
+# Magic-byte signatures required per extension. A file whose real content does
+# not match its extension is rejected even when the browser sent a valid
+# Content-Type header.
+EXTENSION_SIGNATURES = {
+    'pdf': {'application/pdf'},
+    'png': {'image/png'},
+    'jpg': {'image/jpeg'},
+    'jpeg': {'image/jpeg'},
+    'gif': {'image/gif'},
+    'webp': {'image/webp'},
+    'doc': {'application/ole-container'},
+    'docx': {'application/zip-container'},
+    'ppt': {'application/ole-container'},
+    'pptx': {'application/zip-container'},
+    'xls': {'application/ole-container'},
+    'xlsx': {'application/zip-container'},
+}
 
 MAGIC_SIGNATURES = (
     (b'%PDF-', 'application/pdf'),
@@ -76,30 +101,41 @@ def sniff_mime(path):
     return None
 
 
-def validate_content(file_storage, path):
-    """Validate a saved file against its client MIME type and real content."""
+def validate_content(file_storage, path, extension):
+    """Validate a saved file against its extension, MIME type and real bytes."""
     client_mime = (file_storage.content_type or '').split(';')[0].strip().lower()
-    if client_mime not in ALLOWED_MIME_TYPES:
+    kind = ALLOWED_MIME_TYPES.get(client_mime)
+    if kind is None:
         return 'Unsupported file type.'
 
-    detected = sniff_mime(path)
-    if detected is None:
-        # Text-based and container formats cannot be reliably sniffed; the
-        # extension allowlist plus MIME allowlist already restrict them.
+    expected = EXTENSION_SIGNATURES.get(extension)
+    if expected is not None:
+        detected = sniff_mime(path)
+        if detected not in expected:
+            return 'File content does not match its file extension.'
+        if extension in IMAGE_EXTENSIONS and kind != 'image':
+            return 'File content does not match its file extension.'
+        if extension in OFFICE_EXTENSIONS and kind != 'document':
+            return 'File content does not match its file extension.'
         return None
 
-    if detected == 'application/zip-container':
-        if ALLOWED_MIME_TYPES[client_mime] != 'document':
-            return 'File content does not match the selected file type.'
-        return None
-    if detected == 'application/ole-container':
-        if ALLOWED_MIME_TYPES[client_mime] != 'document':
-            return 'File content does not match the selected file type.'
+    if extension in TEXT_EXTENSIONS:
+        if kind not in ('text', 'unknown'):
+            return 'File content does not match its file extension.'
+        try:
+            with open(path, 'rb') as handle:
+                head = handle.read(4096)
+        except OSError:
+            return 'The file could not be read.'
+        if b'\x00' in head:
+            return 'File content does not match its file extension.'
+        try:
+            head.decode('utf-8')
+        except UnicodeDecodeError:
+            return 'File content does not match its file extension.'
         return None
 
-    if client_mime != detected:
-        return 'File content does not match its extension.'
-    return None
+    return 'File type not allowed.'
 
 
 def save_upload(file_storage):
@@ -130,7 +166,7 @@ def save_upload(file_storage):
         os.remove(filepath)
         return None, 'The uploaded file is empty.'
 
-    error = validate_content(file_storage, filepath)
+    error = validate_content(file_storage, filepath, ext)
     if error:
         os.remove(filepath)
         return None, error
