@@ -1,56 +1,84 @@
-const CACHE_VERSION = 'classnest-v1';
+/* ClassNest service worker
+ *
+ * Strategy:
+ *   - Static assets (/static/*, manifest, offline page): cache-first.
+ *   - HTML pages: network-only. Authenticated pages are never written to the
+ *     cache, so a shared device cannot read another user's data offline.
+ *   - Anything else: passthrough to the network.
+ */
+const CACHE_VERSION = 'classnest-v2';
 const STATIC_ASSETS = [
-  '/',
   '/static/css/tokens.css',
   '/static/css/components.css',
   '/static/css/pages.css',
+  '/static/js/theme.js',
   '/static/js/app.js',
   '/static/js/install-prompt.js',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
+  '/static/icons/apple-touch-icon.png',
+  '/manifest.json',
+  '/offline',
 ];
 
-// Install — cache static shell
-self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(STATIC_ASSETS))
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_VERSION)
+      .then((cache) => cache.addAll(STATIC_ASSETS))
+      .catch(() => undefined)
   );
   self.skipWaiting();
 });
 
-// Activate — clean old caches
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k)))
-    )
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(keys.filter((key) => key !== CACHE_VERSION).map((key) => caches.delete(key)))
+      )
+      .then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch — network-first for HTML, cache-first for static assets
-self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
+function isStaticAsset(url) {
+  return (
+    url.pathname.startsWith('/static/') ||
+    url.pathname === '/manifest.json' ||
+    url.pathname === '/offline'
+  );
+}
 
-  // Never cache POST or auth routes
-  if (e.request.method !== 'GET') return;
-  if (url.pathname.startsWith('/auth/')) return;
+self.addEventListener('fetch', (event) => {
+  const request = event.request;
+  const url = new URL(request.url);
 
-  if (url.pathname.startsWith('/static/') || url.pathname === '/manifest.json') {
-    // Cache-first for static
-    e.respondWith(
-      caches.match(e.request).then((cached) => cached || fetch(e.request))
+  if (request.method !== 'GET') return;
+  if (url.origin !== self.location.origin) return;
+
+  if (isStaticAsset(url)) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        const network = fetch(request)
+          .then((response) => {
+            if (response && response.status === 200 && response.type === 'basic') {
+              const copy = response.clone();
+              caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
+            }
+            return response;
+          })
+          .catch(() => cached);
+        return cached || network;
+      })
     );
-  } else {
-    // Network-first for pages
-    e.respondWith(
-      fetch(e.request)
-        .then((resp) => {
-          const clone = resp.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put(e.request, clone));
-          return resp;
-        })
-        .catch(() => caches.match(e.request))
+    return;
+  }
+
+  // Never cache authenticated or dynamic HTML responses.
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).catch(() => caches.match('/offline'))
     );
   }
 });

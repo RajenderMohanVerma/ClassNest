@@ -1,16 +1,27 @@
+"""Create the initial teacher/admin account securely.
+
+Usage:
+    python create_teacher.py
+
+Optional environment overrides:
+    TEACHER_NAME, TEACHER_EMAIL  — skip the prompts for those fields.
+The password is always entered through a hidden prompt and never stored in
+source control, logs, or the shell history.
 """
-Create the initial teacher/admin account securely.
-Usage:  python create_teacher.py
-"""
+
 import getpass
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_app
-from app.extensions import db
-from app.models.user import User
+from email_validator import EmailNotValidError, validate_email  # noqa: E402
+
+from app import create_app  # noqa: E402
+from app.extensions import db  # noqa: E402
+from app.models.user import User  # noqa: E402
+
+MIN_PASSWORD_LENGTH = 8
 
 
 def main():
@@ -18,27 +29,35 @@ def main():
     with app.app_context():
         db.create_all()
 
-        print("\n=== ClassNest — Create Teacher Account ===\n")
-        name = input("Teacher name: ").strip()
-        email = input("Teacher email: ").strip().lower()
+        print('\n=== ClassNest - Create Teacher Account ===\n')
 
-        if not name or not email:
-            print("Name and email are required.")
+        name = os.environ.get('TEACHER_NAME', '').strip() or input('Teacher name: ').strip()
+        email = os.environ.get('TEACHER_EMAIL', '').strip().lower()
+        if not email:
+            email = input('Teacher email: ').strip().lower()
+
+        if len(name) < 2:
+            print('Name must be at least 2 characters.')
             sys.exit(1)
 
-        existing = User.query.filter_by(email=email).first()
-        if existing:
+        try:
+            validate_email(email, check_deliverability=False)
+        except EmailNotValidError:
+            print('Please enter a valid email address.')
+            sys.exit(1)
+
+        if User.query.filter_by(email=email).first():
             print(f"A user with email '{email}' already exists.")
             sys.exit(1)
 
-        password = getpass.getpass("Password (min 6 chars): ")
-        if len(password) < 6:
-            print("Password too short.")
+        password = getpass.getpass(f'Password (min {MIN_PASSWORD_LENGTH} chars): ')
+        if len(password) < MIN_PASSWORD_LENGTH:
+            print(f'Password must be at least {MIN_PASSWORD_LENGTH} characters.')
             sys.exit(1)
 
-        confirm = getpass.getpass("Confirm password: ")
+        confirm = getpass.getpass('Confirm password: ')
         if password != confirm:
-            print("Passwords do not match.")
+            print('Passwords do not match.')
             sys.exit(1)
 
         teacher = User(name=name, email=email, role='teacher')
@@ -46,9 +65,13 @@ def main():
         db.session.add(teacher)
         db.session.commit()
 
-        print(f"\n✓ Teacher account created: {email}")
-        print("  You can now log in at /auth/login")
+        print(f'\nTeacher account created: {email}')
+        print('Sign in at /auth/login and change the password after the first login.')
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except RuntimeError as error:
+        print(f'[ERROR] {error}')
+        sys.exit(1)
