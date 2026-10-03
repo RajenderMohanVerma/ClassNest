@@ -15,6 +15,10 @@ def create_app(config_class=None):
 
     app.config.from_object(config_class)
 
+    # Vercel's deployment filesystem is read-only; only /tmp is writable.
+    if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_VERSION'):
+        app.config['UPLOAD_FOLDER'] = '/tmp/classnest-uploads'
+
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
