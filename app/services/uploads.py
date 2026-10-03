@@ -61,6 +61,9 @@ MAGIC_SIGNATURES = (
 )
 
 
+LEGACY_UPLOAD_FOLDER = os.path.join('app', 'static', 'uploads')
+
+
 def upload_root():
     """Absolute, existing upload directory for the current environment."""
     folder = current_app.config['UPLOAD_FOLDER']
@@ -71,8 +74,28 @@ def upload_root():
     return folder
 
 
+def legacy_upload_root():
+    """Old upload location that shipped inside the public ``static`` folder.
+
+    Files stored before uploads moved out of the static surface are still
+    resolved from here so existing links keep working. ``init_db.py`` moves them
+    into the current root the next time it runs.
+    """
+    legacy = current_app.config.get('LEGACY_UPLOAD_FOLDER', LEGACY_UPLOAD_FOLDER)
+    if not os.path.isabs(legacy):
+        legacy = os.path.join(current_app.root_path, '..', legacy)
+    return os.path.abspath(legacy)
+
+
 def stored_path(stored_name):
-    return os.path.join(upload_root(), stored_name)
+    """Absolute path of a stored file, falling back to the legacy folder."""
+    primary = os.path.join(upload_root(), stored_name)
+    if os.path.exists(primary):
+        return primary
+    legacy = os.path.join(legacy_upload_root(), stored_name)
+    if os.path.exists(legacy):
+        return legacy
+    return primary
 
 
 def allowed_file(filename):
@@ -155,7 +178,7 @@ def save_upload(file_storage):
 
     ext = original.rsplit('.', 1)[1].lower()
     stored = f'{uuid.uuid4().hex}.{ext}'
-    filepath = stored_path(stored)
+    filepath = os.path.join(upload_root(), stored)
 
     try:
         file_storage.save(filepath)
@@ -194,12 +217,15 @@ def save_upload(file_storage):
 
 
 def delete_stored_file(stored_name):
-    """Remove a file from disk; missing files are ignored."""
+    """Remove a file from disk (current and legacy locations); missing is fine."""
     if not stored_name:
         return False
-    path = stored_path(stored_name)
-    try:
-        os.remove(path)
-        return True
-    except OSError:
-        return False
+    removed = False
+    for root in (upload_root(), legacy_upload_root()):
+        path = os.path.join(root, stored_name)
+        try:
+            os.remove(path)
+            removed = True
+        except OSError:
+            continue
+    return removed

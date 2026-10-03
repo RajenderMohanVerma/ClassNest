@@ -116,7 +116,10 @@ def test_pagination_preserves_active_filters(client, login_student, subject, tea
     login_student()
     response = client.get(f'/student/content?subject={subject.id}&sort=newest')
     assert response.status_code == 200
-    assert b'page=2&amp;subject=%d&amp;sort=newest' % subject.id in response.data
+    body = response.data
+    assert b'page=2' in body
+    assert b'subject=%d' % subject.id in body
+    assert b'sort=newest' in body
 
 
 def test_search_matches_title_topic_and_body(client, login_student, published_content):

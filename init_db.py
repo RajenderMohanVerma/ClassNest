@@ -1,13 +1,16 @@
 """Initialize the ClassNest PostgreSQL schema.
 
 `db.create_all()` only creates tables that do not exist yet, so this script also
-runs a small additive sync (new columns / indexes) for databases created by an
-earlier version. It never drops or rewrites existing data.
+runs a small additive sync (new columns / indexes / unique slugs) for databases
+created by an earlier version, and moves uploads out of the old public
+``app/static/uploads`` folder. It never drops or rewrites existing content.
 
 Usage:
     python init_db.py
 """
 
+import os
+import shutil
 import sys
 
 from sqlalchemy import inspect, text
@@ -18,6 +21,7 @@ from app.models.content import Content  # noqa: F401
 from app.models.subject import Subject  # noqa: F401
 from app.models.uploaded_file import UploadedFile  # noqa: F401
 from app.models.user import User  # noqa: F401
+from app.services.uploads import legacy_upload_root, upload_root
 
 # Columns added after the first release, applied to existing installations.
 ADDITIVE_COLUMNS = {
@@ -39,6 +43,11 @@ ADDITIVE_INDEXES = [
     'CREATE INDEX IF NOT EXISTS ix_announcements_published_at ON announcements (published_at)',
     'CREATE INDEX IF NOT EXISTS ix_uploaded_files_content_id ON uploaded_files (content_id)',
     'CREATE INDEX IF NOT EXISTS ix_uploaded_files_size_bytes ON uploaded_files (size_bytes)',
+]
+
+UNIQUE_INDEXES = [
+    ('content.slug', 'CREATE UNIQUE INDEX IF NOT EXISTS ux_content_slug ON content (slug)'),
+    ('subjects.slug', 'CREATE UNIQUE INDEX IF NOT EXISTS ux_subjects_slug ON subjects (slug)'),
 ]
 
 
@@ -73,8 +82,46 @@ def sync_schema():
             db.session.rollback()
             print(f'[WARN] Index failed: {statement} ({error})')
 
+    for label, statement in UNIQUE_INDEXES:
+        table = statement.split(' ON ')[1].split(' ')[0]
+        if table not in existing_tables:
+            continue
+        try:
+            db.session.execute(text(statement))
+            changes.append(f'unique index {label}')
+        except Exception as error:  # pragma: no cover - depends on live schema
+            db.session.rollback()
+            print(f'[WARN] Unique index {label} not created (duplicates?): {error}')
+
     db.session.commit()
     return changes
+
+
+def migrate_legacy_uploads():
+    """Move files out of the old public ``app/static/uploads`` folder."""
+    legacy = legacy_upload_root()
+    target = upload_root()
+    if not os.path.isdir(legacy) or os.path.abspath(legacy) == os.path.abspath(target):
+        return 0
+
+    moved = 0
+    for name in os.listdir(legacy):
+        source = os.path.join(legacy, name)
+        if not os.path.isfile(source):
+            continue
+        destination = os.path.join(target, name)
+        if os.path.exists(destination):
+            continue
+        try:
+            shutil.move(source, destination)
+            moved += 1
+        except OSError as error:  # pragma: no cover - depends on filesystem
+            print(f'[WARN] Could not move {name}: {error}')
+
+    if moved:
+        print(f'[OK] Moved {moved} upload(s) out of app/static/uploads into {target}')
+        print('[..] Run "git rm -r app/static/uploads" once the folder is empty.')
+    return moved
 
 
 def main():
@@ -85,9 +132,11 @@ def main():
 
         changes = sync_schema()
         if changes:
-            print(f'[OK] Added missing columns: {", ".join(changes)}')
+            print(f'[OK] Added missing schema items: {", ".join(changes)}')
         else:
             print('[OK] Schema already up to date')
+
+        migrate_legacy_uploads()
 
         counts = {
             'users': db.session.query(User).count(),

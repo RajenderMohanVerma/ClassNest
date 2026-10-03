@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, abort, g, jsonify, render_template
 
 from app.config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
 from app.extensions import csrf, db, limiter, migrate
@@ -157,6 +157,28 @@ def create_app(config_class=None):
             'app': app.config['APP_NAME'],
         }
         return jsonify(payload), 200 if database == 'ok' else 503
+
+    @app.before_request
+    def protect_legacy_uploads_and_cache():
+        """Never serve uploads from the static tree, never cache app pages."""
+        from flask import request, session
+
+        if request.path.startswith('/static/uploads/'):
+            abort(404)
+
+        if (
+            'user_id' in session
+            and request.method == 'GET'
+            and not request.path.startswith('/static/')
+            and request.accept_mimetypes.best != 'application/json'
+        ):
+            g.no_store = True
+
+    @app.after_request
+    def no_store_authenticated_pages(response):
+        if getattr(g, 'no_store', False):
+            response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+        return response
 
     @app.after_request
     def security_headers(response):

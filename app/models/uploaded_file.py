@@ -12,7 +12,7 @@ class UploadedFile(db.Model):
     mime_type = db.Column(db.String(100), nullable=False)
     size_bytes = db.Column(db.BigInteger, nullable=False, index=True)
     uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='RESTRICT'), nullable=False)
-    content_id = db.Column(db.Integer, db.ForeignKey('content.id', ondelete='SET NULL'), nullable=True, index=True)
+    content_id = db.Column(db.Integer, db.ForeignKey('content.id', ondelete='CASCADE'), nullable=True, index=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), index=True)
 
     uploader = db.relationship('User', backref='uploaded_files')

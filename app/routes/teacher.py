@@ -22,8 +22,20 @@ STUDENT_PER_PAGE = 20
 
 
 # ── Shared helpers ─────────────────────────────────────────
+def _drop_item_file(kind, item):
+    """Delete the stored file and metadata row currently attached to ``kind``."""
+    stored = getattr(item, kind)
+    if not stored:
+        return
+    record = UploadedFile.query.filter_by(stored_name=stored).first()
+    if record is not None:
+        db.session.delete(record)
+    delete_stored_file(stored)
+    setattr(item, kind, None)
+
+
 def _handle_upload(kind, file_storage, item, user_id):
-    """Persist an uploaded file and register its metadata."""
+    """Persist an uploaded file, replacing whatever was attached before."""
     if not file_storage or not file_storage.filename:
         return None
 
@@ -32,6 +44,7 @@ def _handle_upload(kind, file_storage, item, user_id):
         flash(f'{kind.capitalize()}: {error}', 'error')
         return None
 
+    _drop_item_file(kind, item)
     setattr(item, kind, metadata['stored_name'])
     db.session.add(
         UploadedFile(
@@ -404,6 +417,7 @@ def delete_content(id):
     _purge_item_files(item)
     for uploaded in list(item.files):
         delete_stored_file(uploaded.stored_name)
+        db.session.delete(uploaded)
     db.session.delete(item)
     db.session.commit()
     flash('Content and its attachments were deleted.', 'success')

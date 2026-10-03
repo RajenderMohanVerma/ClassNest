@@ -22,7 +22,7 @@ def _dashboard_for(user):
 @auth_bp.route('/login', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
 def login():
-    if 'user_id' in session:
+    if 'user_id' in session and request.method == 'GET':
         return redirect(_home_for_role(session.get('user_role')))
 
     email = ''

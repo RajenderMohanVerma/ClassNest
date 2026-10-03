@@ -1,3 +1,4 @@
+import os
 import re
 
 from flask import (Blueprint, abort, request, send_from_directory, session)
@@ -6,7 +7,7 @@ from app.extensions import db
 from app.models.content import Content
 from app.models.uploaded_file import UploadedFile
 from app.services.decorators import login_required
-from app.services.uploads import upload_root
+from app.services.uploads import stored_path
 
 files_bp = Blueprint('files', __name__)
 
@@ -52,8 +53,9 @@ def serve_file(stored_name):
 
     extension = stored_name.rsplit('.', 1)[-1].lower()
     as_attachment = extension not in IMAGE_EXTENSIONS or request.args.get('download') == '1'
+    resolved = stored_path(stored_name)
     response = send_from_directory(
-        upload_root(),
+        os.path.dirname(resolved),
         stored_name,
         as_attachment=as_attachment,
         download_name=(record.original_name if record else stored_name),
@@ -74,10 +76,14 @@ def download_by_id(id):
     if session.get('user_role') != 'teacher':
         if content is None or not content.is_published:
             abort(403)
-    return send_from_directory(
-        upload_root(),
+    resolved = stored_path(record.stored_name)
+    response = send_from_directory(
+        os.path.dirname(resolved),
         record.stored_name,
         as_attachment=True,
         download_name=record.original_name,
         max_age=0,
     )
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['Content-Security-Policy'] = "default-src 'none'; sandbox"
+    return response

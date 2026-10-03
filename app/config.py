@@ -53,15 +53,17 @@ class Config:
     )
     SESSION_REFRESH_EACH_REQUEST = False
 
-    # Uploads
-    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', 'app/static/uploads')
+    # Uploads live outside app/static so files cannot be read without auth.
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', os.path.join('instance', 'uploads'))
+    LEGACY_UPLOAD_FOLDER = os.path.join('app', 'static', 'uploads')
     MAX_UPLOAD_MB = int(os.environ.get('MAX_UPLOAD_MB', 16))
     MAX_CONTENT_LENGTH = MAX_UPLOAD_MB * 1024 * 1024
 
+    # svg is deliberately excluded: it can carry scripts.
     ALLOWED_EXTENSIONS = {
         'pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx',
         'txt', 'md', 'csv', 'rtf',
-        'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg',
+        'png', 'jpg', 'jpeg', 'gif', 'webp',
     }
 
     # Content types and publication states (mirrored by DB CHECK constraints)
