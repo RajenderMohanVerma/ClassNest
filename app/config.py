@@ -16,7 +16,7 @@ class Config:
     if not db_url.startswith(('postgresql://', 'postgresql+psycopg2://')):
         raise RuntimeError(
             'DATABASE_URL must be a PostgreSQL connection string. '
-            'Set it to the Supabase connection pooler URL.'
+            'Set it to the Supabase Session Pooler URL before starting the app.'
         )
     SQLALCHEMY_DATABASE_URI = db_url
     
