@@ -1,0 +1,22 @@
+<article class="cn-card cn-content-card">
+  <div class="cn-content-card__thumb">
+    {% if item.thumbnail %}
+    <img src="{{ url_for('files.serve_file', stored_name=item.thumbnail) }}" alt="" loading="lazy" width="320" height="160">
+    {% else %}
+    <i class="bi {{ 'bi-file-earmark-pdf' if item.content_type == 'pdf_resource' else ('bi-play-circle' if item.content_type == 'video_lesson' else 'bi-file-earmark-text') }}" aria-hidden="true"></i>
+    {% endif %}
+  </div>
+  <div class="cn-content-card__body">
+    <span class="cn-badge cn-badge--primary">{{ item.content_type_label }}</span>
+    <h3 class="cn-content-card__title">
+      <a href="{{ url_for('student.content_detail', slug=item.slug) }}">{{ item.title }}</a>
+    </h3>
+    {% if item.summary %}<p class="cn-content-card__desc">{{ item.summary }}</p>{% endif %}
+    <div class="cn-content-card__meta">
+      <span>{{ item.subject.name }}{% if item.topic %} · {{ item.topic }}{% endif %}</span>
+      <time datetime="{{ item.published_at or item.created_at }}">
+        {{ (item.published_at or item.created_at).strftime('%b %d, %Y') }}
+      </time>
+    </div>
+  </div>
+</article>

@@ -1,17 +1,20 @@
 <header class="cn-topbar">
   <div class="cn-topbar__left">
-    <button class="cn-topbar__toggle" aria-label="Toggle menu">
+    <button class="cn-topbar__toggle" type="button" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false">
       <i class="bi bi-list"></i>
     </button>
-    <div>
-      <div class="cn-topbar__title">{% block topbar_title %}Dashboard{% endblock %}</div>
-    </div>
+    <div class="cn-topbar__title">{% block topbar_title %}{% endblock %}</div>
   </div>
   <div class="cn-topbar__right">
+    <button class="cn-icon-btn" type="button" id="themeToggle" aria-label="Switch colour theme" title="Switch theme">
+      <i class="bi bi-moon-stars" data-theme-icon></i>
+    </button>
     {% if current_user %}
-    <a class="cn-topbar__user" href="{{ url_for('teacher.profile') if current_user.is_teacher else url_for('student.profile') }}">
-      <div class="cn-topbar__avatar">{{ current_user.name[0] | upper }}</div>
-      <span style="font-size:var(--cn-font-size-sm);font-weight:500;">{{ current_user.name }}</span>
+    <a class="cn-topbar__user"
+       href="{{ url_for('teacher.profile') if current_user.is_teacher else url_for('student.profile') }}">
+      <span class="cn-topbar__avatar" aria-hidden="true">{{ current_user.initials }}</span>
+      <span class="cn-topbar__user-name">{{ current_user.name }}</span>
+      <span class="cn-badge cn-badge--primary">{{ current_user.role_label }}</span>
     </a>
     {% endif %}
   </div>
