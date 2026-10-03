@@ -268,6 +268,36 @@ def test_deleting_content_removes_uploads(app, client, login_teacher, subject, p
         assert not os.path.exists(os.path.join(upload_folder, name))
 
 
+def test_replacing_an_attachment_removes_the_previous_file(app, client, login_teacher, subject, fake_pdf):
+    login_teacher()
+    payload = {
+        **_content_payload(title='Replaceable', subject_id=subject.id),
+        'attachment': (io.BytesIO(fake_pdf), 'first.pdf'),
+    }
+    client.post('/teacher/content/create', data=payload, content_type='multipart/form-data')
+    item = Content.query.filter_by(title='Replaceable').first()
+    first_stored = item.attachment
+    upload_folder = app.config['UPLOAD_FOLDER']
+    assert os.path.exists(os.path.join(upload_folder, first_stored))
+
+    client.post(
+        f'/teacher/content/{item.id}/edit',
+        data={
+            **_content_payload(title='Replaceable', subject_id=subject.id),
+            'attachment': (io.BytesIO(fake_pdf), 'second.pdf'),
+        },
+        content_type='multipart/form-data',
+    )
+
+    updated = Content.query.filter_by(title='Replaceable').first()
+    assert updated.attachment and updated.attachment != first_stored
+    assert os.path.exists(os.path.join(upload_folder, updated.attachment))
+    assert not os.path.exists(os.path.join(upload_folder, first_stored))
+    assert UploadedFile.query.count() == 1
+    record = UploadedFile.query.first()
+    assert record.original_name == 'second.pdf'
+
+
 def test_rejected_upload_does_not_block_content_creation(
     app, client, login_teacher, subject, png_bytes
 ):

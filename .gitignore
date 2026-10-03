@@ -2,6 +2,11 @@ __pycache__/
 *.py[cod]
 *.pyo
 .env
+.pytest_cache/
+.coverage
+htmlcov/
+# Uploads live outside the static tree and must never be committed.
+instance/
 app/static/uploads/*
 !app/static/uploads/.gitkeep
 .vscode/

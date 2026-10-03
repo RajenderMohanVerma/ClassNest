@@ -1,6 +1,7 @@
 """Student-facing browsing, publication visibility and file access tests."""
 
 import io
+import os
 
 from app.extensions import db
 from app.models import Announcement, Content, UploadedFile
@@ -250,3 +251,40 @@ def test_student_download_uses_original_filename(
 def test_file_route_rejects_path_traversal(client, login_teacher):
     login_teacher()
     assert client.get('/files/..%2F..%2F.env').status_code in (400, 404)
+
+
+def test_uploads_are_not_reachable_through_the_static_folder(client, subject, teacher, png_bytes):
+    stored_name = 'd' * 32 + '.png'
+    legacy_folder = os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        'app', 'static', 'uploads',
+    )
+    os.makedirs(legacy_folder, exist_ok=True)
+    with open(os.path.join(legacy_folder, stored_name), 'wb') as handle:
+        handle.write(png_bytes)
+    try:
+        draft = Content(
+            title='Static Probe', slug='static-probe', subject_id=subject.id,
+            thumbnail=stored_name, status='draft', created_by=teacher.id,
+        )
+        db.session.add(draft)
+        db.session.commit()
+
+        response = client.get(f'/static/uploads/{stored_name}')
+        assert response.status_code == 404
+    finally:
+        os.remove(os.path.join(legacy_folder, stored_name))
+
+
+def test_authenticated_pages_are_not_cached(client, login_student, published_content):
+    with client.session_transaction() as flask_session:
+        flask_session.clear()
+
+    public = client.get('/offline')
+    assert public.status_code == 200
+    assert 'no-store' not in public.headers.get('Cache-Control', '')
+
+    login_student()
+    response = client.get('/student/dashboard')
+    assert response.status_code == 200
+    assert 'no-store' in response.headers['Cache-Control']
