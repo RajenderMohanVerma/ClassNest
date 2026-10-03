@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ content.title }} — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/student_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  <div style="max-width: 900px; margin: 0 auto;">
+    <a href="{{ url_for('student.subject_detail', slug=content.subject.slug) }}" style="color: var(--cn-indigo); text-decoration: none; margin-bottom: var(--cn-space-4); display: inline-flex; align-items: center; gap: var(--cn-space-1);">
+      <i class="bi bi-chevron-left"></i> Back to {{ content.subject.name }}
+    </a>
+
+    <article class="cn-card cn-reading">
+      <!-- Meta -->
+      <div style="display: flex; gap: var(--cn-space-3); margin-bottom: var(--cn-space-5); flex-wrap: wrap;">
+        <span class="cn-badge cn-badge--primary">{{ content.content_type|replace('_', ' ')|title }}</span>
+        <span style="font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
+          {{ content.created_at.strftime('%B %d, %Y') }}
+        </span>
+      </div>
+
+      <!-- Title & Description -->
+      <h1 style="margin: 0 0 var(--cn-space-3); font-size: var(--cn-font-size-3xl); line-height: 1.2;">
+        {{ content.title }}
+      </h1>
+      {% if content.description %}
+      <p style="margin: 0 0 var(--cn-space-6); font-size: var(--cn-font-size-lg); color: var(--cn-text-secondary);">
+        {{ content.description }}
+      </p>
+      {% endif %}
+
+      <!-- Thumbnail -->
+      {% if content.thumbnail %}
+      <img src="{{ url_for('static', filename='uploads/' + content.thumbnail) }}" alt="{{ content.title }}"
+           style="width: 100%; max-height: 500px; object-fit: cover; border-radius: var(--cn-radius-lg); margin-bottom: var(--cn-space-6);">
+      {% endif %}
+
+      <!-- Body -->
+      {% if content.body_html %}
+      <div class="cn-reading__body">
+        {{ content.body_html|safe }}
+      </div>
+      {% endif %}
+
+      <!-- Resources -->
+      <div style="margin-top: var(--cn-space-6); padding-top: var(--cn-space-6); border-top: 1px solid var(--cn-border);">
+        {% if content.attachment %}
+        <div style="margin-bottom: var(--cn-space-3); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-success);">
+          <i class="bi bi-file-earmark-pdf"></i>
+          <a href="{{ url_for('student.download_attachment', slug=content.slug) }}" class="cn-btn cn-btn--primary cn-btn--sm">
+            <i class="bi bi-download"></i> Download Material
+          </a>
+        </div>
+        {% endif %}
+
+        {% if content.video_url %}
+        <div style="margin-bottom: var(--cn-space-3); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-info);">
+          <i class="bi bi-play-circle"></i>
+          <a href="{{ content.video_url }}" target="_blank" class="cn-btn cn-btn--primary cn-btn--sm">
+            <i class="bi bi-box-arrow-up-right"></i> Watch Video
+          </a>
+        </div>
+        {% endif %}
+
+        {% if content.resource_url %}
+        <div style="padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-warning);">
+          <i class="bi bi-link-45deg"></i>
+          <a href="{{ content.resource_url }}" target="_blank" class="cn-btn cn-btn--primary cn-btn--sm">
+            <i class="bi bi-box-arrow-up-right"></i> External Resource
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </article>
+
+    <!-- Related Content -->
+    {% if related %}
+    <div style="margin-top: var(--cn-space-8);">
+      <h2 style="font-size: var(--cn-font-size-lg); font-weight: 600; margin: 0 0 var(--cn-space-4);">
+        <i class="bi bi-link"></i> Related Content
+      </h2>
+      <div class="cn-content-grid">
+        {% for item in related %}
+        <div class="cn-card cn-content-card">
+          <div class="cn-content-card__thumb">
+            {% if item.thumbnail %}
+            <img src="{{ url_for('static', filename='uploads/' + item.thumbnail) }}" alt="{{ item.title }}">
+            {% else %}
+            <i class="bi bi-file-earmark-text"></i>
+            {% endif %}
+          </div>
+          <div class="cn-content-card__body">
+            <h3 class="cn-content-card__title">
+              <a href="{{ url_for('student.content_detail', slug=item.slug) }}">{{ item.title }}</a>
+            </h3>
+            <p class="cn-content-card__desc">{{ item.description or item.body_html[:60]|striptags }}</p>
+            <div class="cn-content-card__meta">
+              <span style="font-size: var(--cn-font-size-xs);">{{ item.content_type|replace('_', ' ')|title }}</span>
+              <a href="{{ url_for('student.content_detail', slug=item.slug) }}" style="color: var(--cn-indigo);">Read →</a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{% if subject %}Edit Subject{% else %}New Subject{% endif %} — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  {% include 'partials/alerts.html' %}
+
+  <div class="cn-page-header">
+    <h1 class="cn-page-header__title">{% if subject %}Edit Subject{% else %}Create Subject{% endif %}</h1>
+  </div>
+
+  <div style="max-width: 600px;">
+    <div class="cn-card">
+      <form method="POST" class="cn-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="cn-form-group">
+          <label class="cn-label">Subject Name *</label>
+          <input type="text" class="cn-input" name="name" value="{{ subject.name if subject else name or '' }}" required autofocus>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Description</label>
+          <textarea class="cn-textarea" name="description" placeholder="Brief description of the subject...">{{ subject.description if subject else '' }}</textarea>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Icon (Bootstrap Icon class)</label>
+          <input type="text" class="cn-input" name="icon" placeholder="e.g. bi-book, bi-laptop, bi-flask" 
+                 value="{{ subject.icon if subject else 'bi-book' }}">
+          <small style="color: var(--cn-text-secondary);">Visit <a href="https://icons.getbootstrap.com" target="_blank">Bootstrap Icons</a> to find more.</small>
+        </div>
+
+        <div style="display: flex; gap: var(--cn-space-3);">
+          <button type="submit" class="cn-btn cn-btn--primary">
+            <i class="bi bi-check-lg"></i> Save Subject
+          </button>
+          <a href="{{ url_for('teacher.subjects') }}" class="cn-btn cn-btn--outline">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

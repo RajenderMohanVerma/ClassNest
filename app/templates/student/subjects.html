@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Subjects — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/student_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  <h1 class="cn-page-header__title">All Subjects</h1>
+
+  {% if subjects %}
+  <div class="cn-content-grid">
+    {% for subj in subjects %}
+    <a href="{{ url_for('student.subject_detail', slug=subj.slug) }}" class="cn-card cn-subject-card">
+      <div class="cn-subject-card__icon">
+        <i class="bi {{ subj.icon }}"></i>
+      </div>
+      <div class="cn-subject-card__name">{{ subj.name }}</div>
+      <div class="cn-subject-card__count">{{ subj.content.filter_by(status='published').count() }} lessons</div>
+      {% if subj.description %}
+      <p style="margin-top: var(--cn-space-2); font-size: var(--cn-font-size-xs); color: var(--cn-text-secondary);">{{ subj.description }}</p>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-bookmark"></i></div>
+      <div class="cn-empty__title">No subjects available yet</div>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

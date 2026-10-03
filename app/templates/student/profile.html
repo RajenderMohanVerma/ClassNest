@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Profile — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/student_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  {% include 'partials/alerts.html' %}
+
+  <h1 class="cn-page-header__title">Profile & Settings</h1>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: var(--cn-space-5);">
+    <!-- Update Profile -->
+    <div class="cn-card">
+      <h2 style="margin: 0 0 var(--cn-space-4); font-size: var(--cn-font-size-lg); font-weight: 600;">Personal Info</h2>
+      <form method="POST" class="cn-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="update_profile">
+
+        <div class="cn-form-group">
+          <label class="cn-label">Name</label>
+          <input type="text" class="cn-input" name="name" value="{{ user.name }}" required>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Email</label>
+          <input type="email" class="cn-input" name="email" value="{{ user.email }}" required>
+        </div>
+
+        <button type="submit" class="cn-btn cn-btn--primary">
+          <i class="bi bi-check-lg"></i> Update Profile
+        </button>
+      </form>
+    </div>
+
+    <!-- Change Password -->
+    <div class="cn-card">
+      <h2 style="margin: 0 0 var(--cn-space-4); font-size: var(--cn-font-size-lg); font-weight: 600;">Change Password</h2>
+      <form method="POST" class="cn-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="action" value="change_password">
+
+        <div class="cn-form-group">
+          <label class="cn-label">Current Password</label>
+          <input type="password" class="cn-input" name="current_password" required>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">New Password</label>
+          <input type="password" class="cn-input" name="new_password" required>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Confirm Password</label>
+          <input type="password" class="cn-input" name="confirm_password" required>
+        </div>
+
+        <button type="submit" class="cn-btn cn-btn--primary">
+          <i class="bi bi-lock"></i> Change Password
+        </button>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

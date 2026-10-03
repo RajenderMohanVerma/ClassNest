@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/student_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  {% include 'partials/alerts.html' %}
+
+  <div class="cn-page-header">
+    <h1 class="cn-page-header__title">Welcome back, {{ current_user.name }}</h1>
+  </div>
+
+  <!-- Search Bar -->
+  <div style="margin-bottom: var(--cn-space-6);">
+    <form method="GET" action="{{ url_for('student.search') }}" style="max-width: 500px;">
+      <div class="cn-search">
+        <i class="bi bi-search cn-search__icon"></i>
+        <input type="text" class="cn-search__input" name="q" placeholder="Search content..." autofocus>
+      </div>
+    </form>
+  </div>
+
+  <!-- Recent Content -->
+  <div style="margin-bottom: var(--cn-space-6);">
+    <h2 style="font-size: var(--cn-font-size-lg); font-weight: 600; margin: 0 0 var(--cn-space-4);">
+      <i class="bi bi-star"></i> Recently Published
+    </h2>
+    {% if recent_content %}
+    <div class="cn-content-grid">
+      {% for item in recent_content %}
+      <div class="cn-card cn-content-card">
+        <div class="cn-content-card__thumb">
+          {% if item.thumbnail %}
+          <img src="{{ url_for('static', filename='uploads/' + item.thumbnail) }}" alt="{{ item.title }}">
+          {% else %}
+          <i class="bi bi-file-earmark-text"></i>
+          {% endif %}
+        </div>
+        <div class="cn-content-card__body">
+          <h3 class="cn-content-card__title">
+            <a href="{{ url_for('student.content_detail', slug=item.slug) }}">{{ item.title }}</a>
+          </h3>
+          <p class="cn-content-card__desc">{{ item.description or item.body_html[:80]|striptags }}</p>
+          <div class="cn-content-card__meta">
+            <span style="font-size: var(--cn-font-size-xs);">{{ item.subject.name }}</span>
+            <a href="{{ url_for('student.content_detail', slug=item.slug) }}" style="color: var(--cn-indigo);">Read →</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Subjects -->
+  <div style="margin-bottom: var(--cn-space-6);">
+    <h2 style="font-size: var(--cn-font-size-lg); font-weight: 600; margin: 0 0 var(--cn-space-4);">
+      <i class="bi bi-bookmark"></i> Browse Subjects
+    </h2>
+    {% if subjects %}
+    <div class="cn-content-grid">
+      {% for subj in subjects %}
+      <a href="{{ url_for('student.subject_detail', slug=subj.slug) }}" class="cn-card cn-subject-card">
+        <div class="cn-subject-card__icon">
+          <i class="bi {{ subj.icon }}"></i>
+        </div>
+        <div class="cn-subject-card__name">{{ subj.name }}</div>
+        <div class="cn-subject-card__count">{{ subj.content.filter_by(status='published').count() }} lessons</div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Announcements -->
+  {% if announcements %}
+  <div>
+    <h2 style="font-size: var(--cn-font-size-lg); font-weight: 600; margin: 0 0 var(--cn-space-4);">
+      <i class="bi bi-megaphone"></i> Latest Announcements
+    </h2>
+    <div style="display: flex; flex-direction: column; gap: var(--cn-space-3);">
+      {% for ann in announcements %}
+      <div class="cn-card">
+        <h3 style="margin: 0 0 var(--cn-space-1); font-weight: 600;">{{ ann.title }}</h3>
+        <p style="margin: 0; color: var(--cn-text-secondary); font-size: var(--cn-font-size-sm);">{{ ann.body[:150] }}...</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

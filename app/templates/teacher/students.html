@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Students — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  <h1 class="cn-page-header__title">Students</h1>
+
+  {% if pagination.items %}
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in pagination.items %}
+        <tr>
+          <td>{{ student.name }}</td>
+          <td>{{ student.email }}</td>
+          <td>{{ student.created_at.strftime('%b %d, %Y') }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'partials/pagination.html' %}
+  {% else %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-people"></i></div>
+      <div class="cn-empty__title">No students yet</div>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

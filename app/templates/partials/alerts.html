@@ -1,0 +1,7 @@
+{% for category, message in get_flashed_messages(with_categories=true) %}
+<div class="cn-alert cn-alert--{{ category }}">
+  <i class="bi {% if category == 'success' %}bi-check-circle{% elif category == 'error' %}bi-exclamation-circle{% elif category == 'warning' %}bi-exclamation-triangle{% else %}bi-info-circle{% endif %}"></i>
+  {{ message }}
+  <button class="cn-alert__close" aria-label="Close">&times;</button>
+</div>
+{% endfor %}

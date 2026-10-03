@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block title %}Teacher Dashboard — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  {% include 'partials/alerts.html' %}
+
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">Welcome, {{ current_user.name }}</h1>
+      <p class="cn-page-header__subtitle">Manage your educational content and track student progress</p>
+    </div>
+    <a href="{{ url_for('teacher.create_content') }}" class="cn-btn cn-btn--primary cn-btn--lg">
+      <i class="bi bi-plus-lg"></i> Create Content
+    </a>
+  </div>
+
+  <!-- Stats Grid -->
+  <div class="cn-stats-grid">
+    <div class="cn-card">
+      <div class="cn-stat">
+        <div class="cn-stat__icon cn-stat__icon--primary">
+          <i class="bi bi-file-earmark-text"></i>
+        </div>
+        <div>
+          <div class="cn-stat__value">{{ total_content }}</div>
+          <div class="cn-stat__label">Total Content Items</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cn-card">
+      <div class="cn-stat">
+        <div class="cn-stat__icon cn-stat__icon--success">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div>
+          <div class="cn-stat__value">{{ published }}</div>
+          <div class="cn-stat__label">Published</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cn-card">
+      <div class="cn-stat">
+        <div class="cn-stat__icon cn-stat__icon--warning">
+          <i class="bi bi-pencil"></i>
+        </div>
+        <div>
+          <div class="cn-stat__value">{{ drafts }}</div>
+          <div class="cn-stat__label">Drafts</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cn-card">
+      <div class="cn-stat">
+        <div class="cn-stat__icon cn-stat__icon--info">
+          <i class="bi bi-bookmark"></i>
+        </div>
+        <div>
+          <div class="cn-stat__value">{{ total_subjects }}</div>
+          <div class="cn-stat__label">Subjects</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cn-card">
+      <div class="cn-stat">
+        <div class="cn-stat__icon cn-stat__icon--info">
+          <i class="bi bi-people"></i>
+        </div>
+        <div>
+          <div class="cn-stat__value">{{ total_students }}</div>
+          <div class="cn-stat__label">Students</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: var(--cn-space-5); margin-top: var(--cn-space-6);">
+    <!-- Recent Content -->
+    <div class="cn-card">
+      <h2 style="font-size: var(--cn-font-size-lg); font-weight: 600; margin: 0 0 var(--cn-space-4);">
+        <i class="bi bi-arrow-clockwise"></i> Recently Updated
+      </h2>
+      {% if recent_content %}
+      <div style="display: flex; flex-direction: column; gap: var(--cn-space-3);">
+        {% for item in recent_content %}
+        <div style="padding: var(--cn-space-3); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-indigo);">
+          <a href="{{ url_for('teacher.edit_content', id=item.id) }}" style="text-decoration: none; color: inherit;">
+            <div style="font-weight: 500; color: var(--cn-text);">{{ item.title }}</div>
+            <div style="font-size: var(--cn-font-size-xs); color: var(--cn-text-secondary); margin-top: 4px;">
+              <span class="cn-badge {% if item.status == 'published' %}cn-badge--success{% else %}cn-badge--warning{% endif %}">
+                {{ item.status|capitalize }}
+              </span>
+              {{ item.subject.name }}
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="cn-empty">
+        <div class="cn-empty__icon"><i class="bi bi-inbox"></i></div>
+        <div class="cn-empty__title">No content yet</div>
+        <p>Start creating educational content to see it here.</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Announcements -->
+    <div class="cn-card">
+      <h2 style="font-size: var(--cn-font-size-lg); font-weight: 600; margin: 0 0 var(--cn-space-4);">
+        <i class="bi bi-megaphone"></i> Announcements
+      </h2>
+      {% if announcements %}
+      <div style="display: flex; flex-direction: column; gap: var(--cn-space-3);">
+        {% for ann in announcements %}
+        <div style="padding: var(--cn-space-3); background: var(--cn-bg); border-radius: var(--cn-radius);">
+          <a href="{{ url_for('teacher.edit_announcement', id=ann.id) }}" style="text-decoration: none; color: inherit;">
+            <div style="font-weight: 500; color: var(--cn-text); font-size: var(--cn-font-size-sm);">{{ ann.title }}</div>
+            <div style="font-size: var(--cn-font-size-xs); color: var(--cn-text-secondary); margin-top: 4px;">
+              {% if ann.is_published %}<span class="cn-badge cn-badge--success">Published</span>{% endif %}
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="cn-empty">
+        <div class="cn-empty__icon"><i class="bi bi-chat"></i></div>
+        <div class="cn-empty__title">No announcements</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

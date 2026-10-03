@@ -1,0 +1,19 @@
+{% if pagination.pages > 1 %}
+<nav aria-label="Pagination">
+  <ul class="cn-pagination">
+    {% if pagination.has_prev %}
+    <li><a href="?page={{ pagination.prev_num }}&{{ extra_args|default('') }}">&laquo;</a></li>
+    {% endif %}
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if p %}
+        <li><a href="?page={{ p }}&{{ extra_args|default('') }}" class="{{ 'active' if p == pagination.page }}">{{ p }}</a></li>
+      {% else %}
+        <li><span>&hellip;</span></li>
+      {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+    <li><a href="?page={{ pagination.next_num }}&{{ extra_args|default('') }}">&raquo;</a></li>
+    {% endif %}
+  </ul>
+</nav>
+{% endif %}

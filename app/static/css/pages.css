@@ -1,0 +1,99 @@
+/* ═══════════════════════════════════════════════
+   ClassNest Page-specific styles
+   ═══════════════════════════════════════════════ */
+
+/* ── Login / Register ────────────────────────── */
+.cn-auth {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--cn-bg);
+  padding: var(--cn-space-4);
+}
+.cn-auth__card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--cn-card);
+  border-radius: var(--cn-radius-xl);
+  box-shadow: var(--cn-shadow-lg);
+  padding: var(--cn-space-8);
+}
+.cn-auth__logo {
+  text-align: center;
+  margin-bottom: var(--cn-space-6);
+}
+.cn-auth__logo-icon {
+  width: 56px; height: 56px;
+  background: var(--cn-navy);
+  color: #fff;
+  border-radius: var(--cn-radius-lg);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  margin-bottom: var(--cn-space-2);
+}
+.cn-auth__title { font-size: var(--cn-font-size-2xl); font-weight: 700; text-align: center; margin: 0 0 var(--cn-space-1); }
+.cn-auth__subtitle { text-align: center; color: var(--cn-text-secondary); font-size: var(--cn-font-size-sm); margin-bottom: var(--cn-space-6); }
+
+/* ── Dashboard header ────────────────────────── */
+.cn-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--cn-space-4);
+  margin-bottom: var(--cn-space-6);
+}
+.cn-page-header__title { font-size: var(--cn-font-size-2xl); font-weight: 700; margin: 0; }
+.cn-page-header__subtitle { color: var(--cn-text-secondary); font-size: var(--cn-font-size-sm); margin: var(--cn-space-1) 0 0; }
+
+/* ── Stats grid ──────────────────────────────── */
+.cn-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--cn-space-4);
+  margin-bottom: var(--cn-space-6);
+}
+
+/* ── Content grid ────────────────────────────── */
+.cn-content-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--cn-space-4);
+}
+
+/* ── Filter bar ──────────────────────────────── */
+.cn-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--cn-space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--cn-space-5);
+  padding: var(--cn-space-4);
+  background: var(--cn-card);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius-lg);
+}
+.cn-filter-bar .cn-select, .cn-filter-bar .cn-input {
+  width: auto; min-width: 160px;
+}
+
+/* ── Announcement card ───────────────────────── */
+.cn-announcement {
+  border-left: 4px solid var(--cn-indigo);
+  padding-left: var(--cn-space-4);
+  margin-bottom: var(--cn-space-4);
+}
+.cn-announcement__title { font-weight: 600; margin-bottom: var(--cn-space-1); }
+.cn-announcement__date { font-size: var(--cn-font-size-xs); color: var(--cn-text-secondary); }
+.cn-announcement__body { margin-top: var(--cn-space-2); font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary); }
+
+/* ── Error pages ─────────────────────────────── */
+.cn-error-page {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: var(--cn-space-4);
+}
+.cn-error-page__code { font-size: 6rem; font-weight: 800; color: var(--cn-indigo); line-height: 1; }
+.cn-error-page__title { font-size: var(--cn-font-size-2xl); font-weight: 700; margin: var(--cn-space-4) 0 var(--cn-space-2); }
+.cn-error-page__desc { color: var(--cn-text-secondary); margin-bottom: var(--cn-space-6); }

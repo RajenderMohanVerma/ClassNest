@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Preview: {{ content.title }} — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  <div style="max-width: 900px; margin: 0 auto;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--cn-space-5);">
+      <h1 style="margin: 0;">Preview: {{ content.title }}</h1>
+      <a href="{{ url_for('teacher.edit_content', id=content.id) }}" class="cn-btn cn-btn--outline">
+        <i class="bi bi-pencil"></i> Edit
+      </a>
+    </div>
+
+    <!-- Meta -->
+    <div style="display: flex; gap: var(--cn-space-4); margin-bottom: var(--cn-space-5); flex-wrap: wrap;">
+      <div>
+        <span class="cn-badge {% if content.status == 'published' %}cn-badge--success{% else %}cn-badge--warning{% endif %}">
+          {{ content.status|capitalize }}
+        </span>
+      </div>
+      <div style="font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
+        Subject: <strong>{{ content.subject.name }}</strong>
+      </div>
+      <div style="font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
+        Type: <strong>{{ content.content_type|replace('_', ' ')|title }}</strong>
+      </div>
+    </div>
+
+    <!-- Content -->
+    <div class="cn-card cn-reading">
+      {% if content.thumbnail %}
+      <img src="{{ url_for('static', filename='uploads/' + content.thumbnail) }}" alt="Thumbnail"
+           style="width: 100%; max-height: 400px; object-fit: cover; border-radius: var(--cn-radius-lg); margin-bottom: var(--cn-space-6);">
+      {% endif %}
+
+      {% if content.description %}
+      <p style="font-size: var(--cn-font-size-lg); color: var(--cn-text-secondary); margin: 0 0 var(--cn-space-6);">
+        {{ content.description }}
+      </p>
+      {% endif %}
+
+      {% if content.body_html %}
+      <div class="cn-reading__body">
+        {{ content.body_html|safe }}
+      </div>
+      {% endif %}
+
+      {% if content.attachment %}
+      <div style="margin-top: var(--cn-space-6); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-success);">
+        <i class="bi bi-file-earmark-pdf"></i> Attachment:
+        <a href="#" class="cn-btn cn-btn--ghost cn-btn--sm">Download File</a>
+      </div>
+      {% endif %}
+
+      {% if content.video_url %}
+      <div style="margin-top: var(--cn-space-6); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-info);">
+        <i class="bi bi-play-circle"></i> Video: <a href="{{ content.video_url }}" target="_blank">Open video</a>
+      </div>
+      {% endif %}
+
+      {% if content.resource_url %}
+      <div style="margin-top: var(--cn-space-3); padding: var(--cn-space-4); background: var(--cn-bg); border-radius: var(--cn-radius); border-left: 3px solid var(--cn-warning);">
+        <i class="bi bi-link-45deg"></i> Resource: <a href="{{ content.resource_url }}" target="_blank">Open link</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</main>
+{% endblock %}

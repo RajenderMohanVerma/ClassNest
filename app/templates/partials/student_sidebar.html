@@ -1,0 +1,37 @@
+<nav class="cn-sidebar" id="sidebar">
+  <a class="cn-sidebar__brand" href="{{ url_for('student.dashboard') }}">
+    <i class="bi bi-mortarboard-fill"></i>
+    {{ app_name }}
+  </a>
+  <div class="cn-sidebar__nav">
+    <div class="cn-sidebar__section">Main</div>
+    <a class="cn-sidebar__link {% if request.endpoint == 'student.dashboard' %}active{% endif %}"
+       href="{{ url_for('student.dashboard') }}">
+      <i class="bi bi-grid-1x2"></i> Dashboard
+    </a>
+
+    <div class="cn-sidebar__section">Learn</div>
+    <a class="cn-sidebar__link {% if request.endpoint == 'student.subjects' or request.endpoint == 'student.subject_detail' %}active{% endif %}"
+       href="{{ url_for('student.subjects') }}">
+      <i class="bi bi-bookmark"></i> Subjects
+    </a>
+    <a class="cn-sidebar__link {% if request.endpoint == 'student.content_library' %}active{% endif %}"
+       href="{{ url_for('student.content_library') }}">
+      <i class="bi bi-collection"></i> Content Library
+    </a>
+    <a class="cn-sidebar__link {% if request.endpoint == 'student.announcements' %}active{% endif %}"
+       href="{{ url_for('student.announcements') }}">
+      <i class="bi bi-megaphone"></i> Announcements
+    </a>
+
+    <div class="cn-sidebar__section">Account</div>
+    <a class="cn-sidebar__link {% if request.endpoint == 'student.profile' %}active{% endif %}"
+       href="{{ url_for('student.profile') }}">
+      <i class="bi bi-person-circle"></i> Profile
+    </a>
+    <a class="cn-sidebar__link" href="{{ url_for('auth.logout') }}">
+      <i class="bi bi-box-arrow-left"></i> Logout
+    </a>
+  </div>
+</nav>
+<div class="cn-sidebar-overlay" id="sidebarOverlay"></div>

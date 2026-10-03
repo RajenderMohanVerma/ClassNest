@@ -1,0 +1,18 @@
+<header class="cn-topbar">
+  <div class="cn-topbar__left">
+    <button class="cn-topbar__toggle" aria-label="Toggle menu">
+      <i class="bi bi-list"></i>
+    </button>
+    <div>
+      <div class="cn-topbar__title">{% block topbar_title %}Dashboard{% endblock %}</div>
+    </div>
+  </div>
+  <div class="cn-topbar__right">
+    {% if current_user %}
+    <a class="cn-topbar__user" href="{{ url_for('teacher.profile') if current_user.is_teacher else url_for('student.profile') }}">
+      <div class="cn-topbar__avatar">{{ current_user.name[0] | upper }}</div>
+      <span style="font-size:var(--cn-font-size-sm);font-weight:500;">{{ current_user.name }}</span>
+    </a>
+    {% endif %}
+  </div>
+</header>

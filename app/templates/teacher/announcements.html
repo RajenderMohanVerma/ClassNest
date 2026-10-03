@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Announcements — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  {% include 'partials/alerts.html' %}
+
+  <div class="cn-page-header">
+    <h1 class="cn-page-header__title">Announcements</h1>
+    <a href="{{ url_for('teacher.create_announcement') }}" class="cn-btn cn-btn--primary">
+      <i class="bi bi-plus-lg"></i> New Announcement
+    </a>
+  </div>
+
+  {% if announcements %}
+  <div style="display: flex; flex-direction: column; gap: var(--cn-space-4);">
+    {% for ann in announcements %}
+    <div class="cn-card">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: var(--cn-space-3);">
+        <div>
+          <h3 style="margin: 0 0 var(--cn-space-1); font-size: var(--cn-font-size-base); font-weight: 600;">{{ ann.title }}</h3>
+          <div style="font-size: var(--cn-font-size-xs); color: var(--cn-text-secondary);">
+            {% if ann.is_published %}
+              <span class="cn-badge cn-badge--success">Published</span>
+              {{ ann.published_at.strftime('%b %d, %Y at %I:%M %p') }}
+            {% else %}
+              <span class="cn-badge cn-badge--warning">Draft</span>
+            {% endif %}
+          </div>
+        </div>
+        <div style="display: flex; gap: var(--cn-space-2);">
+          <a href="{{ url_for('teacher.edit_announcement', id=ann.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm">
+            <i class="bi bi-pencil"></i>
+          </a>
+          <form method="POST" action="{{ url_for('teacher.delete_announcement', id=ann.id) }}" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm" style="color: var(--cn-error);" onclick="return confirm('Delete?')">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+      <p style="margin: 0; color: var(--cn-text-secondary);">{{ ann.body[:150] }}...</p>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-megaphone"></i></div>
+      <div class="cn-empty__title">No announcements</div>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

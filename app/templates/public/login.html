@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Login — {{ app_name }}{% endblock %}
+{% block body %}
+<div class="cn-auth">
+  <div class="cn-auth__card">
+    <div class="cn-auth__logo">
+      <div class="cn-auth__logo-icon">
+        <i class="bi bi-mortarboard-fill"></i>
+      </div>
+      <h1 class="cn-auth__title">{{ app_name }}</h1>
+      <p class="cn-auth__subtitle">{{ app_tagline }}</p>
+    </div>
+
+    {% include 'partials/alerts.html' %}
+
+    <form method="POST" class="cn-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <div class="cn-form-group">
+        <label class="cn-label">Email</label>
+        <input type="email" class="cn-input" name="email" required autofocus>
+      </div>
+
+      <div class="cn-form-group">
+        <label class="cn-label">Password</label>
+        <div class="cn-password-wrap">
+          <input type="password" class="cn-input" name="password" required id="password">
+          <button type="button" class="cn-password-toggle" tabindex="-1">
+            <i class="bi bi-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="cn-btn cn-btn--primary" style="width:100%;justify-content:center;">
+        <i class="bi bi-box-arrow-in-right"></i> Sign in
+      </button>
+    </form>
+
+    <hr style="margin: var(--cn-space-6) 0; border: none; border-top: 1px solid var(--cn-border);">
+
+    <div style="text-align: center; font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary);">
+      <p>Don't have an account? <a href="{{ url_for('auth.register') }}" style="color: var(--cn-indigo); font-weight: 500;">Sign up</a></p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ subject.name }} — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/student_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">{{ subject.name }}</h1>
+      {% if subject.description %}
+      <p class="cn-page-header__subtitle">{{ subject.description }}</p>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if pagination.items %}
+  <div class="cn-content-grid">
+    {% for item in pagination.items %}
+    <div class="cn-card cn-content-card">
+      <div class="cn-content-card__thumb">
+        {% if item.thumbnail %}
+        <img src="{{ url_for('static', filename='uploads/' + item.thumbnail) }}" alt="{{ item.title }}">
+        {% else %}
+        <i class="bi bi-file-earmark-text"></i>
+        {% endif %}
+      </div>
+      <div class="cn-content-card__body">
+        <h3 class="cn-content-card__title">
+          <a href="{{ url_for('student.content_detail', slug=item.slug) }}">{{ item.title }}</a>
+        </h3>
+        <p class="cn-content-card__desc">{{ item.description or item.body_html[:60]|striptags }}</p>
+        <div class="cn-content-card__meta">
+          <span style="font-size: var(--cn-font-size-xs);">{{ item.content_type|replace('_', ' ')|title }}</span>
+          <a href="{{ url_for('student.content_detail', slug=item.slug) }}" style="color: var(--cn-indigo);">Read →</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% include 'partials/pagination.html' %}
+  {% else %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-inbox"></i></div>
+      <div class="cn-empty__title">No content available</div>
+      <p>Come back later for more lessons on {{ subject.name }}.</p>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

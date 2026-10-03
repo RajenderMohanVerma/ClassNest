@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{% if content %}Edit Content{% else %}Create Content{% endif %} — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  {% include 'partials/alerts.html' %}
+
+  <div class="cn-page-header">
+    <h1 class="cn-page-header__title">{% if content %}Edit Content{% else %}Create Content{% endif %}</h1>
+  </div>
+
+  <div style="max-width: 800px;">
+    <div class="cn-card">
+      <form method="POST" enctype="multipart/form-data" class="cn-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="cn-form-group">
+          <label class="cn-label">Title *</label>
+          <input type="text" class="cn-input" name="title" value="{{ content.title if content else '' }}" required autofocus>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Subject *</label>
+          <select class="cn-select" name="subject_id" required>
+            <option value="">Select a subject...</option>
+            {% for s in subjects %}
+            <option value="{{ s.id }}" {% if content and content.subject_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--cn-space-4);">
+          <div class="cn-form-group">
+            <label class="cn-label">Topic/Chapter</label>
+            <input type="text" class="cn-input" name="topic" value="{{ content.topic if content else '' }}">
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label">Content Type *</label>
+            <select class="cn-select" name="content_type" required>
+              <option value="notes" {% if content and content.content_type == 'notes' %}selected{% endif %}>Notes</option>
+              <option value="study_material" {% if content and content.content_type == 'study_material' %}selected{% endif %}>Study Material</option>
+              <option value="pdf_resource" {% if content and content.content_type == 'pdf_resource' %}selected{% endif %}>PDF Resource</option>
+              <option value="video_lesson" {% if content and content.content_type == 'video_lesson' %}selected{% endif %}>Video Lesson</option>
+              <option value="reference_link" {% if content and content.content_type == 'reference_link' %}selected{% endif %}>Reference Link</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Description</label>
+          <textarea class="cn-textarea" name="description" placeholder="Brief description...">{{ content.description if content else '' }}</textarea>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Content Body (HTML allowed)</label>
+          <textarea class="cn-textarea" name="body_html" placeholder="Write or paste your content...">{{ content.body_html if content else '' }}</textarea>
+          <small style="color: var(--cn-text-secondary);">Markdown will be converted to HTML.</small>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--cn-space-4);">
+          <div class="cn-form-group">
+            <label class="cn-label">Video URL</label>
+            <input type="url" class="cn-input" name="video_url" value="{{ content.video_url if content else '' }}" placeholder="https://...">
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label">Resource URL</label>
+            <input type="url" class="cn-input" name="resource_url" value="{{ content.resource_url if content else '' }}" placeholder="https://...">
+          </div>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">Tags (comma-separated)</label>
+          <input type="text" class="cn-input" name="tags" value="{{ content.tags if content else '' }}" placeholder="python, fundamentals, beginners">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--cn-space-4);">
+          <div class="cn-form-group">
+            <label class="cn-label">Thumbnail Image</label>
+            <input type="file" class="cn-input" name="thumbnail" accept="image/*">
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label">Attachment (PDF/Doc)</label>
+            <input type="file" class="cn-input" name="attachment" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx">
+          </div>
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label">
+            <input type="checkbox" name="status" value="published" {% if content and content.status == 'published' %}checked{% endif %}>
+            Publish immediately
+          </label>
+        </div>
+
+        <div style="display: flex; gap: var(--cn-space-3);">
+          <button type="submit" class="cn-btn cn-btn--primary">
+            <i class="bi bi-check-lg"></i> Save Content
+          </button>
+          <a href="{{ url_for('teacher.content_list') }}" class="cn-btn cn-btn--outline">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Content Library — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/student_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  <h1 class="cn-page-header__title">Content Library</h1>
+
+  <!-- Filters -->
+  <div class="cn-filter-bar">
+    <form method="GET" style="display: flex; gap: var(--cn-space-2); flex: 1; flex-wrap: wrap; margin: 0;">
+      <input type="text" class="cn-input" name="q" placeholder="Search..." value="{{ search or '' }}"
+             style="flex: 1; min-width: 200px;">
+      <select class="cn-select" name="subject" style="flex: 0 1 150px;">
+        <option value="">All Subjects</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}" {% if subject_filter == s.id|string %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+      <select class="cn-select" name="type" style="flex: 0 1 140px;">
+        <option value="">All Types</option>
+        <option value="notes" {% if type_filter == 'notes' %}selected{% endif %}>Notes</option>
+        <option value="video_lesson" {% if type_filter == 'video_lesson' %}selected{% endif %}>Videos</option>
+        <option value="pdf_resource" {% if type_filter == 'pdf_resource' %}selected{% endif %}>PDFs</option>
+      </select>
+      <button type="submit" class="cn-btn cn-btn--primary">
+        <i class="bi bi-search"></i> Filter
+      </button>
+    </form>
+  </div>
+
+  {% if pagination.items %}
+  <div class="cn-content-grid">
+    {% for item in pagination.items %}
+    <div class="cn-card cn-content-card">
+      <div class="cn-content-card__thumb">
+        {% if item.thumbnail %}
+        <img src="{{ url_for('static', filename='uploads/' + item.thumbnail) }}" alt="{{ item.title }}">
+        {% else %}
+        <i class="bi bi-file-earmark-text"></i>
+        {% endif %}
+      </div>
+      <div class="cn-content-card__body">
+        <h3 class="cn-content-card__title">
+          <a href="{{ url_for('student.content_detail', slug=item.slug) }}">{{ item.title }}</a>
+        </h3>
+        <p class="cn-content-card__desc">{{ item.description or item.body_html[:60]|striptags }}</p>
+        <div class="cn-content-card__meta">
+          <span style="font-size: var(--cn-font-size-xs);">{{ item.subject.name }}</span>
+          <a href="{{ url_for('student.content_detail', slug=item.slug) }}" style="color: var(--cn-indigo);">Read →</a>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% include 'partials/pagination.html' %}
+  {% else %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-inbox"></i></div>
+      <div class="cn-empty__title">No content found</div>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

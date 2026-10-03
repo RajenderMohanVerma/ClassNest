@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Content — {{ app_name }}{% endblock %}
+{% block body %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main">
+  {% include 'partials/alerts.html' %}
+
+  <div class="cn-page-header">
+    <h1 class="cn-page-header__title">Content Management</h1>
+    <a href="{{ url_for('teacher.create_content') }}" class="cn-btn cn-btn--primary">
+      <i class="bi bi-plus-lg"></i> Create Content
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <div class="cn-filter-bar">
+    <form method="GET" class="cn-form" style="display: flex; gap: var(--cn-space-2); flex: 1; flex-wrap: wrap; margin: 0;">
+      <input type="text" class="cn-input" name="q" placeholder="Search..." value="{{ search or '' }}" 
+             style="flex: 1; min-width: 200px;">
+      <select class="cn-select" name="status" style="flex: 0 1 150px;">
+        <option value="">All Status</option>
+        <option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Drafts</option>
+        <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+      </select>
+      <select class="cn-select" name="subject" style="flex: 0 1 150px;">
+        <option value="">All Subjects</option>
+        {% for s in subjects %}
+        <option value="{{ s.id }}" {% if subject_filter == s.id|string %}selected{% endif %}>{{ s.name }}</option>
+        {% endfor %}
+      </select>
+      <select class="cn-select" name="sort" style="flex: 0 1 120px;">
+        <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+        <option value="oldest" {% if sort == 'oldest' %}selected{% endif %}>Oldest</option>
+      </select>
+      <button type="submit" class="cn-btn cn-btn--primary">
+        <i class="bi bi-search"></i> Filter
+      </button>
+    </form>
+  </div>
+
+  <!-- Content List -->
+  {% if pagination.items %}
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Subject</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in pagination.items %}
+        <tr>
+          <td><strong>{{ item.title }}</strong></td>
+          <td>{{ item.subject.name }}</td>
+          <td><small>{{ item.content_type|replace('_', ' ')|title }}</small></td>
+          <td>
+            <span class="cn-badge {% if item.status == 'published' %}cn-badge--success{% else %}cn-badge--warning{% endif %}">
+              {{ item.status|capitalize }}
+            </span>
+          </td>
+          <td><small>{{ item.created_at.strftime('%b %d, %Y') }}</small></td>
+          <td>
+            <div style="display: flex; gap: var(--cn-space-2);">
+              <a href="{{ url_for('teacher.preview_content', id=item.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm" title="Preview">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{{ url_for('teacher.edit_content', id=item.id) }}" class="cn-btn cn-btn--ghost cn-btn--sm" title="Edit">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="POST" action="{{ url_for('teacher.toggle_content', id=item.id) }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm" title="{% if item.status == 'published' %}Unpublish{% else %}Publish{% endif %}">
+                  <i class="bi {% if item.status == 'published' %}bi-eye-slash{% else %}bi-eye-fill{% endif %}"></i>
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('teacher.delete_content', id=item.id) }}" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="cn-btn cn-btn--ghost cn-btn--sm" style="color: var(--cn-error);" 
+                        onclick="return confirm('Delete this content?')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include 'partials/pagination.html' %}
+  {% else %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-inbox"></i></div>
+      <div class="cn-empty__title">No content found</div>
+      <p>Create your first educational content to get started.</p>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}
