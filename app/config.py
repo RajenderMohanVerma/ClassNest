@@ -9,13 +9,15 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-change-me')
 
-    # Supabase and other managed PostgreSQL providers may return postgres://.
+    # Use the installed psycopg2 driver for every PostgreSQL URL.
     db_url = os.environ.get('DATABASE_URL', '').strip()
     if db_url.startswith('postgres://'):
         db_url = f'postgresql://{db_url[len("postgres://"):]}'
     if db_url.startswith('postgresql+psycopg://'):
         db_url = f'postgresql+psycopg2://{db_url[len("postgresql+psycopg://"):]}'
-    if not db_url.startswith(('postgresql://', 'postgresql+psycopg2://')):
+    elif db_url.startswith('postgresql://'):
+        db_url = f'postgresql+psycopg2://{db_url[len("postgresql://"):]}'
+    if not db_url.startswith('postgresql+psycopg2://'):
         raise RuntimeError(
             'DATABASE_URL must be a PostgreSQL connection string. '
             'Set it to the Supabase Session Pooler URL before starting the app.'
