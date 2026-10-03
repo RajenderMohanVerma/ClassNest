@@ -1,63 +1,94 @@
-# Design
+# ClassNest Design System
 
 ## Product identity
 
-- Name: Er. Amit Sir Academy
-- Tagline: Learn • Practice • Achieve
-- Audience: school students, parents, teachers, and administrators
-- UI language: English; learning content may be English, Hindi, or Hinglish
+- **Name:** ClassNest
+- **Tagline:** Teacher & Student Learning Portal
+- **Audience:** teachers and students
+- **UI language:** English; content can contain user-authored Unicode text
+- **Primary experience:** responsive server-rendered web application with PWA support
 
 ## Design principles
 
-- Make learning content easy to discover and resume.
-- Use consistent layouts for public, student, and admin experiences.
-- Keep premium and free content visibly distinct without blocking discovery.
-- Show loading, empty, error, success, and access-denied states explicitly.
-- Prefer reusable components and design tokens over page-specific styling.
-- Keep keyboard access, readable contrast, responsive layouts, and clear focus
-  states in every interface.
+- Make subjects and published lessons easy to discover.
+- Keep teacher management workflows separate from student consumption flows.
+- Show success, validation, empty, denied, and error states explicitly.
+- Use reusable partials and CSS components instead of page-specific duplication.
+- Preserve readable typography and keyboard-visible focus states.
+- Keep the interface usable from mobile widths through desktop layouts.
 
-## Main experience patterns
+## Layout patterns
 
-### Public
+### Public and authentication
 
-Header, navigation, search, content cards, filters, detail pages, related
-content, and clear calls to action.
+The landing page redirects users to the appropriate experience. Login and
+registration use focused forms with validation feedback and flash messages.
 
-### Authentication
+### Teacher shell
 
-Focused forms for login, registration, password recovery, reset, and email
-verification. Errors are specific and actionable.
+Teacher pages use a reusable sidebar and topbar. The dashboard shows counts and
+recent activity. CRUD pages use cards, forms, tables, confirmation actions, and
+publication badges.
 
-### Student dashboard
+### Student shell
 
-Authenticated shell with dashboard summary, course learning view, progress,
-bookmarks, purchases, notifications, and profile.
+Student pages use a separate navigation partial and focus on discovery:
+subject cards, content cards, filters, search, reading layout, announcements,
+and related content.
 
-### Admin
+### Shared states
 
-Sidebar navigation, table/list views, filters, create/edit forms, media
-selection, confirmation dialogs, audit visibility, and role protection.
+- Flash alerts for success, warning, info, and error messages
+- Empty states with an explanation and next action
+- 403, 404, and 500 pages
+- Responsive sidebar behavior on small screens
+- Form error and validation messaging
 
 ## Visual system
 
-Use one shared token source for colors, typography, spacing, borders, shadows,
-breakpoints, and motion. Do not introduce one-off values when a token exists.
-The detailed token values and page-by-page UI requirements remain defined in
-`PROJECT_MEMORY.md` until the implementation stack is selected.
+The source of truth is `app/static/css/tokens.css`. Reusable components are
+defined in `app/static/css/components.css`, while page-specific adjustments are
+in `app/static/css/pages.css`.
 
-## Design quality checklist
+The implemented visual language includes:
 
-- Responsive at mobile, tablet, and desktop widths.
-- No horizontal overflow.
-- Buttons and links have clear hover, focus, disabled, and loading states.
-- Forms preserve entered values when validation fails.
-- Destructive actions require confirmation.
-- Empty states explain what the user can do next.
+- Indigo primary color and slate neutrals
+- Green success, amber warning, red error, and blue information states
+- System font stack for fast loading
+- Consistent spacing, border-radius, shadows, and focus rings
+- Responsive content grids and readable lesson typography
+
+Do not introduce new one-off colors or spacing values when an existing token or
+component can express the design.
+
+## Accessibility and responsive behavior
+
+- Use semantic headings, labels, buttons, and links.
+- Keep visible focus indicators.
+- Maintain readable contrast for text and status badges.
+- Ensure controls remain usable at approximately 360px viewport width.
+- Avoid horizontal overflow in tables, cards, and reading pages.
+- Keep entered form values available after validation errors.
+
+## PWA behavior
+
+- `manifest.json` defines app metadata, icons, theme, and standalone display.
+- `sw.js` uses cache-first behavior for static assets and network-first
+  behavior for HTML.
+- `app/static/js/install-prompt.js` handles mobile installation guidance.
+- HTTPS is required for production service-worker installation.
+
+## Design QA checklist
+
+- [ ] Test at mobile, tablet, desktop, and wide desktop widths.
+- [ ] Test keyboard navigation and focus visibility.
+- [ ] Test empty, validation, forbidden, not-found, and server-error states.
+- [ ] Test teacher and student navigation independently.
+- [ ] Confirm the service worker does not cache authenticated form responses.
 
 ## Change record
 
-| Date | Change | Reason |
-|------|--------|--------|
-| 2026-10-03 | Created design source document | Establish project documentation baseline |
-
+| Date | Change |
+|------|--------|
+| 2026-10-03 | Replaced the stale product identity and framework assumptions with the implemented ClassNest UI system |
+| 2026-10-03 | Documented template shells, CSS token files, responsive behavior, and PWA design |

@@ -1,46 +1,62 @@
-# Rules
+# ClassNest Engineering Rules
 
 ## Documentation rules
 
-- These six files are required project documentation:
-  `Architecture.md`, `Design.md`, `Memory.md`, `PRD.md`, `Rules.md`, and
-  `Task.md`.
-- Update the relevant documentation in the same change as the implementation.
-- Do not silently overwrite a locked decision; record a decision and request
-  approval when a change is needed.
+- Keep the six files in `docs/` aligned with the implementation.
+- Update the relevant documentation in the same change as an implementation.
+- Do not describe planned features as implemented.
+- Record known limitations instead of hiding them.
+- Never commit `.env`, database files, uploaded files, credentials, or keys.
 
 ## Engineering rules
 
-- Preserve type safety and use strict validation.
-- Follow existing naming, formatting, and component patterns.
-- Prefer shared helpers and components over duplicate logic.
-- Do not hide errors with broad catches, silent fallbacks, or fake success
-  responses.
-- Keep changes focused and test behavior that was changed.
-- Never commit secrets, real credentials, or private keys.
+- Preserve the Flask application-factory pattern.
+- Keep blueprint responsibilities separated by user experience/domain.
+- Prefer SQLAlchemy ORM and existing model relationships over raw SQL.
+- Reuse decorators, services, template partials, and CSS tokens.
+- Validate input at the server boundary.
+- Surface failures with a user-visible message or an appropriate error response.
+- Avoid broad exception handlers and silent fallback behavior.
+- Keep changes focused and run the smallest relevant verification.
 
 ## Security rules
 
-- Never trust client-side authorization or payment state.
-- Never put access or refresh tokens in local storage.
-- Never construct SQL using string interpolation.
-- Validate and authorize every API mutation on the server.
-- Verify payment signatures and make webhook handling idempotent.
-- Generate signed premium URLs only after a current access check.
-- Log security-relevant events without logging secrets or sensitive tokens.
+- Enforce authorization on the server for every teacher/student route.
+- Never allow public registration to assign the teacher role.
+- Hash passwords with Werkzeug; never store plaintext passwords.
+- Keep CSRF protection enabled for browser form mutations.
+- Sanitize user-authored HTML before using the `safe` rendering path.
+- Validate both extension and MIME type for uploaded files.
+- Generate UUID storage names and never trust user-provided paths.
+- Use a strong `SECRET_KEY` and secure cookies in production.
+- Use PostgreSQL instead of SQLite in production.
+- Use Redis-backed rate limiting for multiple production instances.
+- Never log secrets, passwords, session values, or database URLs.
 
-## Product rules
+## Database and storage rules
 
-- Enrollment is created only after verified payment or an explicit admin
-  grant.
-- Premium content remains discoverable but not readable without access.
-- Money uses integer paise; time is stored in UTC.
-- Content visibility and scheduled publishing are server-enforced.
-- Admin-only routes and actions require the ADMIN role.
+- Use UTC-aware timestamps.
+- Keep database schema changes in migrations once the migration workflow is
+  introduced.
+- Store upload metadata in the database and large objects in persistent object
+  storage for production.
+- Do not treat Vercel/serverless local disk as durable storage.
+- Back up production PostgreSQL before schema changes.
 
 ## Definition of done
 
-A change is done only when its requirements are documented, implementation is
-complete, relevant states and errors are handled, tests or checks pass, and
-`Task.md` and `Memory.md` reflect the new state.
+A change is complete only when:
 
+1. The requirement is documented.
+2. Implementation is complete and consistent with existing patterns.
+3. Relevant success, empty, validation, denied, and error states are handled.
+4. Targeted tests or checks pass.
+5. `Task.md` and `Memory.md` reflect the new state.
+6. No secrets or runtime data are included in the commit.
+
+## Change record
+
+| Date | Update |
+|------|--------|
+| 2026-10-03 | Replaced stale Next.js/payment rules with rules for the implemented Flask MVP |
+| 2026-10-03 | Added server-side security, storage, migration, and documentation requirements |

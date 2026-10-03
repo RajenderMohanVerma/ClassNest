@@ -1,48 +1,62 @@
-# Memory
+# ClassNest Project Memory
 
 ## Current project state
 
-- Project: Er. Amit Sir Academy
-- Documentation baseline created: 2026-10-03
-- Implementation status: Phase 1 foundation scaffold
-- Root specification: `PROJECT_MEMORY.md`
-- Chosen technology stack: Next.js 15/React 19 web, Fastify 5 API,
-  PostgreSQL/Prisma, TypeScript, external storage abstraction, Razorpay
-- Execution mode: AUTONOMOUS
+- Project: ClassNest Teacher-Student Learning Portal
+- Status: Flask MVP implemented and pushed to GitHub
+- Repository: `https://github.com/RajenderMohanVerma/ClassNest`
+- Branch: `main`
+- Local development database: SQLite
+- Production database target: PostgreSQL
+- Runtime: Flask app factory with Jinja2 templates
 
-## Locked decisions
+## Implemented decisions
 
-- Use a statically typed implementation with strict type checking where
-  supported.
-- Public pages must be server-rendered or statically generated.
-- Backend API is versioned at `/api/v1`.
-- Authentication uses short-lived access tokens and rotating refresh tokens
-  stored in secure cookies; sessions are stored in the database.
-- Premium access is granted only by verified payment or an explicit admin grant.
-- Premium files require a fresh signed URL after an access check.
-- Store currency amounts as INR paise integers.
-- Store time in UTC and display it in Asia/Kolkata.
-- Never store secrets in source control or documentation.
+- Use Flask blueprints for public, authentication, teacher, student, and API
+  concerns.
+- Use SQLAlchemy models rather than raw SQL.
+- Keep teacher role assignment out of ordinary public registration.
+- Use session authentication with role decorators.
+- Use Werkzeug password hashing.
+- Enable global CSRF protection for mutating forms.
+- Sanitize authored HTML with Bleach before rendering it as safe content.
+- Validate uploaded files by extension and MIME type and store UUID filenames.
+- Support SQLite locally and PostgreSQL through `DATABASE_URL` in production.
+- Keep the UI server-rendered and progressively enhanced with vanilla JS.
+
+## Current feature inventory
+
+- Authentication: login, student registration, logout
+- Teacher: dashboard, subjects CRUD, content CRUD, preview, publish toggle,
+  announcements CRUD, student list, file list/delete, profile
+- Student: dashboard, subjects, content library, content detail, download,
+  announcements, search, profile
+- API: statistics endpoint at `/api/stats`
+- PWA: manifest, service worker, install prompt, responsive UI
+- Error handling: 403, 404, and 500 templates
+
+## Known gaps and follow-up decisions
+
+- Add a real Flask-Migrate initial migration before production schema changes.
+- Move file objects from local disk to persistent object storage for Vercel or
+  other serverless hosting.
+- Configure Redis-backed Flask-Limiter storage for multiple instances.
+- Add automated route/model tests and deployment smoke tests.
+- Add email delivery only when password reset or verification is approved.
+- Add background jobs, payments, progress tracking, or notifications only as
+  separately scoped features.
 
 ## Documentation workflow
 
-1. Read `Memory.md`, `PRD.md`, `Architecture.md`, `Design.md`, `Rules.md`,
-   and `Task.md` before starting a significant change.
-2. Record new decisions and completed work in the relevant document.
-3. Keep this file current after every meaningful phase.
-4. If a decision conflicts with `PROJECT_MEMORY.md`, stop and get approval
-   before changing the locked decision.
+1. Read the six files in `docs/` before significant changes.
+2. Update the relevant document in the same change as implementation.
+3. Record meaningful decisions and known gaps here.
+4. Update `Task.md` with acceptance criteria and verification results.
+5. Never record real credentials, connection strings, or private data.
 
-## Decision log
+## Change record
 
-| Date | Decision | Reason |
-|------|----------|--------|
-| 2026-10-03 | Split the master specification into six maintained docs | Make project context easy to find and update |
-| 2026-10-03 | Selected Next.js + Fastify + PostgreSQL/Prisma TypeScript monorepo | Meets SSR, separate API, relational DB, and strict typing requirements |
-
-## Known gaps
-
-- Docker is not installed in the current environment, so PostgreSQL container
-  health and migrations need to be verified on a machine with Docker.
-- Authentication, database schema, and migrations are the next implementation
-  work after the foundation scaffold.
+| Date | Decision or update |
+|------|-------------------|
+| 2026-10-03 | Reconciled project memory with the implemented Flask application |
+| 2026-10-03 | Recorded current features, GitHub state, deployment gaps, and follow-up work |
