@@ -10,34 +10,53 @@ Mark a task complete only after the relevant check passes.
 
 ### Project foundation
 
-- [x] Create Flask application factory and configuration classes.
+- [x] Create Flask application factory and configuration classes, including
+      `TestingConfig` and startup validation of `DATABASE_URL`/`SECRET_KEY`.
 - [x] Initialize SQLAlchemy, Flask-Migrate, CSRF, and rate limiter.
-- [x] Register public, auth, teacher, student, and API blueprints.
-- [x] Add environment-driven Supabase PostgreSQL configuration.
-- [x] Add `.env.example`, `.gitignore`, requirements, and entry scripts.
+- [x] Register public, auth, teacher, student, files, and API blueprints plus the
+      app-level `/healthz`, `/manifest.json`, and `/sw.js` routes.
+- [x] Add environment-driven Supabase PostgreSQL configuration with URL
+      normalization and pool health settings.
+- [x] Add `.env.example`, `.gitignore`, `requirements.txt`,
+      `requirements-dev.txt`, `Procfile`, `vercel.json`, and entry scripts.
 
 ### Data and services
 
 - [x] Implement `User`, `Subject`, `Content`, `Announcement`, and
-      `UploadedFile` models.
+      `UploadedFile` models with publication timestamps and unique-slug helpers.
 - [x] Add password hashing and role helpers.
-- [x] Add login, teacher, and student authorization decorators.
-- [x] Add HTML sanitization service.
-- [x] Add upload extension, MIME, UUID filename, and size handling.
+- [x] Add login, teacher, and student authorization decorators plus
+      `safe_next_url`.
+- [x] Add HTML sanitization service with unsafe-block removal.
+- [x] Add upload extension, MIME, magic-byte, UUID filename, and size handling.
+- [x] Add shared account and pagination services.
 
 ### Authentication and routes
 
-- [x] Implement login, student registration, logout, and rate limits.
-- [x] Implement teacher dashboard and management routes.
+- [x] Implement login, student registration, POST-only logout, and rate limits.
+- [x] Implement teacher dashboard, management routes, filters, and sorting.
 - [x] Implement student dashboard, library, reading, search, and profile routes.
-- [x] Implement statistics API and custom error pages.
+- [x] Implement authenticated file delivery with publication checks.
+- [x] Implement statistics and content-type APIs, custom error pages, and a
+      database health check.
 
 ### Frontend and PWA
 
-- [x] Create base template and reusable navigation/alert/pagination partials.
-- [x] Create all public, teacher, student, and error templates.
-- [x] Create design tokens, reusable CSS components, and page styles.
-- [x] Add app JavaScript, service worker, manifest, install prompt, and icons.
+- [x] Create base template and reusable navigation/alert/pagination/content-card
+      partials.
+- [x] Create all public, teacher, student, offline, and error templates.
+- [x] Create design tokens (light and dark), reusable CSS components, and page
+      styles.
+- [x] Add app JavaScript, theme bootstrap, service worker, manifest, install
+      prompt, and icons.
+
+### Quality
+
+- [x] Add automated authentication, authorization, CRUD, upload, search,
+      pagination, and error-handling tests (`tests/`, 77 tests).
+- [x] Add security response headers and `no-store` caching for private pages.
+- [x] Move uploads outside the static tree and block `/static/uploads/*`.
+- [x] Migrate legacy uploads and add unique slug indexes in `init_db.py`.
 
 ### Documentation and delivery
 
@@ -50,11 +69,12 @@ Mark a task complete only after the relevant check passes.
 - [ ] Add and verify an initial Flask-Migrate migration.
 - [x] Add Vercel `api/index.py` and `vercel.json` for the selected deployment
       target.
-- [ ] Provision managed PostgreSQL and run schema initialization/migration.
+- [ ] Provision managed PostgreSQL and run `python init_db.py`.
 - [ ] Replace local uploads with durable object storage.
-- [ ] Configure production `SECRET_KEY`, secure cookies, and Redis rate limits.
-- [ ] Add automated authentication, authorization, CRUD, and upload tests.
-- [ ] Run a production smoke test against the deployed URL.
+- [ ] Configure production `SECRET_KEY`, secure cookies, and
+      `RATE_LIMIT_STORAGE_URI`.
+- [x] Add automated authentication, authorization, CRUD, and upload tests.
+- [ ] Run a production smoke test against the deployed URL (`/healthz`).
 
 ## Acceptance criteria for the next deployment task
 
@@ -76,6 +96,13 @@ python init_db.py
 python -c "from run import app; print(sorted(rule.rule for rule in app.url_map.iter_rules()))"
 ```
 
+### Automated tests
+
+```powershell
+pip install -r requirements-dev.txt
+pytest
+```
+
 ### Git delivery check
 
 ```powershell
@@ -90,3 +117,4 @@ git log -1 --oneline
 | 2026-10-03 | Replaced the old TypeScript foundation task list with the completed Flask implementation log |
 | 2026-10-03 | Added GitHub delivery status and production deployment follow-up tasks |
 | 2026-10-03 | Added Vercel serverless entry point and deployment configuration |
+| 2026-10-03 | Recorded the 77-test suite, dark mode, offline page, health check, files blueprint, security headers, and upload-folder move |

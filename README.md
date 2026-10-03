@@ -178,9 +178,9 @@ Visit `http://localhost:5000` in your browser.
 ```
 Amit Academy/
 ├── app/
-│   ├── __init__.py          # Flask app factory, blueprints, error handlers
-│   ├── config.py            # Configuration for dev/production
-│   ├── extensions.py        # SQLAlchemy, Flask-Migrate, etc.
+│   ├── __init__.py          # Flask app factory, blueprints, error handlers, healthz
+│   ├── config.py            # Dev/production/testing configuration + validation
+│   ├── extensions.py        # SQLAlchemy, Flask-Migrate, CSRF, rate limiter
 │   ├── models/              # SQLAlchemy ORM models
 │   │   ├── user.py
 │   │   ├── subject.py
@@ -188,16 +188,19 @@ Amit Academy/
 │   │   ├── announcement.py
 │   │   └── uploaded_file.py
 │   ├── routes/              # Flask blueprints
-│   │   ├── public.py        # Public pages
-│   │   ├── auth.py          # Login/Register/Logout
+│   │   ├── public.py        # Landing page, offline page
+│   │   ├── auth.py          # Login/Register/Logout (POST logout)
 │   │   ├── teacher.py       # Teacher dashboard & features
 │   │   ├── student.py       # Student dashboard & features
-│   │   └── api.py           # API endpoints
+│   │   ├── files.py         # Authenticated file delivery
+│   │   └── api.py           # JSON endpoints
 │   ├── services/            # Business logic
-│   │   ├── uploads.py       # File upload handling
+│   │   ├── uploads.py       # File validation, UUID storage, deletion
 │   │   ├── sanitizer.py     # HTML sanitization
+│   │   ├── accounts.py      # Shared profile/password logic
+│   │   ├── pagination.py    # Filter-preserving pagination args
 │   │   └── decorators.py    # Auth decorators
-│   ├── templates/           # Jinja2 templates
+│   ├── templates/           # Jinja2 templates (36 files)
 │   │   ├── base.html
 │   │   ├── partials/
 │   │   ├── public/
@@ -206,17 +209,27 @@ Amit Academy/
 │   │   └── student/
 │   └── static/              # CSS, JS, icons
 │       ├── css/             # Design tokens, components, pages
-│       ├── js/              # App logic, PWA install prompt
-│       ├── uploads/         # User-uploaded files
+│       ├── js/              # App logic, theme, PWA install prompt
 │       └── icons/           # PWA icons
-├── requirements.txt         # Python dependencies
+├── api/index.py             # Vercel serverless entry point
+├── tests/                   # Pytest suite (77 tests, SQLite)
+├── docs/                    # PRD, architecture, design, task, rules, memory
+├── requirements.txt         # Runtime dependencies
+├── requirements-dev.txt     # Test/lint dependencies
+├── Procfile                 # Gunicorn start command
+├── vercel.json              # Vercel build + rewrite rules
 ├── .env.example            # Environment variables template
 ├── .gitignore              # Git ignore rules
+├── init_db.py               # Schema init + additive sync + upload migration
 ├── create_teacher.py       # CLI tool for teacher account creation
 ├── run.py                  # Application entry point
 ├── manifest.json           # PWA metadata
 └── sw.js                   # Service worker
 ```
+
+> Uploads are stored in `instance/uploads` (configurable via `UPLOAD_FOLDER`). The old
+> `app/static/uploads` folder is only read as a legacy fallback for files created before
+> the move, and `/static/uploads/...` always returns 404.
 
 ---
 
@@ -272,21 +285,23 @@ Amit Academy/
 - `name`
 - `password_hash`
 - `role` (teacher / student)
+- `avatar` (Optional)
 - `created_at`, `updated_at` (Timestamps)
 
 ### Subject
 - `id` (Primary Key)
-- `name` (Unique)
-- `slug` (URL-friendly, auto-generated)
+- `name`
+- `slug` (URL-friendly, unique; duplicates get `-2`, `-3`, …)
 - `description` (Optional)
 - `icon` (Bootstrap icon class)
+- `created_by` (Foreign Key → User, required)
 - `created_at`, `updated_at`
 
 ### Content
 - `id` (Primary Key)
-- `title`, `slug`, `description`
+- `title`, `slug` (unique), `description`
 - `body_html` (Sanitized HTML)
-- `content_type` (notes / video_lesson / pdf_resource)
+- `content_type` (notes / study_material / pdf_resource / video_lesson / announcement / reference_link)
 - `status` (draft / published)
 - `subject_id` (Foreign Key → Subject)
 - `created_by` (Foreign Key → User)
@@ -299,68 +314,70 @@ Amit Academy/
 - `title`, `body`
 - `is_published` (Boolean)
 - `created_by` (Foreign Key → User)
-- `created_at`, `published_at` (Timestamps)
+- `created_at`, `published_at`, `updated_at` (Timestamps)
 
 ### UploadedFile
 - `id` (Primary Key)
 - `original_name` (Filename user uploaded)
-- `stored_name` (UUID-based storage name)
+- `stored_name` (UUID-based storage name, unique)
 - `mime_type`
 - `size_bytes`
+- `uploaded_by` (Foreign Key → User)
+- `content_id` (Foreign Key → Content, nullable, cascades on delete)
 - `created_at` (Timestamp)
 
 ---
 
 ## API Endpoints
 
-### Public Routes
+### Public & App Routes
 - `GET /` — Redirects to login (or dashboard if logged in)
+- `GET /offline` — Offline fallback page for the service worker
+- `GET /healthz` — Deployment smoke test (`{"status","database","app"}`, 200 or 503)
+- `GET /manifest.json`, `GET /sw.js` — PWA metadata and service worker
 - `GET /auth/login` — Login page
-- `POST /auth/login` — Submit login
+- `POST /auth/login` — Submit login (honours a same-site `next`)
 - `GET /auth/register` — Register page
 - `POST /auth/register` — Submit registration
-- `POST /auth/logout` — Logout
+- `POST /auth/logout` — Logout (`GET /auth/logout` returns 405)
 
 ### Teacher Routes
 - `GET /teacher/dashboard` — Dashboard
 - `GET /teacher/subjects` — List subjects
-- `POST /teacher/subjects` — Create subject
-- `GET /teacher/subjects/<id>/edit` — Edit subject
-- `POST /teacher/subjects/<id>/edit` — Update subject
-- `GET /teacher/content` — List content
-- `GET /teacher/content/create` — Create content form
-- `POST /teacher/content/create` — Create content
-- `GET /teacher/content/<id>/edit` — Edit content
-- `POST /teacher/content/<id>/edit` — Update content
+- `GET|POST /teacher/subjects/create` — Create subject
+- `GET|POST /teacher/subjects/<id>/edit` — Edit subject
+- `POST /teacher/subjects/<id>/delete` — Delete subject (only when empty)
+- `GET /teacher/content` — List content (supports `q`, `status`, `subject`, `type`, `sort`)
+- `GET|POST /teacher/content/create` — Create content
+- `GET|POST /teacher/content/<id>/edit` — Edit content
 - `GET /teacher/content/<id>/preview` — Preview content
 - `POST /teacher/content/<id>/toggle` — Publish/unpublish
-- `POST /teacher/content/<id>/delete` — Delete content
+- `POST /teacher/content/<id>/delete` — Delete content and its files
 - `GET /teacher/announcements` — List announcements
-- `GET /teacher/announcements/create` — Create announcement
-- `POST /teacher/announcements/create` — Create announcement
-- `GET /teacher/announcements/<id>/edit` — Edit announcement
-- `POST /teacher/announcements/<id>/edit` — Update announcement
+- `GET|POST /teacher/announcements/create` — Create announcement
+- `GET|POST /teacher/announcements/<id>/edit` — Edit announcement
 - `POST /teacher/announcements/<id>/delete` — Delete announcement
-- `GET /teacher/students` — List students
+- `GET /teacher/students` — List/search students
 - `GET /teacher/files` — List files
 - `POST /teacher/files/<id>/delete` — Delete file
-- `GET /teacher/profile` — Profile page
-- `POST /teacher/profile` — Update profile/password
+- `GET|POST /teacher/profile` — Profile page and updates
 
 ### Student Routes
 - `GET /student/dashboard` — Dashboard
 - `GET /student/subjects` — List subjects
 - `GET /student/subjects/<slug>` — Subject detail with content
-- `GET /student/content` — Content library
+- `GET /student/content` — Content library (`q`, `subject`, `type`, `sort`)
 - `GET /student/content/<slug>` — Read content
-- `GET /student/content/<slug>/download` — Download attachment
+- `GET /student/content/<slug>/download` — Download attachment (redirects to `/files`)
 - `GET /student/announcements` — List announcements
 - `GET /student/search` — Search content
-- `GET /student/profile` — Profile page
-- `POST /student/profile` — Update profile/password
+- `GET|POST /student/profile` — Profile page and updates
 
-### API Routes
-- `GET /api/stats` — Dashboard statistics (JSON)
+### File & API Routes
+- `GET /files/<stored_name>` — Serve an upload (login required, publication-checked)
+- `GET /files/<id>/download` — Download an upload by id
+- `GET /api/stats` — Dashboard statistics (JSON, teacher only)
+- `GET /api/content-types` — Content type labels (JSON, any signed-in user)
 
 ---
 
@@ -385,9 +402,12 @@ request to the Flask application entry point.
 4. Import `RajenderMohanVerma/ClassNest` into Vercel.
 5. Add these Vercel environment variables for the Production environment:
    `DATABASE_URL`, `SECRET_KEY`, `FLASK_ENV=production`, `FLASK_DEBUG=0`,
-   `APP_NAME`, `APP_TAGLINE`, and `MAX_UPLOAD_MB`.
+   `APP_NAME`, `APP_TAGLINE`, `SESSION_HOURS`, `MAX_UPLOAD_MB`,
+   `RATE_LIMIT_STORAGE_URI`, `RATE_LIMIT_DEFAULT`.
+   `UPLOAD_FOLDER` is forced to `/tmp/classnest-uploads` on Vercel, so uploaded
+   files are ephemeral — move them to Supabase Storage for persistence.
 6. Deploy the `main` branch and test login, registration, teacher CRUD, student
-   browsing, search, and `/api/stats`.
+   browsing, search, `/api/stats`, and `/healthz`.
 
 Vercel's local filesystem is not durable. The current local upload folder is
 appropriate for development only. Use Vercel Blob, Cloudinary, S3, or
@@ -449,12 +469,29 @@ for Flask-Limiter when running multiple instances.
 
 - **CSRF**: All forms include CSRF tokens; globally enabled via Flask-WTF
 - **SQL Injection**: All queries use SQLAlchemy ORM (no string interpolation)
-- **XSS**: All user HTML content is sanitized with Bleach
-- **Rate Limiting**: Login/register endpoints limited to 10 and 5 attempts per minute
-- **Password Hashing**: Werkzeug's `generate_password_hash` uses bcrypt with salt
-- **Session Cookies**: Set to HTTP-only and SameSite="Lax" for production HTTPS
-- **File Uploads**: MIME type validation, UUID storage, no direct execution
+- **XSS**: User HTML is sanitized with Bleach; unsafe elements are removed with their content and inline `style` attributes are stripped
+- **Rate Limiting**: Login 10/min, register 5/min, and a 300/hour global default (shared storage via `RATE_LIMIT_STORAGE_URI`)
+- **Password Hashing**: Werkzeug's `generate_password_hash` uses salted scrypt
+- **Session Cookies**: HTTP-only and SameSite="Lax"; `Secure` in production
+- **File Uploads**: Extension, MIME, and magic-byte validation; UUID storage outside `app/static`; served only through `/files` behind a login and publication check
+- **Cache Control**: Authenticated pages send `Cache-Control: no-store`
+- **Response Headers**: CSP, `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS in production
 - **Role-Based Access**: Server-side @teacher_required and @student_required decorators enforce permissions
+- **Startup Validation**: Production refuses to boot without a real `SECRET_KEY` and a PostgreSQL `DATABASE_URL`
+
+---
+
+## Testing
+
+```bash
+pip install -r requirements-dev.txt
+pytest            # 77 tests
+pytest -q         # quiet output
+```
+
+`TestingConfig` gives each test run an in-memory SQLite database and a temporary
+upload directory, so tests never touch the Supabase instance. Rate limiting and
+CSRF are disabled there and are verified manually.
 
 ---
 
@@ -479,7 +516,11 @@ pip install psycopg2-binary
 **Solution**: PWA requires HTTPS in production. On localhost, it works without HTTPS.
 
 ### Upload Size Exceeded
-**Solution**: Increase `MAX_CONTENT_LENGTH` in config.py and `MAX_UPLOAD_MB` in `.env`
+**Solution**: Raise `MAX_UPLOAD_MB` in `.env`; `MAX_CONTENT_LENGTH` is derived from it automatically.
+
+### File returns 404 on `/files/...`
+**Solution**: Uploads must live under `UPLOAD_FOLDER`. Run `python init_db.py` once to move
+files out of the old `app/static/uploads` folder into the current upload directory.
 
 ---
 
@@ -490,6 +531,11 @@ pip install psycopg2-binary
 export FLASK_ENV=development
 export FLASK_DEBUG=true
 python run.py
+```
+
+### Change the Port
+```bash
+PORT=8000 python run.py          # Windows PowerShell: $env:PORT=8000
 ```
 
 ### Database Shell
@@ -516,23 +562,27 @@ from app.models import User, Subject, Content
 
 app = create_app()
 with app.app_context():
-    # Create subjects
-    math = Subject(name="Mathematics", slug="mathematics", icon="bi-calculator")
-    db.session.add_all([math])
+    teacher = User(name="Teacher", email="teacher@example.com", role="teacher")
+    teacher.set_password("teacherpass")
+    db.session.add(teacher)
     db.session.commit()
-    
-    # Create content
-    # ... etc
+
+    math = Subject(name="Mathematics", slug="mathematics", icon="bi-calculator", created_by=teacher.id)
+    db.session.add(math)
+    db.session.commit()
+
+    # ... more content
 ```
 
 ---
 
 ## Performance Optimization
 
-- **Database Indexing**: Configured on common query fields (email, slug, status)
-- **Pagination**: Content lists paginated at 12-20 items per page
-- **Caching**: Service worker caches static assets (CSS, JS, icons)
-- **Lazy Loading**: Images use lazy-load technique in newer browsers
+- **Database Indexing**: Email, slugs, status, topic, `published_at`, `is_published`, `size_bytes`, `content_id`; unique indexes on `content.slug` and `subjects.slug`
+- **Pagination**: Content 12/page, teacher files 20/page, teacher students 20/page, teacher announcements 20/page, student announcements 10/page; filters and sort are preserved across pages
+- **Connection Pooling**: `pool_pre_ping` and `pool_recycle=280` keep Supabase connections healthy
+- **Caching**: The service worker caches static assets only; HTML is never cached
+- **Lazy Loading**: Images use native lazy loading
 - **Query Optimization**: Uses SQLAlchemy `.filter()` chains efficiently
 
 ---
@@ -544,10 +594,10 @@ with app.app_context():
 - [ ] Discussion forums or comments on content
 - [ ] Student progress tracking and certificates
 - [ ] Real-time notifications (WebSockets)
-- [ ] Dark mode toggle
 - [ ] Multilingual support (i18n)
 - [ ] Content versioning and rollback
 - [ ] Advanced analytics and reporting
+- [ ] Durable object storage (Supabase Storage) instead of local disk
 - [ ] Mobile native app (React Native / Flutter)
 
 ---

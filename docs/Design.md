@@ -40,8 +40,8 @@ and related content.
 
 - Flash alerts for success, warning, info, and error messages
 - Empty states with an explanation and next action
-- 403, 404, and 500 pages
-- Responsive sidebar behavior on small screens
+- 400, 403, 404, 413, 429, and 500 pages built on `errors/error.html`
+- Responsive sidebar behavior on small screens (drawer with overlay, Escape to close)
 - Form error and validation messaging
 
 ## Visual system
@@ -52,39 +52,59 @@ in `app/static/css/pages.css`.
 
 The implemented visual language includes:
 
-- Indigo primary color and slate neutrals
-- Green success, amber warning, red error, and blue information states
-- System font stack for fast loading
+- Indigo primary color (`#4F46E5`) and slate neutrals
+- Emerald success, amber warning, red error, and blue information states
+- Inter with a system font fallback stack
 - Consistent spacing, border-radius, shadows, and focus rings
 - Responsive content grids and readable lesson typography
+- A dark theme: `[data-theme='dark']` token overrides plus `color-scheme: dark`
 
 Do not introduce new one-off colors or spacing values when an existing token or
 component can express the design.
 
+## Theming
+
+- `app/static/js/theme.js` runs before paint, reads `classnest_theme` from
+  `localStorage`, and falls back to `prefers-color-scheme`.
+- `app/static/js/app.js` toggles the theme, persists the choice, and keeps the
+  `#themeToggle` icon in sync with `data-theme-icon`.
+- `[data-theme='dark']` in `tokens.css` overrides the color, border, and shadow
+  tokens; `components.css` sets `color-scheme: dark`.
+- The choice is applied on `<html data-theme="light|dark">`.
+
 ## Accessibility and responsive behavior
 
 - Use semantic headings, labels, buttons, and links.
+- Provide a skip link to `#main-content`.
+- Track state with `aria-current`, `aria-expanded`, and `aria-pressed`.
 - Keep visible focus indicators.
-- Maintain readable contrast for text and status badges.
-- Ensure controls remain usable at approximately 360px viewport width.
+- Maintain readable contrast for text and status badges in both themes.
+- Ensure controls remain usable at approximately 360px viewport width; touch
+  targets are at least 40px.
 - Avoid horizontal overflow in tables, cards, and reading pages.
 - Keep entered form values available after validation errors.
+- Honor `prefers-reduced-motion` by collapsing transitions to `0ms`.
 
 ## PWA behavior
 
-- `manifest.json` defines app metadata, icons, theme, and standalone display.
-- `sw.js` uses cache-first behavior for static assets and network-first
-  behavior for HTML.
-- `app/static/js/install-prompt.js` handles mobile installation guidance.
+- `manifest.json` defines app metadata, icons, theme, standalone display,
+  `orientation: "portrait"`, and a `background_color`.
+- `sw.js` uses cache-first behavior for static assets, never caches HTML, and
+  falls back to the precached `/offline` page when a navigation fails.
+- `app/static/js/install-prompt.js` handles mobile installation guidance with a
+  7-day dismissal memory and a once-per-session display gate.
 - HTTPS is required for production service-worker installation.
 
 ## Design QA checklist
 
 - [ ] Test at mobile, tablet, desktop, and wide desktop widths.
 - [ ] Test keyboard navigation and focus visibility.
-- [ ] Test empty, validation, forbidden, not-found, and server-error states.
+- [ ] Test light and dark themes for contrast and readable status colors.
+- [ ] Test empty, validation, forbidden, not-found, too-large, rate-limited, and
+      server-error states.
 - [ ] Test teacher and student navigation independently.
 - [ ] Confirm the service worker does not cache authenticated form responses.
+- [ ] Confirm `/offline` renders correctly from the service-worker cache.
 
 ## Change record
 
@@ -92,3 +112,4 @@ component can express the design.
 |------|--------|
 | 2026-10-03 | Replaced the stale product identity and framework assumptions with the implemented ClassNest UI system |
 | 2026-10-03 | Documented template shells, CSS token files, responsive behavior, and PWA design |
+| 2026-10-03 | Added dark mode, the offline page, extended error states, skip link, ARIA state, and reduced-motion rules |

@@ -1,5 +1,3 @@
-from datetime import datetime, timezone
-
 from flask import (Blueprint, abort, flash, redirect, render_template,
                    request, session, url_for)
 

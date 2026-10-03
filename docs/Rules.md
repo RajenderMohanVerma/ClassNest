@@ -23,21 +23,38 @@
 
 - Enforce authorization on the server for every teacher/student route.
 - Never allow public registration to assign the teacher role.
-- Hash passwords with Werkzeug; never store plaintext passwords.
-- Keep CSRF protection enabled for browser form mutations.
-- Sanitize user-authored HTML before using the `safe` rendering path.
-- Validate both extension and MIME type for uploaded files.
+- Hash passwords with Werkzeug (salted scrypt); never store plaintext passwords.
+- Keep CSRF protection enabled for browser form mutations; logout is POST-only.
+- Sanitize user-authored HTML before using the `safe` rendering path: allowlisted
+  tags only, `script/style/iframe/object/embed/form` content removed, inline
+  `style` attributes stripped, comments stripped.
+- Validate uploads on three layers: extension allowlist (no SVG), client MIME
+  allowlist, and content/magic-byte signature; reject empty files and verify
+  images when Pillow is available.
 - Generate UUID storage names and never trust user-provided paths.
-- Use a strong `SECRET_KEY` and secure cookies in production.
-- Use Supabase PostgreSQL in every environment.
-- Use Redis-backed rate limiting for multiple production instances.
+- Keep uploads outside `app/static`; `/static/uploads/*` must return 404.
+- Deliver files only through `/files/...` behind a login check and a publication
+  check for students.
+- Reject open redirects: `next` targets must be same-site relative paths and must
+  not target `/auth/*`.
+- Send security response headers (`X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `Permissions-Policy`, CSP, HSTS in production) and
+  `Cache-Control: no-store` on authenticated pages.
+- Use a strong `SECRET_KEY` and secure cookies in production; refuse to start
+  production with the default key.
+- Use Supabase PostgreSQL in every environment except the isolated test suite.
+- Use shared rate-limit storage (`RATE_LIMIT_STORAGE_URI`) for multiple
+  production instances; the default limit is 300 requests per hour plus per-route
+  limits on login and registration.
 - Never log secrets, passwords, session values, or database URLs.
 
 ## Database and storage rules
 
 - Use UTC-aware timestamps.
 - Keep database schema changes in migrations once the migration workflow is
-  introduced.
+  introduced; until then `init_db.py` may only add tables, columns, and indexes
+  additively.
+- Keep `subjects.slug` and `content.slug` unique.
 - Store upload metadata in the database and large objects in persistent object
   storage for production.
 - Do not treat Vercel/serverless local disk as durable storage.
@@ -50,7 +67,7 @@ A change is complete only when:
 1. The requirement is documented.
 2. Implementation is complete and consistent with existing patterns.
 3. Relevant success, empty, validation, denied, and error states are handled.
-4. Targeted tests or checks pass.
+4. Targeted tests or checks pass (`pytest` for behavior changes).
 5. `Task.md` and `Memory.md` reflect the new state.
 6. No secrets or runtime data are included in the commit.
 
@@ -60,3 +77,4 @@ A change is complete only when:
 |------|--------|
 | 2026-10-03 | Replaced stale Next.js/payment rules with rules for the implemented Flask MVP |
 | 2026-10-03 | Added server-side security, storage, migration, and documentation requirements |
+| 2026-10-03 | Added sanitizer, upload, file-delivery, redirect, header, caching, and slug rules now enforced in code |

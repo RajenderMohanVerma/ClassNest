@@ -2,10 +2,10 @@
 
 ## ✅ Completed: Full Production-Ready Flask Learning Portal
 
-**Date**: October 3, 2024  
-**Total Files Created**: 51  
-**Code Lines**: ~15,000+  
+**Date**: October 3, 2026  
+**Total Files Created**: 90  
 **Build Time**: ~2 hours  
+**Verification**: 77 automated tests passing (`pytest`)  
 
 ---
 
@@ -23,57 +23,74 @@
 - ✅ **Announcement Model** — Published/draft announcements
 - ✅ **UploadedFile Model** — Secure file storage tracking
 
-### Routes & Blueprints (5 Blueprints)
+### Routes & Blueprints (6 Blueprints + 3 App Routes)
 
 #### Public Routes (`routes/public.py`)
 - `GET /` — Index redirect
+- `GET /offline` — Offline fallback page for the service worker
 
 #### Authentication (`routes/auth.py`)
-- `GET/POST /auth/login` — Login with rate limiting (10/min)
+- `GET/POST /auth/login` — Login with rate limiting (10/min) and safe `next` redirect
 - `GET/POST /auth/register` — Student registration (5/min)
-- `POST /auth/logout` — Session termination
+- `POST /auth/logout` — Session termination (`GET` returns 405)
 
-#### Teacher Routes (`routes/teacher.py`) - 22 Routes
+#### Teacher Routes (`routes/teacher.py`) - 19 Routes
 - **Dashboard**: Stats and activity overview
 - **Content Management**: Create, edit, publish, preview, delete, toggle content
 - **Subject Management**: CRUD operations on subjects
-- **Announcements**: Create, edit, delete announcements
-- **Student Overview**: View all registered students
-- **File Management**: Upload, delete file attachments
+- **Announcements**: Create, edit, publish/unpublish, delete announcements
+- **Student Overview**: View and search registered students
+- **File Management**: List uploads, delete file attachments
 - **Profile**: Update profile, change password
 
-#### Student Routes (`routes/student.py`) - 10 Routes
+#### Student Routes (`routes/student.py`) - 9 Routes
 - **Dashboard**: Welcome, recent content, subjects, announcements
-- **Subjects**: Browse all subjects with lesson counts
-- **Content Library**: Search, filter by subject/type
+- **Subjects**: Browse all subjects with published lesson counts
+- **Content Library**: Search, filter by subject/type, sort, paginate
 - **Content Reading**: View full content with attachments
 - **Announcements**: View published announcements
 - **Profile**: Update profile, change password
-- **Search**: Full-text search across content
+- **Search**: Full-text search across title, topic, and body
+
+#### File Delivery (`routes/files.py`)
+- `GET /files/<stored_name>` — Login-required file serving with publication checks
+- `GET /files/<id>/download` — Download by upload id
 
 #### API Routes (`routes/api.py`)
 - `GET /api/stats` — Dashboard statistics (JSON)
+- `GET /api/content-types` — Content type labels (JSON)
 
-### Templates (30 Templates)
+#### App-Level Routes (`app/__init__.py`)
+- `GET /healthz` — Deployment smoke test with database check (200/503)
+- `GET /manifest.json` — PWA manifest
+- `GET /sw.js` — Service worker
+
+### Templates (36 Templates)
 
 #### Base & Partials
 - `base.html` — Master template with PWA meta tags
 - `alerts.html` — Flash message renderer
 - `teacher_sidebar.html` — Teacher navigation with 8 menu items
 - `student_sidebar.html` — Student navigation with 6 menu items
-- `topbar.html` — Header with user menu and branding
-- `pagination.html` — Paginated list controls
+- `topbar.html` — Header with user menu, theme toggle, and branding
+- `content_card.html` — Shared content card for dashboards and lists
+- `pagination.html` — Paginated list controls (preserves filters and sort)
 
-#### Public Pages (2)
+#### Public Pages (3)
 - `public/login.html` — Login form with email/password
 - `public/register.html` — Student registration form
+- `public/offline.html` — Offline fallback page
 
-#### Error Pages (3)
-- `errors/404.html` — Not found page
+#### Error Pages (7)
+- `errors/error.html` — Shared error shell used by all error pages
+- `errors/400.html` — Bad request page
 - `errors/403.html` — Forbidden access page
+- `errors/404.html` — Not found page
+- `errors/413.html` — Upload too large page
+- `errors/429.html` — Rate limited page
 - `errors/500.html` — Server error page
 
-#### Teacher Pages (7)
+#### Teacher Pages (11)
 - `teacher/dashboard.html` — Overview with stats, recent activity, announcements
 - `teacher/subjects.html` — Subject list with CRUD buttons
 - `teacher/subject_form.html` — Subject create/edit form
@@ -99,14 +116,15 @@
 ### Static Assets
 
 #### CSS (3 Files, ~22KB)
-- **tokens.css** — Design tokens: colors, typography, spacing, shadows, transitions
+- **tokens.css** — Design tokens: colors (light + dark), typography, spacing, shadows, transitions
 - **components.css** — UI library: sidebar, topbar, cards, buttons, forms, tables, badges, alerts, grids, search
 - **pages.css** — Page-specific styles: auth, dashboards, empty states, reading content
 
-#### JavaScript (3 Files, ~9KB)
-- **app.js** — Sidebar toggle, alerts, password visibility, delete confirmation, SW registration
+#### JavaScript (3 Files in `app/static/js`)
+- **app.js** — Sidebar toggle, alerts, password visibility, delete confirmation, theme sync, SW registration
+- **theme.js** — Pre-paint dark-mode bootstrap using `localStorage` and `prefers-color-scheme`
 - **install-prompt.js** — PWA install prompt with mobile detection, iOS/Android support
-- **sw.js** — Service worker with cache-first/network-first strategies
+- `sw.js` (project root) — Service worker with cache-first static assets and offline navigation fallback
 
 #### Icons (3 Files)
 - `icons/icon-192.png` — PWA icon for mobile home screen
@@ -119,33 +137,46 @@
 ### Services & Utilities
 
 #### Security & Upload (`services/`)
-- **uploads.py** — Secure file upload with MIME validation, UUID storage
-- **sanitizer.py** — HTML bleach sanitization with safe tag whitelist
-- **decorators.py** — @login_required, @teacher_required, @student_required
+- **uploads.py** — Extension, MIME, and magic-byte validation; UUID storage outside `app/static`; legacy-folder fallback
+- **sanitizer.py** — HTML bleach sanitization with safe tag whitelist and unsafe-block removal
+- **decorators.py** — @login_required, @teacher_required, @student_required, safe_next_url
+- **accounts.py** — Shared profile update and password change logic
+- **pagination.py** — Filter-preserving pagination query arguments
 
 ### Configuration & Documentation
 
 #### Setup Files
 - `.env.example` — Environment variables template
 - `.gitignore` — Python and Flask ignores
-- `requirements.txt` — 11 dependencies pinned to versions
+- `requirements.txt` — 12 dependencies pinned to versions
+- `requirements-dev.txt` — Test dependencies (pytest)
 - `run.py` — Application entry point
+- `Procfile` — Gunicorn start command
+- `vercel.json` — Vercel build and rewrite configuration
+- `api/index.py` — Vercel serverless entry point
 - `create_teacher.py` — CLI tool for teacher account creation (secure prompts)
-- `init_db.py` — Database initialization script
+- `init_db.py` — Database initialization, additive schema sync, legacy upload migration
+- `tests/` — 77 automated tests (SQLite, isolated from Supabase)
 
-#### Documentation (2 Files)
-- **README.md** (16,000+ chars) — Complete guide with setup, usage, API docs, deployment, troubleshooting
-- **QUICKSTART.md** (2,400+ chars) — Fast 5-minute setup guide
+#### Documentation (11 Files)
+- **README.md** — Complete guide with setup, usage, API docs, deployment, troubleshooting
+- **QUICKSTART.md** — Fast 5-minute setup guide
+- **INDEX.md** — Repository map and navigation
+- **CHECKLIST.md** — Build and verification status
+- **BUILD_SUMMARY.md** — This file
+- **docs/PRD.md**, **docs/Architecture.md**, **docs/Design.md**, **docs/Task.md**, **docs/Rules.md**, **docs/Memory.md**
 
 ---
 
 ## 🔐 Security Features Implemented
 
 ✅ **Authentication & Authorization**
-- Password hashing with Werkzeug (bcrypt internally)
-- Session-based authentication with 8-hour expiry
+- Password hashing with Werkzeug (salted scrypt)
+- Session-based authentication with 8-hour expiry when "remember me" is used
+- POST-only logout (CSRF-protected)
 - Role-based access control (teacher vs student)
-- Rate limiting on login (10/min) and register (5/min)
+- Rate limiting on login (10/min), register (5/min), and a 300/hour global default
+- `safe_next_url` blocks open redirects
 
 ✅ **CSRF Protection**
 - Flask-WTF global CSRF protection
@@ -153,16 +184,20 @@
 - SameSite="Lax" cookies
 
 ✅ **Input Validation & Sanitization**
-- Bleach HTML sanitizer with tag whitelist
-- File MIME type validation (not just extension)
+- Bleach HTML sanitizer with tag whitelist; `script/style/iframe/object/embed/form` content removed
+- File extension, MIME, and magic-byte validation (SVG never allowed)
 - URL slug validation
 - Email validation
 
 ✅ **Data Protection**
 - SQLAlchemy ORM (no SQL injection)
 - Files stored with UUIDs (no directory traversal)
-- MAX_CONTENT_LENGTH upload limits
+- MAX_CONTENT_LENGTH upload limits derived from MAX_UPLOAD_MB
 - HTTP-only session cookies
+- Uploads stored outside `app/static`; `/static/uploads/*` returns 404
+- Files served only through `/files/...` behind login and publication checks
+- `Cache-Control: no-store` on authenticated pages
+- Security response headers: CSP, `X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`, HSTS in production
 
 ✅ **Session Security**
 - SECURE cookie flag in production (HTTPS only)
@@ -183,17 +218,26 @@
 
 ✅ **Responsive Design**
 - Mobile-first approach
-- Breakpoints: 768px (tablet), 1024px (desktop)
-- Sidebar collapses on mobile with overlay
+- Breakpoints: 1080px, 768px, 420px (max-width), content capped at 1320px
+- Sidebar collapses to a drawer with overlay and Escape-to-close
 - Grid layouts adapt (1-4 columns based on viewport)
-- Touch-friendly buttons and spacing
+- Touch-friendly buttons and spacing (40px+ targets)
 
 ✅ **Accessibility**
+- Skip link to `#main-content`
+- `aria-current`, `aria-expanded`, `aria-pressed` state on navigation and toggles
 - Focus indicators on all interactive elements
 - Semantic HTML (buttons, links, forms, headings)
-- Color contrast meets WCAG AA standards
+- Color contrast meets WCAG AA standards in light and dark themes
 - Alt text on images
 - Form labels associated with inputs
+- `prefers-reduced-motion` disables transitions
+
+✅ **Dark Mode**
+- Manual light/dark toggle with `prefers-color-scheme` default
+- Choice persisted in `localStorage` (`classnest_theme`)
+- Pre-paint bootstrap script avoids a flash of the wrong theme
+- Dark token overrides in `tokens.css`, `color-scheme: dark` in `components.css`
 
 ✅ **PWA Features**
 - Installable on mobile home screen
@@ -263,7 +307,8 @@ Indexes: created_at
 - Migration commands documented
 
 ✅ **Error Handling**
-- Custom 404/403/500 error pages
+- Custom 400/403/404/413/429/500 error pages built on one shared shell
+- JSON error responses for `/api/` clients
 - Flash messages for user feedback
 - Form validation with error display
 - Graceful fallbacks
@@ -357,16 +402,15 @@ Visit `http://localhost:5000`
 
 ## 📦 Deliverables
 
-**Total Files**: 51
-- **Python Files**: 23 (models, routes, services, config)
-- **Templates**: 30 (Jinja2 HTML)
-- **Static Assets**: 12 (CSS, JS, icons)
-- **Configuration**: 6 (.env, manifest, etc.)
-- **Documentation**: 2 (README, QUICKSTART)
+**Total Files**: 90
+- **Python Files**: 22 (models, routes, services, config, tests)
+- **Templates**: 36 (Jinja2 HTML)
+- **Static Assets**: 12 (CSS, JS, icons, service worker, manifest)
+- **Configuration**: 8 (.env.example, requirements, Procfile, vercel.json, api entry, gitignore)
+- **Documentation**: 11 (README, QUICKSTART, INDEX, CHECKLIST, BUILD_SUMMARY, docs/*.md)
+- **Tests**: 77 pytest tests (auth, roles, CRUD, uploads, search, pagination, errors)
 
-**Total Size**: ~350 KB (excluding venv)
-**Database**: Supabase PostgreSQL, initialized with `python init_db.py`
-**Code Quality**: Production-ready with best practices
+**Code Quality**: Production-ready with best practices, verified by an automated test suite
 
 ---
 

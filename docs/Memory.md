@@ -7,34 +7,49 @@
 - Repository: `https://github.com/RajenderMohanVerma/ClassNest`
 - Branch: `main`
 - Vercel entry point: `api/index.py`
-- Vercel configuration: `vercel.json`
+- Vercel configuration: `vercel.json` (build + rewrite to the Flask function)
 - Database provider: Supabase PostgreSQL
 - Runtime: Flask app factory with Jinja2 templates
+- Upload storage: `instance/uploads` by default, `/tmp/classnest-uploads` on Vercel
 
 ## Implemented decisions
 
-- Use Flask blueprints for public, authentication, teacher, student, and API
-  concerns.
+- Use Flask blueprints for public, authentication, teacher, student, files, and
+  API concerns.
 - Use SQLAlchemy models rather than raw SQL.
 - Keep teacher role assignment out of ordinary public registration.
-- Use session authentication with role decorators.
-- Use Werkzeug password hashing.
+- Use session authentication with role decorators and POST-only logout.
+- Use Werkzeug password hashing (salted scrypt).
 - Enable global CSRF protection for mutating forms.
-- Sanitize authored HTML with Bleach before rendering it as safe content.
-- Validate uploaded files by extension and MIME type and store UUID filenames.
-- Require a PostgreSQL `DATABASE_URL` in every environment.
+- Sanitize authored HTML with Bleach before rendering it as safe content, and
+  remove unsafe element content entirely.
+- Validate uploaded files by extension, MIME type, and content signature; reject
+  SVG and empty files; store UUID filenames outside `app/static`.
+- Serve files only through `/files/...` behind login and publication checks, and
+  return 404 for `/static/uploads/*`.
+- Send security response headers and disable caching for authenticated pages.
+- Reject open redirects through `safe_next_url`.
+- Require a PostgreSQL `DATABASE_URL` outside the isolated test suite.
 - Keep the UI server-rendered and progressively enhanced with vanilla JS.
+- Support a light/dark theme with a pre-paint bootstrap script and
+  `prefers-color-scheme` default.
 
 ## Current feature inventory
 
-- Authentication: login, student registration, logout
-- Teacher: dashboard, subjects CRUD, content CRUD, preview, publish toggle,
-  announcements CRUD, student list, file list/delete, profile
-- Student: dashboard, subjects, content library, content detail, download,
-  announcements, search, profile
-- API: statistics endpoint at `/api/stats`
-- PWA: manifest, service worker, install prompt, responsive UI
-- Error handling: 403, 404, and 500 templates
+- Authentication: login with validated `next`, student registration, POST logout
+- Teacher: dashboard, subjects CRUD, content CRUD with unique slugs, preview,
+  publish toggle, list filters/search/sort/pagination, announcements CRUD,
+  student search, file list/delete, profile
+- Student: dashboard, subjects with published counts, content library with
+  filters/sort/pagination, content detail, download through `/files`, search over
+  title/topic/body, announcements, profile
+- Files: authenticated serving by stored name and by upload id
+- API: statistics at `/api/stats`, content types at `/api/content-types`
+- App routes: `/healthz` (database probe), `/offline`, `/manifest.json`, `/sw.js`
+- PWA: manifest, service worker with offline fallback, install prompt, responsive UI
+- Theming: light and dark design tokens with a persistent toggle
+- Error handling: 400, 403, 404, 413, 429, and 500 templates (JSON for API clients)
+- Tests: 77 pytest tests in `tests/` against in-memory SQLite
 
 ## Known gaps and follow-up decisions
 
@@ -42,9 +57,11 @@
 - Complete the Vercel project import, environment variables, and production
   smoke test.
 - Move file objects from local disk to persistent object storage for Vercel or
-  other serverless hosting.
-- Configure Redis-backed Flask-Limiter storage for multiple instances.
-- Add automated route/model tests and deployment smoke tests.
+  other serverless hosting (currently `/tmp/classnest-uploads`).
+- Configure shared Flask-Limiter storage (`RATE_LIMIT_STORAGE_URI`) for multiple
+  instances.
+- Add deployment smoke tests; CSRF and rate limiting are disabled in
+  `TestingConfig` and are verified manually.
 - Add email delivery only when password reset or verification is approved.
 - Add background jobs, payments, progress tracking, or notifications only as
   separately scoped features.
@@ -64,3 +81,4 @@
 | 2026-10-03 | Reconciled project memory with the implemented Flask application |
 | 2026-10-03 | Recorded current features, GitHub state, deployment gaps, and follow-up work |
 | 2026-10-03 | Added the Vercel entry point and deployment configuration |
+| 2026-10-03 | Recorded dark mode, offline page, health check, files blueprint, unique slugs, `published_at`, filter-preserving pagination, upload hardening, security headers, and the 77-test suite |

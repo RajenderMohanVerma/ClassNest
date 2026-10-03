@@ -84,36 +84,46 @@ ClassNest/
 │   │   ├── announcement.py    ← News & updates
 │   │   └── uploaded_file.py   ← Attachments & resources
 │   │
-│   ├── routes/                ← API endpoints (44 routes)
-│   │   ├── public.py          ← Public pages (1 route)
-│   │   ├── auth.py            ← Login/register (6 routes)
-│   │   ├── teacher.py         ← Teacher dashboard (22 routes)
-│   │   ├── student.py         ← Student portal (10 routes)
-│   │   └── api.py             ← JSON endpoints (1 route)
+│   ├── routes/                ← API endpoints (40 routes)
+│   │   ├── public.py          ← Public pages + offline page (2 routes)
+│   │   ├── auth.py            ← Login/register/logout (3 routes)
+│   │   ├── teacher.py         ← Teacher dashboard (19 routes)
+│   │   ├── student.py         ← Student portal (9 routes)
+│   │   ├── files.py           ← Authenticated file delivery (2 routes)
+│   │   └── api.py             ← JSON endpoints (2 routes)
 │   │
 │   ├── services/              ← Business logic
 │   │   ├── decorators.py      ← Auth decorators (@teacher_required, etc)
-│   │   ├── uploads.py         ← File upload validation
-│   │   └── sanitizer.py       ← HTML sanitization
+│   │   ├── uploads.py         ← File validation, UUID storage, deletion
+│   │   ├── sanitizer.py       ← HTML sanitization
+│   │   ├── accounts.py        ← Shared profile/password updates
+│   │   └── pagination.py      ← Filter-preserving pagination args
 │   │
-│   ├── templates/             ← Jinja2 HTML (30 files)
+│   ├── templates/             ← Jinja2 HTML (36 files)
 │   │   ├── base.html          ← Master template
 │   │   ├── partials/          ← Reusable components
 │   │   │   ├── alerts.html
 │   │   │   ├── teacher_sidebar.html
 │   │   │   ├── student_sidebar.html
 │   │   │   ├── topbar.html
+│   │   │   ├── content_card.html
 │   │   │   └── pagination.html
 │   │   ├── public/            ← Public pages
 │   │   │   ├── login.html
-│   │   │   └── register.html
+│   │   │   ├── register.html
+│   │   │   └── offline.html
 │   │   ├── errors/            ← Error pages
-│   │   │   ├── 404.html
+│   │   │   ├── error.html     ← Shared error shell
+│   │   │   ├── 400.html
 │   │   │   ├── 403.html
+│   │   │   ├── 404.html
+│   │   │   ├── 413.html
+│   │   │   ├── 429.html
 │   │   │   └── 500.html
 │   │   ├── teacher/           ← Teacher pages (11 files)
 │   │   │   ├── dashboard.html
 │   │   │   ├── subjects.html
+│   │   │   ├── subject_form.html
 │   │   │   ├── content_list.html
 │   │   │   ├── content_form.html
 │   │   │   ├── content_preview.html
@@ -134,20 +144,26 @@ ClassNest/
 │   │
 │   └── static/                ← CSS, JS, icons
 │       ├── css/
-│       │   ├── tokens.css     ← Design tokens (variables)
+│       │   ├── tokens.css     ← Design tokens (light + dark themes)
 │       │   ├── components.css ← UI library (20+ components)
 │       │   └── pages.css      ← Page-specific styles
 │       ├── js/
 │       │   ├── app.js         ← App logic & interactivity
-│       │   ├── install-prompt.js ← PWA install handler
-│       │   └── sw.js          ← Service worker (offline)
+│       │   ├── theme.js       ← Dark-mode bootstrap
+│       │   └── install-prompt.js ← PWA install handler
 │       └── icons/             ← PWA icons
 │           ├── icon-192.png
 │           ├── icon-512.png
 │           └── apple-touch-icon.png
 │
+├── 🧪 tests/                  ← Pytest suite (77 tests, SQLite)
+│   ├── conftest.py
+│   ├── test_auth.py
+│   ├── test_teacher.py
+│   └── test_student.py
+│
 └── 📊 Project Files
-    └── app/static/uploads/     ← Local-only upload staging directory
+    └── instance/uploads/      ← Upload directory (outside app/static)
 ```
 
 ---
@@ -197,28 +213,32 @@ ClassNest/
 | File | Purpose |
 |------|---------|
 | `requirements.txt` | Python package dependencies (pip install) |
+| `requirements-dev.txt` | Test dependencies (pytest) |
 | `.env.example` | Template for environment variables (copy to `.env`) |
-| `app/config.py` | Flask configuration (dev vs prod) |
+| `app/config.py` | Flask configuration (dev vs prod vs testing) |
 | `vercel.json` | Vercel build and route configuration |
+| `Procfile` | Gunicorn start command for hosts that use it |
 
 ### Application Core
 | File | Purpose | Key Sections |
 |------|---------|-------------|
-| `app/__init__.py` | Flask app factory | Blueprint registration, error handlers |
+| `app/__init__.py` | Flask app factory | Blueprint registration, error handlers, `/healthz`, security headers |
 | `app/extensions.py` | Database & auth initialization | SQLAlchemy, CSRF, Rate limiter |
 | `app/models/*` | SQLAlchemy ORM models | User, Subject, Content, Announcement, File |
-| `app/routes/*` | API endpoints (44 routes) | Public, Auth, Teacher, Student, API |
-| `app/services/*` | Business logic | Auth decorators, file validation, sanitization |
+| `app/routes/*` | API endpoints (40 routes) | Public, Auth, Teacher, Student, Files, API |
+| `app/services/*` | Business logic | Auth decorators, file validation, sanitization, accounts, pagination |
+| `tests/*` | Automated tests (77) | Auth, roles, CRUD, uploads, search, pagination, errors |
 
 ### Frontend
 | File | Purpose |
 |------|---------|
 | `app/templates/base.html` | Master HTML template (inherited by all pages) |
-| `app/templates/public/*` | Login & registration pages |
+| `app/templates/public/*` | Login, registration, and offline pages |
 | `app/templates/teacher/*` | All teacher-facing pages |
 | `app/templates/student/*` | All student-facing pages |
+| `app/templates/errors/*` | 400 / 403 / 404 / 413 / 429 / 500 pages |
 | `app/static/css/*.css` | Styling (design tokens, components, pages) |
-| `app/static/js/*.js` | Client-side logic (app, PWA, service worker) |
+| `app/static/js/*.js` | Client-side logic (app shell, theme, install prompt) |
 | `manifest.json` | PWA configuration |
 | `sw.js` | Service worker served from the application root |
 
@@ -287,7 +307,7 @@ Vercel routes all requests to `api/index.py`, which exposes the Flask app.
 1. Create a managed PostgreSQL database using Supabase.
 2. Run `python init_db.py` once with the production `DATABASE_URL`.
 3. Run `python create_teacher.py` once with the same database URL.
-4. Import the GitHub repository into Vercel.
+   `APP_NAME`, `APP_TAGLINE`, `SESSION_HOURS`, `MAX_UPLOAD_MB`, `RATE_LIMIT_STORAGE_URI`, and `RATE_LIMIT_DEFAULT` as Vercel environment variables.
 5. Add `DATABASE_URL`, `SECRET_KEY`, `FLASK_ENV=production`, `FLASK_DEBUG=0`,
    `APP_NAME`, `APP_TAGLINE`, and `MAX_UPLOAD_MB` as Vercel environment variables.
 6. Deploy from the `main` branch.
@@ -328,7 +348,7 @@ Before going to production:
 
 ### Troubleshooting
 1. Check [README.md → Troubleshooting](README.md#troubleshooting)
-2. Check [README.md → Troubleshooting](README.md#troubleshooting)
+2. Check [docs/Rules.md](docs/Rules.md) for project rules and review [docs/Memory.md](docs/Memory.md)
 3. Review error message in Flask console
 4. Check database connection and initialization
 
@@ -358,15 +378,13 @@ Before considering the project complete:
 
 | Metric | Value |
 |--------|-------|
-| Total Files | 52 |
-| Python Modules | 19 |
-| Jinja2 Templates | 30 |
+| Python Files | 22 |
+| Jinja2 Templates | 36 |
+| Project Files (tracked) | 90 |
 | Database Tables | 5 |
-| API Routes | 44 |
+| API Routes | 40 |
 | CSS Components | 20+ |
-| Lines of Code | ~15,000 |
-| Documentation | 16,000+ chars |
-| Build Time | ~2 hours |
+| Automated Tests | 77 |
 | Status | ✅ Production-Ready |
 
 ---
@@ -386,33 +404,38 @@ Before considering the project complete:
 ### Teacher Features
 ✅ Dashboard with statistics  
 ✅ Create/edit/delete subjects  
-✅ Create/publish/draft content  
-✅ Post announcements  
-✅ View enrolled students  
-✅ Upload files & resources  
-✅ Profile settings  
+✅ Create/publish/draft content with unique slugs  
+✅ Filter, sort, and paginate content lists  
+✅ Post announcements with publish/unpublish  
+✅ Search enrolled students  
+✅ Upload files & resources with signature validation  
+✅ Profile settings & password change  
 
 ### Student Features
 ✅ Dashboard with recommendations  
 ✅ Browse subjects & content  
-✅ Read formatted content  
-✅ Download resources  
-✅ Search across all content  
-✅ Filter by subject & type  
+✅ Read sanitized content  
+✅ Download resources through the authenticated `/files` route  
+✅ Search across titles, topics, and body text  
+✅ Filter by subject & type, sort by newest/oldest/title  
 ✅ View announcements  
 ✅ Profile settings  
 
 ### Technical Features
 ✅ Responsive design (mobile to desktop)  
-✅ Progressive Web App (offline, installable)  
+✅ Dark mode toggle with system preference  
+✅ Progressive Web App (offline fallback, installable)  
 ✅ CSRF protection  
-✅ Password hashing  
-✅ Rate limiting  
+✅ Password hashing (scrypt)  
+✅ Rate limiting (login, register, global default)  
 ✅ HTML sanitization  
-✅ File upload validation  
+✅ Three-layer file upload validation  
 ✅ Role-based access control  
-✅ Error handling (404, 403, 500)  
-✅ Accessibility (semantic HTML, focus states)  
+✅ Security headers, CSP, and `no-store` on private pages  
+✅ Error handling (400, 403, 404, 413, 429, 500)  
+✅ Accessibility (semantic HTML, focus states, skip link, reduced motion)  
+✅ Health check endpoint (`/healthz`)  
+✅ Automated test suite (77 tests)  
 
 ---
 

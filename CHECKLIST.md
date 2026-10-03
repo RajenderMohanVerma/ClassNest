@@ -15,13 +15,13 @@
 - [x] **§11 Content Management** — CRUD with sanitization, attachment upload, publication
 - [x] **§12 Announcements** — Create/edit/delete, publish control, student view
 - [x] **§13 UI Components** — Cards, buttons, forms, tables, badges, alerts (20+ types)
-- [x] **§14 Layout System** — Sidebar (fixed), topbar (fixed), main content (responsive)
-- [x] **§15 Responsive Design** — Mobile (360px), tablet (768px), desktop (1024px+)
-- [x] **§16 Navigation** — Sidebar with menu, topbar with user menu, breadcrumbs
+- [x] **§14 Layout System** — Sidebar (drawer on mobile), topbar (sticky), main content (responsive)
+- [x] **§15 Responsive Design** — Mobile (420px), tablet (768px), desktop (1080px+)
+- [x] **§16 Navigation** — Sidebar with menu, topbar with user menu and theme toggle
 - [x] **§17 Forms & Validation** — CSRF tokens, error display, success feedback
-- [x] **§18 Error Handling** — 404, 403, 500 pages with helpful messaging
-- [x] **§19 Accessibility** — Focus indicators, color contrast, semantic HTML
-- [x] **§20 PWA Features** — Manifest, service worker, install prompt (mobile-only)
+- [x] **§18 Error Handling** — 400, 403, 404, 413, 429, 500 pages with helpful messaging
+- [x] **§19 Accessibility** — Skip link, focus indicators, ARIA state, reduced motion, contrast
+- [x] **§20 PWA Features** — Manifest, service worker, install prompt (mobile-only), offline page
 
 **Status**: ✅ ALL 20 SECTIONS COMPLETE
 
@@ -30,35 +30,44 @@
 ## 📁 File Structure Checklist
 
 ### Application Core (19 Python files)
-- [x] `app/__init__.py` — App factory, blueprints, error handlers (95 lines)
-- [x] `app/config.py` — Configuration management (45 lines)
-- [x] `app/extensions.py` — SQLAlchemy, Migrate, CSRF, Limiter (14 lines)
+- [x] `app/__init__.py` — App factory, blueprints, error handlers, `/healthz`, security headers
+- [x] `app/config.py` — Dev/production/testing configuration with startup validation
+- [x] `app/extensions.py` — SQLAlchemy, Migrate, CSRF, Limiter
 
 ### Models (5 SQLAlchemy ORM models)
-- [x] `app/models/__init__.py` — Package init
-- [x] `app/models/user.py` — User with roles, password hashing (55 lines)
-- [x] `app/models/subject.py` — Subject with slug (30 lines)
-- [x] `app/models/content.py` — Content with status, types (60 lines)
-- [x] `app/models/announcement.py` — Announcement with publish status (30 lines)
-- [x] `app/models/uploaded_file.py` — File tracking (25 lines)
+- [x] `app/models/__init__.py` — Package init (re-exports all models)
+- [x] `app/models/user.py` — User with roles, password hashing, avatar, initials
+- [x] `app/models/subject.py` — Subject with unique slug and lesson counts
+- [x] `app/models/content.py` — Content with status, types, `published_at`, unique slug
+- [x] `app/models/announcement.py` — Announcement with publish state and `published_at`
+- [x] `app/models/uploaded_file.py` — File tracking with content linkage
 
-### Routes (5 blueprints, 44 routes total)
+### Routes (6 blueprints, 40 routes total)
 - [x] `app/routes/__init__.py` — Package init
-- [x] `app/routes/public.py` — Index (1 route)
-- [x] `app/routes/auth.py` — Login/register/logout (6 routes)
-- [x] `app/routes/teacher.py` — 22 teacher routes (450 lines)
+- [x] `app/routes/public.py` — Index and offline page (2 routes)
+- [x] `app/routes/auth.py` — Login/register/logout (3 routes, POST-only logout)
+- [x] `app/routes/teacher.py` — 19 teacher routes
   - ✅ Dashboard, subjects CRUD, content CRUD, announcements CRUD, students, files, profile
-- [x] `app/routes/student.py` — 10 student routes (150 lines)
+- [x] `app/routes/student.py` — 9 student routes
   - ✅ Dashboard, subjects, content library, content detail, search, announcements, profile
-- [x] `app/routes/api.py` — Stats endpoint (1 route)
+- [x] `app/routes/files.py` — Authenticated file serving and download (2 routes)
+- [x] `app/routes/api.py` — Stats and content-type endpoints (2 routes)
 
-### Services (3 files)
+### Services (6 files)
 - [x] `app/services/__init__.py` — Package init
-- [x] `app/services/decorators.py` — Auth decorators (40 lines)
-- [x] `app/services/uploads.py` — File upload validation (60 lines)
-- [x] `app/services/sanitizer.py` — HTML sanitization (25 lines)
+- [x] `app/services/decorators.py` — Auth decorators and `safe_next_url`
+- [x] `app/services/uploads.py` — Extension/MIME/magic-byte validation, UUID storage, legacy fallback
+- [x] `app/services/sanitizer.py` — HTML sanitization with unsafe-block removal
+- [x] `app/services/accounts.py` — Shared profile and password updates
+- [x] `app/services/pagination.py` — Filter-preserving pagination arguments
 
-### Templates (30 HTML files)
+### Tests (4 files, 77 tests)
+- [x] `tests/conftest.py` — Fixtures with in-memory SQLite and temp uploads
+- [x] `tests/test_auth.py` — Login, registration, logout, role guards, redirects
+- [x] `tests/test_teacher.py` — Subject/content/announcement CRUD, uploads, sanitization
+- [x] `tests/test_student.py` — Library filters, search, pagination, file access control
+
+### Templates (36 HTML files)
 
 #### Base & Partials (6 files)
 - [x] `app/templates/base.html` — Master template
@@ -68,16 +77,21 @@
 - [x] `app/templates/partials/topbar.html` — Header bar
 - [x] `app/templates/partials/pagination.html` — Pagination controls
 
-#### Public Pages (2 files)
+#### Public Pages (3 files)
 - [x] `app/templates/public/login.html`
 - [x] `app/templates/public/register.html`
+- [x] `app/templates/public/offline.html`
 
-#### Error Pages (3 files)
-- [x] `app/templates/errors/404.html`
+#### Error Pages (7 files)
+- [x] `app/templates/errors/error.html` — Shared error shell
+- [x] `app/templates/errors/400.html`
 - [x] `app/templates/errors/403.html`
+- [x] `app/templates/errors/404.html`
+- [x] `app/templates/errors/413.html`
+- [x] `app/templates/errors/429.html`
 - [x] `app/templates/errors/500.html`
 
-#### Teacher Pages (7 files)
+#### Teacher Pages (11 files)
 - [x] `app/templates/teacher/dashboard.html`
 - [x] `app/templates/teacher/subjects.html`
 - [x] `app/templates/teacher/subject_form.html`
@@ -100,17 +114,18 @@
 - [x] `app/templates/student/search.html`
 - [x] `app/templates/student/profile.html`
 
-### Static Assets (9 files)
+### Static Assets (12 files)
 
 #### CSS (3 files)
-- [x] `app/static/css/tokens.css` — Design system (60+ variables)
+- [x] `app/static/css/tokens.css` — Design system (60+ variables, light and dark themes)
 - [x] `app/static/css/components.css` — UI library (20+ components)
 - [x] `app/static/css/pages.css` — Page-specific styles
 
-#### JavaScript (2 files)
-- [x] `app/static/js/app.js` — App logic, sidebar toggle, SW registration
+#### JavaScript (3 files + service worker)
+- [x] `app/static/js/app.js` — App logic, sidebar toggle, theme sync, SW registration
+- [x] `app/static/js/theme.js` — Dark-mode pre-paint bootstrap
 - [x] `app/static/js/install-prompt.js` — PWA install prompt (mobile detection)
-- [x] `app/static/js/sw.js` — Service worker (cache strategies)
+- [x] `sw.js` (project root) — Service worker (cache strategies, offline fallback)
 
 #### Icons (3 files)
 - [x] `app/static/icons/icon-192.png` — PWA icon (192×192)
@@ -120,32 +135,41 @@
 #### Manifest
 - [x] `manifest.json` — PWA metadata
 
-### Configuration & Entry Points (8 files)
-- [x] `requirements.txt` — 11 dependencies (pinned versions)
+### Configuration & Entry Points (11 files)
+- [x] `requirements.txt` — 12 dependencies (pinned versions)
+- [x] `requirements-dev.txt` — Test dependencies
 - [x] `.env.example` — Environment template
-- [x] `.gitignore` — Standard Python ignores
+- [x] `.gitignore` — Standard Python ignores (includes `instance/`)
 - [x] `run.py` — Flask app runner
 - [x] `create_teacher.py` — CLI teacher account creation
-- [x] `init_db.py` — Database initialization script
+- [x] `init_db.py` — Schema init, additive sync, legacy upload migration
+- [x] `Procfile` — Gunicorn start command
+- [x] `vercel.json` — Vercel build and rewrite configuration
+- [x] `api/index.py` — Vercel serverless entry point
+- [x] `tests/` — Automated test suite (4 files, 77 tests)
 
-### Documentation (4 markdown files)
-- [x] `README.md` — Comprehensive guide (16,000+ chars)
+### Documentation (11 markdown files)
+- [x] `README.md` — Comprehensive guide
 - [x] `QUICKSTART.md` — 5-minute setup guide
+- [x] `INDEX.md` — Repository map and navigation
 - [x] `BUILD_SUMMARY.md` — Build details and coverage
 - [x] `CHECKLIST.md` — This file
+- [x] `docs/PRD.md`, `docs/Architecture.md`, `docs/Design.md`, `docs/Task.md`, `docs/Rules.md`, `docs/Memory.md`
 
-**Total Files Created**: 52 ✅
+**Total Files Created**: 90 ✅
 
 ---
 
 ## 🔒 Security Features Checklist
 
 ### Authentication & Authorization
-- [x] Werkzeug password hashing (bcrypt internally)
-- [x] Session-based authentication with 8-hour expiry
+- [x] Werkzeug password hashing (salted scrypt)
+- [x] Session-based authentication with 8-hour expiry when "remember me" is used
 - [x] Role-based access (@teacher_required, @student_required)
-- [x] Rate limiting (10/min login, 5/min register)
+- [x] Rate limiting (10/min login, 5/min register, 300/hour global default)
+- [x] POST-only logout with CSRF token
 - [x] Login/logout flows with session management
+- [x] `safe_next_url` blocks open redirects
 
 ### CSRF Protection
 - [x] Flask-WTF CSRF tokens on all forms
@@ -154,42 +178,49 @@
 - [x] Global CSRF protection initialized
 
 ### Input Validation & Sanitization
-- [x] Bleach HTML sanitizer with tag whitelist
-- [x] File MIME type validation
+- [x] Bleach HTML sanitizer with tag whitelist and unsafe-block removal
+- [x] File extension, MIME, and magic-byte validation
 - [x] Email validation with email-validator
-- [x] URL slug validation and generation
+- [x] URL slug validation and unique generation
 - [x] Form field validation in templates
 
 ### Data Protection
 - [x] SQLAlchemy ORM (no SQL injection)
 - [x] File storage with UUIDs (no path traversal)
-- [x] MAX_CONTENT_LENGTH upload limits
+- [x] MAX_CONTENT_LENGTH upload limits derived from MAX_UPLOAD_MB
 - [x] HTTP-only session cookies
 - [x] Secure cookie flag in production
+- [x] Uploads outside `app/static`; `/static/uploads/*` returns 404
+- [x] Authenticated file delivery with publication checks
+- [x] `Cache-Control: no-store` on authenticated pages
+- [x] Security headers: CSP, X-Frame-Options, nosniff, Referrer-Policy, Permissions-Policy, HSTS
 
 ### Error Handling
 - [x] Try-catch blocks in critical sections
-- [x] Custom error pages (404, 403, 500)
+- [x] Custom error pages (400, 403, 404, 413, 429, 500)
+- [x] JSON error responses for API clients
 - [x] User feedback via flash messages
 - [x] Database rollback on errors
+- [x] Health check endpoint with database probe
 
 ---
 
 ## 🎨 Design System Checklist
 
 ### Colors
-- [x] Primary: Indigo (#172554)
+- [x] Primary: Indigo (#4F46E5)
 - [x] Secondary: Slate (#475569)
-- [x] Success: Green (#22C55E)
+- [x] Success: Emerald (#10B981)
 - [x] Error: Red (#EF4444)
 - [x] Warning: Amber (#F59E0B)
-- [x] Info: Blue (#0EA5E9)
-- [x] Background: White (#FFFFFF)
-- [x] Surface: #F8FAFC
+- [x] Info: Blue (#3B82F6)
+- [x] Background: #F8FAFC
+- [x] Surface: #FFFFFF
 - [x] Border: #E2E8F0
+- [x] Dark theme overrides in `[data-theme='dark']`
 
 ### Typography
-- [x] Font stack: -apple-system, BlinkMacSystemFont, sans-serif
+- [x] Font stack: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
 - [x] Base size: 16px
 - [x] Scale: xs (12px), sm (14px), base (16px), lg (18px), xl (20px), 2xl (24px), 3xl (30px)
 - [x] Line height: 1.4 (tight), 1.5 (normal), 1.6 (relaxed), 1.8 (reading)
@@ -222,16 +253,17 @@
 - [x] Loading states (implied by success/error feedback)
 
 ### Responsive Breakpoints
-- [x] Mobile: Default (< 768px)
+- [x] Mobile: Default (< 420px)
+- [x] Small tablet: 420px and up
 - [x] Tablet: 768px and up
-- [x] Desktop: 1024px and up
-- [x] Large: 1440px and up (implicit via max-widths)
+- [x] Desktop: 1080px and up
+- [x] Content capped at 1320px (`--cn-content-max`)
 
 ### CSS Organization
-- [x] tokens.css: Variables and root styles
+- [x] tokens.css: Variables, light/dark themes, root styles
 - [x] components.css: Reusable components
 - [x] pages.css: Page-specific overrides
-- [x] No inline styles (except dynamic content)
+- [x] No inline styles (except the loading indicator in `errors/error.html`)
 
 ---
 
@@ -241,24 +273,26 @@
 - [x] App name and short name
 - [x] Start URL (/)
 - [x] Display mode (standalone)
+- [x] Orientation (portrait)
 - [x] Theme color (#172554)
 - [x] Background color
 - [x] Icons array (192×192, 512×512)
-- [x] Icon purpose (maskable for adaptive)
+- [x] Icon purpose (any maskable)
 
 ### Service Worker
 - [x] Cache-first strategy for /static/* (CSS, JS, icons)
-- [x] Network-first strategy for HTML pages
-- [x] Skip auth routes (/auth/*)
+- [x] No HTML caching; navigation falls back to the precached `/offline` page
 - [x] Skip POST requests (forms)
 - [x] Cache versioning
+- [x] `skipWaiting()` and `clients.claim()`
 - [x] Error handling (offline fallback)
 
 ### Install Prompt
 - [x] Mobile detection (pointer:coarse AND width < 768px)
 - [x] beforeinstallprompt handling (Chrome/Android)
 - [x] Manual Add-to-Home-Screen guide (iOS/Safari)
-- [x] Dismissal memory (7-day localStorage)
+- [x] Generic manual-install fallback
+- [x] Dismissal memory (7-day localStorage) and once-per-session gate
 - [x] Installation confirmation (localStorage flag)
 - [x] No prompt if already installed
 
@@ -274,28 +308,39 @@
 
 ## 🧪 Testing Checklist
 
+### Automated (`pytest`, 77 tests)
+- [x] Login flow and invalid credentials
+- [x] Student registration validation and duplicate email
+- [x] POST-only logout
+- [x] Role guards for teacher and student routes
+- [x] Content CRUD, publish toggle, and cascade file cleanup
+- [x] Subject CRUD and unique slugs
+- [x] Announcement publish/unpublish/delete
+- [x] File upload (extension, MIME, content signature) and rejection paths
+- [x] Secure file delivery (anonymous, draft, path traversal)
+- [x] Attachment replacement removes the previous file
+- [x] Student search, filters, sorting, and pagination
+- [x] Sanitized HTML storage and preview
+- [x] Uploads unreachable through `/static/uploads/`
+- [x] `Cache-Control: no-store` on authenticated pages
+- [x] Error pages (403, 404) and health check
+
 ### Manual Testing Ready
 - [x] App loads without errors (verified)
 - [x] Database initializes (verified with init_db.py)
-- [x] All blueprints registered (verified: 5 blueprints)
+- [x] All blueprints registered (verified: 6 blueprints)
 - [x] Templates parse without syntax errors
 - [x] Models have valid relationships
 - [x] Routes have proper decorators
 - [x] Static assets linked correctly
 
 ### Not Automated (Requires Live Testing)
-- [ ] Login flow (email/password validation)
-- [ ] Student registration (email validation, duplicate check)
-- [ ] Content CRUD (create, edit, publish, delete)
-- [ ] File upload (MIME validation, storage)
-- [ ] Search functionality (full-text across fields)
-- [ ] Pagination (load pages correctly)
-- [ ] Responsive design (test at 360px, 768px, 1024px, 1440px)
+- [ ] Responsive design (test at 360px, 768px, 1080px, 1440px)
+- [ ] Dark mode visual check in both themes
 - [ ] PWA install prompt (test on mobile Safari/Chrome)
 - [ ] Service worker (cache hit/miss in DevTools)
-- [ ] CSRF protection (form submission validation)
-- [ ] Rate limiting (multiple rapid login attempts)
-- [ ] Error handling (access forbidden, not found pages)
+- [ ] CSRF protection (disabled in TestingConfig; verify a real form submit)
+- [ ] Rate limiting (disabled in TestingConfig; verify 429 page)
 
 ---
 
@@ -338,16 +383,16 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Files | 52 |
-| Python Modules | 19 |
-| Jinja2 Templates | 30 |
-| CSS Lines | ~600 |
-| JavaScript Lines | ~250 |
+| Total Files | 90 |
+| Python Files | 22 |
+| Jinja2 Templates | 36 |
+| CSS Files | 3 |
+| JavaScript Files | 4 (including the root service worker) |
 | Database Tables | 5 |
-| Routes/Endpoints | 44 |
+| Routes/Endpoints | 40 |
 | Components | 20+ |
-| Documentation Pages | 4 |
-| Total Code Lines | ~15,000 |
+| Documentation Pages | 11 |
+| Automated Tests | 77 |
 | Build Time | 2 hours |
 
 ---
@@ -360,15 +405,16 @@
 - [x] Proper imports and modules
 - [x] Comments on complex logic
 - [x] No hardcoded values (uses config)
-- [x] DRY principle applied (template inheritance, mixins)
+- [x] DRY principle applied (template inheritance, shared services)
 
 ### Architecture
 - [x] Separation of concerns (models, routes, services)
-- [x] Blueprint organization (public, auth, teacher, student, api)
-- [x] Configuration management (dev/prod profiles)
+- [x] Blueprint organization (public, auth, teacher, student, files, api)
+- [x] Configuration management (dev/prod/testing profiles)
 - [x] Service layer for business logic
 - [x] Decorator pattern for auth checks
 - [x] Template inheritance for UI consistency
+- [x] App factory with startup configuration validation
 
 ### Best Practices
 - [x] Use SQLAlchemy ORM (not raw SQL)
@@ -386,10 +432,17 @@
 
 | Document | Status | Details |
 |----------|--------|---------|
-| README.md | ✅ Complete | 16,000+ chars, setup to deployment |
-| QUICKSTART.md | ✅ Complete | 2,400+ chars, 5-minute setup |
-| BUILD_SUMMARY.md | ✅ Complete | 14,000+ chars, coverage report |
+| README.md | ✅ Complete | Setup to deployment, API docs, security notes, testing |
+| QUICKSTART.md | ✅ Complete | 5-minute setup |
+| INDEX.md | ✅ Complete | Repository map and navigation |
+| BUILD_SUMMARY.md | ✅ Complete | Coverage report |
 | CHECKLIST.md | ✅ This File | Verification of all requirements |
+| docs/PRD.md | ✅ Current | Product requirements and change record |
+| docs/Architecture.md | ✅ Current | Structure, data model, boundaries |
+| docs/Design.md | ✅ Current | Components, tokens, PWA behaviour |
+| docs/Task.md | ✅ Current | Task list and status |
+| docs/Rules.md | ✅ Current | Non-negotiable engineering rules |
+| docs/Memory.md | ✅ Current | Feature inventory and open items |
 | Inline Comments | ✅ Adequate | Key sections commented |
 | API Docs | ✅ In README | All routes documented |
 | Deployment Docs | ✅ In README | Setup instructions for prod |
@@ -405,12 +458,13 @@ All 20 sections of the build prompt have been implemented and verified.
 
 - **Core Application**: Fully functional Flask backend with SQLAlchemy ORM
 - **Database**: 5 tables with relationships, ready in Supabase PostgreSQL
-- **Routes**: 44 endpoints across 5 blueprints (public, auth, teacher, student, api)
-- **Templates**: 30 Jinja2 templates with responsive design
-- **Security**: CSRF, rate limiting, password hashing, input sanitization
-- **PWA**: Service worker, manifest, mobile install prompt
-- **Design System**: Complete CSS component library with design tokens
-- **Documentation**: 4 markdown files with setup, usage, and deployment guides
+- **Routes**: 40 endpoints across 6 blueprints (public, auth, teacher, student, files, api)
+- **Templates**: 36 Jinja2 templates with responsive design and dark mode
+- **Security**: CSRF, rate limiting, password hashing, input sanitization, upload signature validation, security headers
+- **PWA**: Service worker, manifest, offline page, mobile install prompt
+- **Design System**: Complete CSS component library with light/dark design tokens
+- **Documentation**: 11 markdown files with setup, usage, and deployment guides
+- **Tests**: 77 automated tests passing
 
 ### 🚀 Ready for Deployment
 
