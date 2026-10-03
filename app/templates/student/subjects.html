@@ -1,23 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Subjects — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Subjects' %}
 {% include 'partials/student_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
-  <h1 class="cn-page-header__title">All Subjects</h1>
+<main class="cn-main" id="main-content">
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">All Subjects</h1>
+      <p class="cn-page-header__subtitle">{{ subjects | length }} subject{{ '' if subjects | length == 1 else 's' }} available</p>
+    </div>
+  </div>
 
   {% if subjects %}
   <div class="cn-content-grid">
     {% for subj in subjects %}
     <a href="{{ url_for('student.subject_detail', slug=subj.slug) }}" class="cn-card cn-subject-card">
-      <div class="cn-subject-card__icon">
-        <i class="bi {{ subj.icon }}"></i>
-      </div>
-      <div class="cn-subject-card__name">{{ subj.name }}</div>
-      <div class="cn-subject-card__count">{{ subj.content.filter_by(status='published').count() }} lessons</div>
+      <span class="cn-subject-card__icon"><i class="bi {{ subj.icon }}" aria-hidden="true"></i></span>
+      <span class="cn-subject-card__name">{{ subj.name }}</span>
+      <span class="cn-subject-card__count">
+        {{ subj.published_count }} lesson{{ '' if subj.published_count == 1 else 's' }}
+      </span>
       {% if subj.description %}
-      <p style="margin-top: var(--cn-space-2); font-size: var(--cn-font-size-xs); color: var(--cn-text-secondary);">{{ subj.description }}</p>
+      <span class="cn-subject-card__desc">{{ subj.description }}</span>
       {% endif %}
     </a>
     {% endfor %}
@@ -27,6 +33,7 @@
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-bookmark"></i></div>
       <div class="cn-empty__title">No subjects available yet</div>
+      <p>Your teacher has not created any subjects.</p>
     </div>
   </div>
   {% endif %}

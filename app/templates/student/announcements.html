@@ -1,30 +1,44 @@
 {% extends "base.html" %}
 {% block title %}Announcements — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Announcements' %}
 {% include 'partials/student_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
-  <h1 class="cn-page-header__title">Announcements</h1>
+<main class="cn-main" id="main-content">
+  {% include 'partials/alerts.html' %}
 
-  {% if announcements %}
-  <div style="display: flex; flex-direction: column; gap: var(--cn-space-4);">
-    {% for ann in announcements %}
-    <div class="cn-card">
-      <h2 style="margin: 0 0 var(--cn-space-2); font-size: var(--cn-font-size-lg); font-weight: 600;">{{ ann.title }}</h2>
-      <div style="font-size: var(--cn-font-size-sm); color: var(--cn-text-secondary); margin-bottom: var(--cn-space-3);">
-        {{ ann.published_at.strftime('%B %d, %Y at %I:%M %p') }}
-      </div>
-      <p style="margin: 0; line-height: 1.6; color: var(--cn-text-secondary);">{{ ann.body }}</p>
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">Announcements</h1>
+      <p class="cn-page-header__subtitle">
+        {{ pagination.total }} published announcement{{ '' if pagination.total == 1 else 's' }}
+      </p>
     </div>
+  </div>
+
+  {% if pagination.items %}
+  <div class="cn-stack">
+    {% for ann in pagination.items %}
+    <article class="cn-card cn-announcement-card">
+      <div class="cn-announcement-card__meta">
+        <span class="cn-badge cn-badge--primary"><i class="bi bi-megaphone"></i> Announcement</span>
+        <time class="cn-muted cn-text-sm" datetime="{{ ann.published_at or ann.created_at }}">
+          {{ (ann.published_at or ann.created_at).strftime('%B %d, %Y at %I:%M %p') }}
+        </time>
+      </div>
+      <h2 class="cn-card__title">{{ ann.title }}</h2>
+      <div class="cn-reading__body cn-reading__body--sm">{{ ann.body | safe }}</div>
+    </article>
     {% endfor %}
   </div>
+  {% include 'partials/pagination.html' %}
   {% else %}
   <div class="cn-card">
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-megaphone"></i></div>
-      <div class="cn-empty__title">No announcements</div>
-      <p>Check back later for important updates.</p>
+      <div class="cn-empty__title">No announcements yet</div>
+      <p>When your teacher posts an update it will appear here.</p>
     </div>
   </div>
   {% endif %}

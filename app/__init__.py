@@ -53,6 +53,7 @@ def create_app(config_class=None):
     @app.context_processor
     def inject_globals():
         from flask import session
+        from app.models.content import CONTENT_TYPE_LABELS
         from app.models.user import User
         user = None
         user_id = session.get('user_id')
@@ -63,7 +64,7 @@ def create_app(config_class=None):
             'app_tagline': app.config['APP_TAGLINE'],
             'app_description': app.config['APP_DESCRIPTION'],
             'theme_color': app.config['THEME_COLOR'],
-            'content_type_labels': app.config['CONTENT_TYPES'],
+            'content_type_labels': CONTENT_TYPE_LABELS,
             'current_user': user,
         }
 

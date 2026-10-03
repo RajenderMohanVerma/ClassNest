@@ -1,53 +1,55 @@
 {% extends "base.html" %}
-{% block title %}Search Results — {{ app_name }}{% endblock %}
+{% block title %}Search — {{ app_name }}{% endblock %}
 {% block body %}
+{% set page_title = 'Search' %}
 {% include 'partials/student_sidebar.html' %}
 {% include 'partials/topbar.html' %}
 
-<main class="cn-main">
-  <h1 class="cn-page-header__title">
-    {% if query %}Search Results for "{{ query }}"{% else %}Search Content{% endif %}
-  </h1>
+<main class="cn-main" id="main-content">
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">
+        {% if query %}Results for "{{ query }}"{% else %}Search content{% endif %}
+      </h1>
+      {% if pagination %}
+      <p class="cn-page-header__subtitle">{{ pagination.total }} match{{ '' if pagination.total == 1 else 'es' }} across titles, topics, tags and lesson text</p>
+      {% endif %}
+    </div>
+  </div>
 
-  {% if query %}
-    {% if results %}
-    <div class="cn-content-grid">
-      {% for item in results %}
-      <div class="cn-card cn-content-card">
-        <div class="cn-content-card__thumb">
-          {% if item.thumbnail %}
-          <img src="{{ url_for('static', filename='uploads/' + item.thumbnail) }}" alt="{{ item.title }}">
-          {% else %}
-          <i class="bi bi-file-earmark-text"></i>
-          {% endif %}
-        </div>
-        <div class="cn-content-card__body">
-          <h3 class="cn-content-card__title">
-            <a href="{{ url_for('student.content_detail', slug=item.slug) }}">{{ item.title }}</a>
-          </h3>
-          <p class="cn-content-card__desc">{{ item.description or item.body_html[:60]|striptags }}</p>
-          <div class="cn-content-card__meta">
-            <span style="font-size: var(--cn-font-size-xs);">{{ item.subject.name }}</span>
-            <a href="{{ url_for('student.content_detail', slug=item.slug) }}" style="color: var(--cn-indigo);">Read →</a>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="cn-card">
-      <div class="cn-empty">
-        <div class="cn-empty__icon"><i class="bi bi-search"></i></div>
-        <div class="cn-empty__title">No results found</div>
-        <p>Try different keywords or browse subjects.</p>
+  <form method="GET" class="cn-filter-bar" role="search" action="{{ url_for('student.search') }}">
+    <div class="cn-filter-bar__field cn-filter-bar__field--grow">
+      <label class="cn-sr-only" for="search-input">Search terms</label>
+      <div class="cn-search">
+        <i class="bi bi-search cn-search__icon" aria-hidden="true"></i>
+        <input type="search" class="cn-search__input" id="search-input" name="q"
+               value="{{ query or '' }}" placeholder="Search content..." autofocus>
       </div>
     </div>
-    {% endif %}
+    <button type="submit" class="cn-btn cn-btn--primary"><i class="bi bi-search"></i> Search</button>
+  </form>
+
+  {% if query and pagination and pagination.items %}
+  <div class="cn-content-grid">
+    {% for item in pagination.items %}
+    {% include 'partials/content_card.html' %}
+    {% endfor %}
+  </div>
+  {% include 'partials/pagination.html' with extra_args = pagination_args(request.args) %}
+  {% elif query %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-search"></i></div>
+      <div class="cn-empty__title">No results found</div>
+      <p>Try different keywords, or browse <a href="{{ url_for('student.subjects') }}">subjects</a>.</p>
+    </div>
+  </div>
   {% else %}
   <div class="cn-card">
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-search"></i></div>
       <div class="cn-empty__title">Enter a search term</div>
+      <p>Search lesson titles, topics, tags and full lesson text.</p>
     </div>
   </div>
   {% endif %}
