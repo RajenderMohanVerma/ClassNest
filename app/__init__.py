@@ -25,8 +25,14 @@ def create_app(config_class=None):
     csrf.init_app(app)
     limiter.init_app(app)
 
-    # Ensure upload directory exists
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    # Ensure uploads use a writable directory in serverless environments.
+    try:
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    except OSError:
+        if app.config['UPLOAD_FOLDER'] == '/tmp/classnest-uploads':
+            raise
+        app.config['UPLOAD_FOLDER'] = '/tmp/classnest-uploads'
+        os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
     # Register blueprints
     from app.routes.public import public_bp
