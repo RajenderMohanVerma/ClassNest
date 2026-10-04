@@ -70,7 +70,8 @@ ClassNest/
 │   ├── requirements.txt        ← Python dependencies
 │   ├── .env.example           ← Environment template
 │   ├── .gitignore             ← Git exclusions
-│   └── manifest.json          ← PWA manifest
+│   ├── manifest.webmanifest   ← PWA manifest (install metadata)
+│   └── manifest.json          ← Legacy alias of the manifest
 │
 ├── 🎮 Application (app/)
 │   ├── __init__.py            ← App factory, blueprints
@@ -152,11 +153,15 @@ ClassNest/
 │       │   ├── theme.js       ← Dark-mode bootstrap
 │       │   └── install-prompt.js ← PWA install handler
 │       └── icons/             ← PWA icons
+│           ├── logo.svg
+│           ├── favicon-16x16.png
+│           ├── favicon-32x32.png
+│           ├── apple-touch-icon.png
 │           ├── icon-192.png
 │           ├── icon-512.png
-│           └── apple-touch-icon.png
+│           └── icon-512-maskable.png
 │
-├── 🧪 tests/                  ← Pytest suite (77 tests, SQLite)
+├── 🧪 tests/                  ← Pytest suite (110 tests, SQLite)
 │   ├── conftest.py
 │   ├── test_auth.py
 │   ├── test_teacher.py
@@ -239,7 +244,9 @@ ClassNest/
 | `app/templates/errors/*` | 400 / 403 / 404 / 413 / 429 / 500 pages |
 | `app/static/css/*.css` | Styling (design tokens, components, pages) |
 | `app/static/js/*.js` | Client-side logic (app shell, theme, install prompt) |
-| `manifest.json` | PWA configuration |
+| `manifest.webmanifest` | PWA configuration (name, theme colour, icons) |
+| `manifest.json` | Legacy alias served from the same file |
+| `tools/generate_icons.py` | Rasterises `logo.svg` geometry into every icon and favicon |
 | `sw.js` | Service worker served from the application root |
 
 ---
@@ -384,7 +391,7 @@ Before considering the project complete:
 | Database Tables | 5 |
 | API Routes | 40 |
 | CSS Components | 20+ |
-| Automated Tests | 77 |
+| Automated Tests | 110 |
 | Status | ✅ Production-Ready |
 
 ---
@@ -435,7 +442,7 @@ Before considering the project complete:
 ✅ Error handling (400, 403, 404, 413, 429, 500)  
 ✅ Accessibility (semantic HTML, focus states, skip link, reduced motion)  
 ✅ Health check endpoint (`/healthz`)  
-✅ Automated test suite (77 tests)  
+✅ Automated test suite (110 tests)  
 
 ---
 

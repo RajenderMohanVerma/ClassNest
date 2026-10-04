@@ -87,13 +87,21 @@ component can express the design.
 
 ## PWA behavior
 
-- `manifest.json` defines app metadata, icons, theme, standalone display,
-  `orientation: "portrait"`, and a `background_color`.
+- `manifest.webmanifest` defines app metadata, icons, theme `#4f35e8`,
+  standalone display, `orientation: "any"`, and `background_color`.
+  `/manifest.json` serves the same file for already-installed PWAs.
 - `sw.js` uses cache-first behavior for static assets, never caches HTML, and
   falls back to the precached `/offline` page when a navigation fails.
 - `app/static/js/install-prompt.js` handles mobile installation guidance with a
   7-day dismissal memory and a once-per-session display gate.
 - HTTPS is required for production service-worker installation.
+- `/favicon.ico` is served from the site root as well as `/static`, because
+  browsers request that path without going through the static route.
+- `app/static/icons/logo.svg` is the single source of truth for the mark: it
+  appears in both sidebars, the auth pages, and the SVG favicon, and
+  `tools/generate_icons.py` rasterises the same geometry into every PNG.
+- Palette: purple `#7A3BF0` to blue `#3E63E8` gradient, white logo, orange
+  `#F59E0B` accent; browser theme colour `#4f35e8`.
 
 ## Design QA checklist
 

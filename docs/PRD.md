@@ -71,6 +71,8 @@ updates a profile.
 - Responsive design system with light and dark themes
 - Error templates for 400, 403, 404, 413, 429, and 500 (JSON for API clients)
 - PWA manifest, service worker, install prompt, and an offline fallback page
+- Complete app-icon and favicon set with a maskable icon for Android
+  adaptive icons
 - JSON statistics and content-type endpoints
 - Health-check endpoint reporting database reachability
 - Security response headers and `no-store` caching for authenticated pages

@@ -8,12 +8,14 @@ every page must advertise the icons, favicons and theme colour.
 import json
 import os
 import struct
+import xml.etree.ElementTree as ET
 
 import pytest
 
 from app import db
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SVG_NS = '{http://www.w3.org/2000/svg}'
 
 EXPECTED_ICONS = {
     '/static/icons/favicon-16x16.png': (16, 16),
@@ -90,6 +92,10 @@ def test_manifest_file_declares_every_icon(client):
         assert icon['src'].startswith('/'), 'icon src must be an absolute path'
         response = client.get(icon['src'])
         assert response.status_code == 200, icon['src']
+        if icon['type'] == 'image/svg+xml':
+            # Scalable icons declare "any"; verify the payload parses instead.
+            ET.fromstring(response.data)
+            continue
         assert png_dimensions(icon['src']) == tuple(
             int(part) for part in icon['sizes'].lower().split('x')
         ), icon['src']
@@ -116,6 +122,62 @@ def test_every_icon_is_downloadable(client, icon_path):
     assert response.status_code == 200
     assert response.mimetype == 'image/png'
     assert response.data.startswith(b'\x89PNG\r\n\x1a\n')
+
+
+def test_logo_svg_exists_and_is_served(client):
+    path = os.path.join(BASE_DIR, 'app', 'static', 'icons', 'logo.svg')
+    assert os.path.isfile(path)
+
+    response = client.get('/static/icons/logo.svg')
+    assert response.status_code == 200
+    assert response.mimetype in ('image/svg+xml', 'text/xml')
+
+
+def test_logo_svg_is_valid_and_matches_the_brand_palette():
+    """The SVG is the single source of truth for the mark, so validate it."""
+    path = os.path.join(BASE_DIR, 'app', 'static', 'icons', 'logo.svg')
+    root = ET.parse(path).getroot()
+
+    assert root.tag == f'{SVG_NS}svg'
+    assert root.get('viewBox') == '0 0 512 512'
+
+    stops = [s.get('stop-color').lower() for s in root.iter(f'{SVG_NS}stop')]
+    assert stops == ['#7a3bf0', '#3e63e8'], 'purple-blue gradient changed'
+
+    gradient = root.find(f'.//{SVG_NS}linearGradient')
+    assert gradient.get('x1') == '0' and gradient.get('y1') == '0'
+    assert gradient.get('x2') == '1' and gradient.get('y2') == '1'
+
+    accent = next(root.iter(f'{SVG_NS}circle'))
+    assert accent.get('fill').lower() == '#f59e0b', 'orange accent is missing'
+
+    # three white shapes: two book pages and the cap board
+    assert len(list(root.iter(f'{SVG_NS}polygon'))) == 3
+    assert len(list(root.iter(f'{SVG_NS}rect'))) == 2  # background + cap band
+
+
+def test_svg_page_lines_stay_inside_their_own_page():
+    """Regression: page rules used to bleed across the spine onto the other page."""
+    path = os.path.join(BASE_DIR, 'app', 'static', 'icons', 'logo.svg')
+    root = ET.parse(path).getroot()
+    left_edge, right_edge = 0.482, 0.518
+
+    for line in root.iter(f'{SVG_NS}line'):
+        xs = (float(line.get('x1')), float(line.get('x2')))
+        in_left = all(x <= left_edge + 1e-6 for x in xs)
+        in_right = all(x >= right_edge - 1e-6 for x in xs)
+        # the tassel hangs at x=0.876, outside both pages, which is expected
+        assert in_left or in_right or min(xs) > 0.86, f'line crosses the spine: {xs}'
+
+
+def test_logo_is_used_across_the_site(client, app):
+    """One mark everywhere: sidebars, auth pages and the offline page."""
+    with app.app_context():
+        db.create_all()
+
+    for path in ('/auth/login', '/auth/register', '/offline'):
+        body = client.get(path).get_data(as_text=True)
+        assert 'logo.svg' in body, f'{path} does not use the SVG logo'
 
 
 def test_head_tags_are_present_on_every_page(client, app):

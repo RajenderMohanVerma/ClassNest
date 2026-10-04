@@ -41,6 +41,7 @@ A modern, production-ready educational content management system built with Flas
 - **Service Worker** — Cache-first for static assets; HTML is never cached and falls back to `/offline`
 - **Install Prompt** — Mobile-only PWA install suggestion with iOS/Android detection and dismissal memory
 - **Offline Page** — `/offline` renders a friendly cached fallback when the network is unavailable
+- **One Logo Everywhere** — `app/static/icons/logo.svg` is the single source of truth: used in both sidebars, the login/register pages, the SVG favicon, and rasterised into every PNG icon/favicon by `python tools/generate_icons.py`
 - **Responsive Design** — Works seamlessly on desktop, tablet, and mobile
 
 ### 🎨 Design System
@@ -52,7 +53,7 @@ A modern, production-ready educational content management system built with Flas
 - **Customizable** — Easy to rebrand by modifying config and design tokens
 
 ### 🧪 Testing
-- **77 automated tests** covering auth, roles, CRUD, publication, uploads, search, pagination, and error handling
+- **110 automated tests** covering auth, roles, CRUD, publication, uploads, search, pagination, error handling, and PWA assets
 - **Isolated test database** — in-memory SQLite via `TestingConfig`, never touches Supabase
 
 ## Tech Stack
@@ -210,9 +211,12 @@ Amit Academy/
 │   └── static/              # CSS, JS, icons
 │       ├── css/             # Design tokens, components, pages
 │       ├── js/              # App logic, theme, PWA install prompt
-│       └── icons/           # PWA icons
+│       ├── favicon.ico      # Multi-resolution favicon (16/32/48)
+│       ├── icons/logo.svg   # Scalable logo (source of truth)
+│       └── icons/           # App icons: 16, 32, 180, 192, 512, maskable
 ├── api/index.py             # Vercel serverless entry point
-├── tests/                   # Pytest suite (77 tests, SQLite)
+├── tests/                   # Pytest suite (106 tests, SQLite)
+├── tools/generate_icons.py  # Regenerates the icon + favicon set
 ├── docs/                    # PRD, architecture, design, task, rules, memory
 ├── requirements.txt         # Runtime dependencies
 ├── requirements-dev.txt     # Test/lint dependencies
@@ -223,7 +227,8 @@ Amit Academy/
 ├── init_db.py               # Schema init + additive sync + upload migration
 ├── create_teacher.py       # CLI tool for teacher account creation
 ├── run.py                  # Application entry point
-├── manifest.json           # PWA metadata
+├── manifest.webmanifest    # PWA manifest (install metadata)
+├── manifest.json           # Legacy alias of the manifest
 └── sw.js                   # Service worker
 ```
 
@@ -334,7 +339,9 @@ Amit Academy/
 - `GET /` — Redirects to login (or dashboard if logged in)
 - `GET /offline` — Offline fallback page for the service worker
 - `GET /healthz` — Deployment smoke test (`{"status","database","app"}`, 200 or 503)
-- `GET /manifest.json`, `GET /sw.js` — PWA metadata and service worker
+- `GET /manifest.webmanifest`, `GET /manifest.json` — PWA manifest (correct `application/manifest+json` type)
+- `GET /favicon.ico` — favicon at the site root, as browsers request by default
+- `GET /sw.js` — service worker
 - `GET /auth/login` — Login page
 - `POST /auth/login` — Submit login (honours a same-site `next`)
 - `GET /auth/register` — Register page
@@ -485,7 +492,7 @@ for Flask-Limiter when running multiple instances.
 
 ```bash
 pip install -r requirements-dev.txt
-pytest            # 77 tests
+pytest            # 110 tests
 pytest -q         # quiet output
 ```
 

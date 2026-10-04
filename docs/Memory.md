@@ -45,11 +45,17 @@
   title/topic/body, announcements, profile
 - Files: authenticated serving by stored name and by upload id
 - API: statistics at `/api/stats`, content types at `/api/content-types`
-- App routes: `/healthz` (database probe), `/offline`, `/manifest.json`, `/sw.js`
+- App routes: `/healthz` (database probe), `/offline`, `/manifest.webmanifest`
+  (plus the `/manifest.json` alias), `/favicon.ico`, `/sw.js`
 - PWA: manifest, service worker with offline fallback, install prompt, responsive UI
+- Brand assets: `icons/logo.svg` is the source of truth, used in both sidebars and
+  the auth pages, plus 16/32/180/192/512 PNGs, a maskable 512, and `favicon.ico`
+  rasterised from the same geometry by `tools/generate_icons.py`; theme colour
+  `#4f35e8`
 - Theming: light and dark design tokens with a persistent toggle
 - Error handling: 400, 403, 404, 413, 429, and 500 templates (JSON for API clients)
-- Tests: 77 pytest tests in `tests/` against in-memory SQLite
+- Tests: 110 pytest tests in `tests/` against in-memory SQLite, including PWA asset
+  and head-tag assertions
 
 ## Known gaps and follow-up decisions
 

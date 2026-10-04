@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+     width="512" height="512" role="img" aria-label="ClassNest">
+  <title>ClassNest</title>
+  <defs>
+    <linearGradient id="cnGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7A3BF0"/>
+      <stop offset="1" stop-color="#3E63E8"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#cnGradient)"/>
+  <g transform="translate(35.84 35.84) scale(440.32)">
+    <polygon points="0.145,0.6 0.482,0.652 0.482,0.858 0.145,0.802" fill="#FFFFFF"/>
+    <polygon points="0.518,0.652 0.855,0.6 0.855,0.802 0.518,0.858" fill="#FFFFFF"/>
+    <line x1="0.195" y1="0.706" x2="0.442" y2="0.67" stroke="#E2DEFF" stroke-width="0.014" stroke-linecap="round"/>
+    <line x1="0.195" y1="0.758" x2="0.442" y2="0.722" stroke="#E2DEFF" stroke-width="0.014" stroke-linecap="round"/>
+    <line x1="0.805" y1="0.706" x2="0.558" y2="0.67" stroke="#E2DEFF" stroke-width="0.014" stroke-linecap="round"/>
+    <line x1="0.805" y1="0.758" x2="0.558" y2="0.722" stroke="#E2DEFF" stroke-width="0.014" stroke-linecap="round"/>
+    <rect x="0.3" y="0.442" width="0.4"
+          height="0.114" rx="0.035" fill="#FFFFFF"/>
+    <polygon points="0.5,0.24 0.876,0.404 0.5,0.568 0.124,0.404" fill="#FFFFFF"/>
+    <line x1="0.876" y1="0.404" x2="0.876" y2="0.618"
+          stroke="#FFFFFF" stroke-width="0.02" stroke-linecap="round"/>
+    <circle cx="0.876" cy="0.652" r="0.046" fill="#F59E0B"/>
+  </g>
+</svg>

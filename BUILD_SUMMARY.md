@@ -5,7 +5,7 @@
 **Date**: October 3, 2026  
 **Total Files Created**: 90  
 **Build Time**: ~2 hours  
-**Verification**: 77 automated tests passing (`pytest`)  
+**Verification**: 110 automated tests passing (`pytest`)  
 
 ---
 
@@ -62,7 +62,9 @@
 
 #### App-Level Routes (`app/__init__.py`)
 - `GET /healthz` — Deployment smoke test with database check (200/503)
-- `GET /manifest.json` — PWA manifest
+- `GET /manifest.webmanifest` — PWA manifest (`application/manifest+json`)
+- `GET /manifest.json` — Legacy alias of the manifest
+- `GET /favicon.ico` — Favicon served from the site root
 - `GET /sw.js` — Service worker
 
 ### Templates (36 Templates)
@@ -126,13 +128,19 @@
 - **install-prompt.js** — PWA install prompt with mobile detection, iOS/Android support
 - `sw.js` (project root) — Service worker with cache-first static assets and offline navigation fallback
 
-#### Icons (3 Files)
-- `icons/icon-192.png` — PWA icon for mobile home screen
-- `icons/icon-512.png` — PWA icon for app stores
-- `icons/apple-touch-icon.png` — iOS touch icon
+#### Logo, Icons & Favicons (8 Files)
+- `icons/logo.svg` — Scalable logo, single source of truth for the mark
+- `icons/icon-192.png` — Install icon (192×192, purpose `any`)
+- `icons/icon-512.png` — Install icon (512×512, purpose `any`)
+- `icons/icon-512-maskable.png` — Maskable icon with safe-zone padding
+- `icons/apple-touch-icon.png` — iOS home screen (180×180, opaque)
+- `icons/favicon-32x32.png` / `icons/favicon-16x16.png` — Browser tab
+- `favicon.ico` — Multi-resolution favicon (16/32/48)
+- `tools/generate_icons.py` — One geometry definition renders both the SVG and every PNG
 
 #### Configuration
-- `manifest.json` — PWA manifest with app metadata
+- `manifest.webmanifest` — PWA manifest with app metadata, theme `#4f35e8`, and the full icon set
+- `manifest.json` — Legacy alias kept for already-installed PWAs
 
 ### Services & Utilities
 
@@ -156,7 +164,7 @@
 - `api/index.py` — Vercel serverless entry point
 - `create_teacher.py` — CLI tool for teacher account creation (secure prompts)
 - `init_db.py` — Database initialization, additive schema sync, legacy upload migration
-- `tests/` — 77 automated tests (SQLite, isolated from Supabase)
+- `tests/` — 110 automated tests (SQLite, isolated from Supabase, includes PWA assets)
 
 #### Documentation (11 Files)
 - **README.md** — Complete guide with setup, usage, API docs, deployment, troubleshooting
@@ -408,7 +416,7 @@ Visit `http://localhost:5000`
 - **Static Assets**: 12 (CSS, JS, icons, service worker, manifest)
 - **Configuration**: 8 (.env.example, requirements, Procfile, vercel.json, api entry, gitignore)
 - **Documentation**: 11 (README, QUICKSTART, INDEX, CHECKLIST, BUILD_SUMMARY, docs/*.md)
-- **Tests**: 77 pytest tests (auth, roles, CRUD, uploads, search, pagination, errors)
+- **Tests**: 110 pytest tests (auth, roles, CRUD, uploads, search, pagination, errors, PWA icons/manifest)
 
 **Code Quality**: Production-ready with best practices, verified by an automated test suite
 

@@ -47,6 +47,10 @@
   production instances; the default limit is 300 requests per hour plus per-route
   limits on login and registration.
 - Never log secrets, passwords, session values, or database URLs.
+- Keep PWA assets complete and consistent: every icon declared in the
+  manifest must exist at the declared size, and `<meta name="theme-color">`
+  must match `manifest.webmanifest`.
+- Regenerate icons with `tools/generate_icons.py`; do not hand-edit PNG binaries.
 
 ## Database and storage rules
 

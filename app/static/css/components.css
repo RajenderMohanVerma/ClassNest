@@ -86,6 +86,13 @@ img { max-width: 100%; }
   z-index: 1;
 }
 .cn-sidebar__brand i { font-size: 1.5rem; color: #A5B4FC; }
+.cn-sidebar__logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: block;
+  flex-shrink: 0;
+}
 .cn-sidebar__nav { flex: 1; padding: var(--cn-space-3) var(--cn-space-2) var(--cn-space-6); }
 
 .cn-sidebar__link {

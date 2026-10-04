@@ -61,7 +61,7 @@
 - [x] `app/services/accounts.py` — Shared profile and password updates
 - [x] `app/services/pagination.py` — Filter-preserving pagination arguments
 
-### Tests (4 files, 77 tests)
+### Tests (5 files, 110 tests)
 - [x] `tests/conftest.py` — Fixtures with in-memory SQLite and temp uploads
 - [x] `tests/test_auth.py` — Login, registration, logout, role guards, redirects
 - [x] `tests/test_teacher.py` — Subject/content/announcement CRUD, uploads, sanitization
@@ -114,7 +114,7 @@
 - [x] `app/templates/student/search.html`
 - [x] `app/templates/student/profile.html`
 
-### Static Assets (12 files)
+### Static Assets (18 files)
 
 #### CSS (3 files)
 - [x] `app/static/css/tokens.css` — Design system (60+ variables, light and dark themes)
@@ -127,13 +127,20 @@
 - [x] `app/static/js/install-prompt.js` — PWA install prompt (mobile detection)
 - [x] `sw.js` (project root) — Service worker (cache strategies, offline fallback)
 
-#### Icons (3 files)
-- [x] `app/static/icons/icon-192.png` — PWA icon (192×192)
-- [x] `app/static/icons/icon-512.png` — PWA icon (512×512)
-- [x] `app/static/icons/apple-touch-icon.png` — iOS icon (180×180)
+#### Logo, Icons & Favicons (8 files)
+- [x] `app/static/icons/logo.svg` — Scalable logo used site-wide and as the SVG favicon
+- [x] `app/static/icons/favicon-16x16.png` — Browser tab (16×16)
+- [x] `app/static/icons/favicon-32x32.png` — Browser tab (32×32)
+- [x] `app/static/icons/apple-touch-icon.png` — iOS icon (180×180, opaque)
+- [x] `app/static/icons/icon-192.png` — Install icon (192×192)
+- [x] `app/static/icons/icon-512.png` — Install icon (512×512)
+- [x] `app/static/icons/icon-512-maskable.png` — Maskable icon with safe-zone padding
+- [x] `app/static/favicon.ico` — Multi-resolution favicon (16/32/48)
+- [x] `tools/generate_icons.py` — Regenerates the whole set from code
 
 #### Manifest
-- [x] `manifest.json` — PWA metadata
+- [x] `manifest.webmanifest` — PWA metadata (theme `#4f35e8`, all icons declared)
+- [x] `manifest.json` — Legacy alias served from the same file
 
 ### Configuration & Entry Points (11 files)
 - [x] `requirements.txt` — 12 dependencies (pinned versions)
@@ -146,7 +153,7 @@
 - [x] `Procfile` — Gunicorn start command
 - [x] `vercel.json` — Vercel build and rewrite configuration
 - [x] `api/index.py` — Vercel serverless entry point
-- [x] `tests/` — Automated test suite (4 files, 77 tests)
+- [x] `tests/` — Automated test suite (5 files, 110 tests)
 
 ### Documentation (11 markdown files)
 - [x] `README.md` — Comprehensive guide
@@ -270,14 +277,17 @@
 ## 📱 PWA Checklist
 
 ### Manifest
-- [x] App name and short name
-- [x] Start URL (/)
+- [x] App name and short name (`ClassNest`)
+- [x] `id`, start URL, and scope (/)
 - [x] Display mode (standalone)
-- [x] Orientation (portrait)
-- [x] Theme color (#172554)
-- [x] Background color
-- [x] Icons array (192×192, 512×512)
-- [x] Icon purpose (any maskable)
+- [x] Orientation (any)
+- [x] Theme color (#4f35e8, matches the `<meta name="theme-color">`)
+- [x] Background color (#ffffff)
+- [x] Icons array (16, 32, 180, 192, 512 plus a maskable 512)
+- [x] Icon purpose declared for every entry (`any` / `maskable`)
+- [x] Served as `application/manifest+json` from `/manifest.webmanifest`
+- [x] Legacy `/manifest.json` alias kept for already-installed PWAs
+- [x] Categories (`education`, `productivity`)
 
 ### Service Worker
 - [x] Cache-first strategy for /static/* (CSS, JS, icons)
@@ -296,19 +306,26 @@
 - [x] Installation confirmation (localStorage flag)
 - [x] No prompt if already installed
 
-### Meta Tags
+### Meta Tags & Favicons
 - [x] viewport: width=device-width, initial-scale=1.0
-- [x] theme-color: #172554
-- [x] manifest link
+- [x] theme-color: #4f35e8
+- [x] description: ClassNest - Your Smart Learning Companion
+- [x] manifest link (`/manifest.webmanifest` plus the legacy path)
+- [x] favicon 16×16, 32×32, 192×192, and `favicon.ico` (root + `/static`)
+- [x] apple-touch-icon 180×180 (opaque PNG, as iOS requires)
+- [x] mobile-web-app-capable
 - [x] apple-mobile-web-app-capable
 - [x] apple-mobile-web-app-status-bar-style
 - [x] apple-mobile-web-app-title
+- [x] Login, registration, and both sidebars use `logo.svg` instead of a generic glyph
+- [x] Page rules stay inside their own book page (regression test)
+- [x] Every icon size and head tag is asserted by `tests/test_pwa.py`
 
 ---
 
 ## 🧪 Testing Checklist
 
-### Automated (`pytest`, 77 tests)
+### Automated (`pytest`, 110 tests)
 - [x] Login flow and invalid credentials
 - [x] Student registration validation and duplicate email
 - [x] POST-only logout
@@ -383,7 +400,7 @@
 
 | Metric | Value |
 |--------|-------|
-| Total Files | 90 |
+| Total Files | 97 |
 | Python Files | 22 |
 | Jinja2 Templates | 36 |
 | CSS Files | 3 |
@@ -392,7 +409,7 @@
 | Routes/Endpoints | 40 |
 | Components | 20+ |
 | Documentation Pages | 11 |
-| Automated Tests | 77 |
+| Automated Tests | 110 |
 | Build Time | 2 hours |
 
 ---
@@ -464,7 +481,7 @@ All 20 sections of the build prompt have been implemented and verified.
 - **PWA**: Service worker, manifest, offline page, mobile install prompt
 - **Design System**: Complete CSS component library with light/dark design tokens
 - **Documentation**: 11 markdown files with setup, usage, and deployment guides
-- **Tests**: 77 automated tests passing
+- **Tests**: 110 automated tests passing
 
 ### 🚀 Ready for Deployment
 

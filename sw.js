@@ -15,6 +15,7 @@ const STATIC_ASSETS = [
   '/static/js/app.js',
   '/static/js/install-prompt.js',
   '/static/favicon.ico',
+  '/static/icons/logo.svg',
   '/static/icons/favicon-16x16.png',
   '/static/icons/favicon-32x32.png',
   '/static/icons/apple-touch-icon.png',

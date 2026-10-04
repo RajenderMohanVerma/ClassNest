@@ -51,12 +51,15 @@ app/
 └── static/                     # CSS, JavaScript, icons
 
 api/index.py                    # Vercel serverless entry point
+manifest.webmanifest            # PWA manifest (manifest.json is an alias)
+tools/generate_icons.py          # renders logo.svg + every PNG icon/favicon
 tests/                          # pytest suite (in-memory SQLite)
 ```
 
 The application is created by `create_app()` and registers six blueprints:
-public, auth, teacher, student, files, and API. It also serves `/manifest.json`,
-`/sw.js`, and `/healthz` at the app level. The same factory is used by `run.py`,
+public, auth, teacher, student, files, and API. It also serves `/manifest.webmanifest` (with `/manifest.json`
+as a legacy alias), `/favicon.ico`, `/sw.js`, and `/healthz` at the app
+level. The same factory is used by `run.py`,
 tests, the Flask CLI, and the Vercel entry point. Configuration classes cover
 development, production, and testing; production refuses to boot without a real
 `SECRET_KEY` and a PostgreSQL `DATABASE_URL`.
@@ -147,8 +150,10 @@ and `vercel.json` builds that function and rewrites all requests to it.
 ## Testing architecture
 
 `TestingConfig` swaps PostgreSQL for in-memory SQLite, points uploads at a
-temporary directory, and disables CSRF and rate limiting so the 77-test suite in
-`tests/` runs in isolation from Supabase.
+temporary directory, and disables CSRF and rate limiting so the 110-test suite
+in `tests/` runs in isolation from Supabase. `tests/test_pwa.py` asserts that every
+icon declared in the manifest exists at the exact declared size and that the head
+tags match the manifest.
 
 ## Known architecture limitations
 

@@ -12,6 +12,12 @@
   "categories": ["education", "productivity"],
   "icons": [
     {
+      "src": "/static/icons/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
       "src": "/static/icons/favicon-16x16.png",
       "sizes": "16x16",
       "type": "image/png",

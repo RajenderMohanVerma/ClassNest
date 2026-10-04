@@ -49,6 +49,9 @@ Mark a task complete only after the relevant check passes.
       styles.
 - [x] Add app JavaScript, theme bootstrap, service worker, manifest, install
       prompt, and icons.
+- [x] Add the complete app-icon and favicon set (16/32/180/192/512, maskable,
+      `favicon.ico`) generated from `tools/generate_icons.py`, serve the manifest
+      as `application/manifest+json`, and assert every asset in tests.
 
 ### Quality
 
