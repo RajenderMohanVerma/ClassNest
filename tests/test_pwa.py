@@ -147,6 +147,13 @@ def test_offline_page_carries_the_same_icons(client):
     assert 'apple-mobile-web-app-title' in body
 
 
+def test_login_and_register_show_the_app_icon(client):
+    for path in ('/auth/login', '/auth/register'):
+        body = client.get(path).get_data(as_text=True)
+        assert 'icons/icon-192.png' in body, path
+        assert 'cn-auth__logo-icon' in body, path
+
+
 def test_install_prompt_script_is_loaded(client):
     body = client.get('/auth/login').get_data(as_text=True)
     assert '/static/js/install-prompt.js' in body
