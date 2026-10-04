@@ -124,11 +124,42 @@ def create_app(config_class=None):
         from flask import request
         return request.path.startswith('/api/') or request.accept_mimetypes.best == 'application/json'
 
-    # Serve manifest.json and sw.js from the project root
+    @app.route('/favicon.ico')
+    def favicon():
+        """Browsers request /favicon.ico by default, outside the static route."""
+        from flask import send_from_directory
+        return send_from_directory(
+            os.path.join(app.root_path, 'static'), 'favicon.ico', max_age=86400
+        )
+
+    # Serve PWA metadata and the service worker from the project root
+    @app.route('/manifest.webmanifest')
+    def web_manifest():
+        """Web app manifest for installable PWAs."""
+        from flask import make_response, send_from_directory
+        response = make_response(
+            send_from_directory(
+                os.path.join(app.root_path, '..'),
+                'manifest.webmanifest',
+                mimetype='application/manifest+json',
+            )
+        )
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
+
     @app.route('/manifest.json')
     def manifest():
-        from flask import send_from_directory
-        return send_from_directory(os.path.join(app.root_path, '..'), 'manifest.json')
+        """Legacy alias so already-installed PWAs keep working."""
+        from flask import make_response, send_from_directory
+        response = make_response(
+            send_from_directory(
+                os.path.join(app.root_path, '..'),
+                'manifest.webmanifest',
+                mimetype='application/manifest+json',
+            )
+        )
+        response.headers['Cache-Control'] = 'no-cache'
+        return response
 
     @app.route('/sw.js')
     def service_worker():

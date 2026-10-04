@@ -1,3 +1,5 @@
 # Development / test extras (not installed on the deployment platform).
 -r requirements.txt
 pytest==8.3.4
+# Only needed to regenerate the app icons: python tools/generate_icons.py
+Pillow==10.4.0

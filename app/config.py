@@ -100,9 +100,9 @@ class Config:
     APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Teacher & Student Learning Portal')
     APP_DESCRIPTION = os.environ.get(
         'APP_DESCRIPTION',
-        'Publish learning material, announcements, and resources for students.',
+        'ClassNest - Your Smart Learning Companion',
     )
-    THEME_COLOR = os.environ.get('THEME_COLOR', '#172554')
+    THEME_COLOR = os.environ.get('THEME_COLOR', '#4f35e8')
 
     DEBUG = _env_flag('FLASK_DEBUG', '0')
 

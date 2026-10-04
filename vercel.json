@@ -7,9 +7,9 @@
       "use": "@vercel/python",
       "config": {
         "includeFiles": [
-          "app/static/**",
-          "templates/**",
+          "app/**",
           "manifest.json",
+          "manifest.webmanifest",
           "sw.js"
         ]
       }

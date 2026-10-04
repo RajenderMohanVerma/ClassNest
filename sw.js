@@ -6,7 +6,7 @@
  *     cache, so a shared device cannot read another user's data offline.
  *   - Anything else: passthrough to the network.
  */
-const CACHE_VERSION = 'classnest-v2';
+const CACHE_VERSION = 'classnest-v3';
 const STATIC_ASSETS = [
   '/static/css/tokens.css',
   '/static/css/components.css',
@@ -14,9 +14,14 @@ const STATIC_ASSETS = [
   '/static/js/theme.js',
   '/static/js/app.js',
   '/static/js/install-prompt.js',
+  '/static/favicon.ico',
+  '/static/icons/favicon-16x16.png',
+  '/static/icons/favicon-32x32.png',
+  '/static/icons/apple-touch-icon.png',
   '/static/icons/icon-192.png',
   '/static/icons/icon-512.png',
-  '/static/icons/apple-touch-icon.png',
+  '/static/icons/icon-512-maskable.png',
+  '/manifest.webmanifest',
   '/manifest.json',
   '/offline',
 ];
@@ -45,6 +50,7 @@ self.addEventListener('activate', (event) => {
 function isStaticAsset(url) {
   return (
     url.pathname.startsWith('/static/') ||
+    url.pathname === '/manifest.webmanifest' ||
     url.pathname === '/manifest.json' ||
     url.pathname === '/offline'
   );
