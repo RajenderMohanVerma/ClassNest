@@ -288,3 +288,40 @@ def test_authenticated_pages_are_not_cached(client, login_student, published_con
     response = client.get('/student/dashboard')
     assert response.status_code == 200
     assert 'no-store' in response.headers['Cache-Control']
+
+# ── Page rendering regression ───────────────────────────────
+def test_student_dashboard_renders_announcement_summary(client, login_student, announcement):
+    login_student()
+    response = client.get('/student/dashboard')
+    assert response.status_code == 200
+    assert b'Classes start Monday' in response.data
+
+    listing = client.get('/student/announcements')
+    assert listing.status_code == 200
+    assert b'Classes start Monday' in listing.data
+
+
+def test_student_content_detail_renders_tags_and_summary(client, login_student, published_content):
+    published_content.tags = 'algebra, basics'
+    db.session.commit()
+
+    login_student()
+    response = client.get(f'/student/content/{published_content.slug}')
+    assert response.status_code == 200
+    assert b'algebra' in response.data
+    assert b'basics' in response.data
+
+
+def test_student_pages_render(client, login_student, published_content, subject, announcement):
+    login_student()
+    for path in (
+        '/student/dashboard',
+        '/student/subjects',
+        f'/student/subjects/{subject.slug}',
+        '/student/content',
+        '/student/announcements',
+        '/student/search',
+        '/student/search?q=published',
+        '/student/profile',
+    ):
+        assert client.get(path).status_code == 200, path

@@ -454,3 +454,37 @@ def test_password_change_succeeds(client, login_teacher, teacher):
     )
     assert b'Password changed' in response.data
     assert teacher.check_password('newsecret1')
+
+# ── Page rendering regression ───────────────────────────────
+def test_teacher_announcement_pages_render_summary(client, login_teacher, announcement):
+    login_teacher()
+
+    listing = client.get('/teacher/announcements')
+    assert listing.status_code == 200
+    assert b'Classes start Monday' in listing.data
+
+    form = client.get('/teacher/announcements/create')
+    assert form.status_code == 200
+
+    edit = client.get(f'/teacher/announcements/{announcement.id}/edit')
+    assert edit.status_code == 200
+
+
+def test_teacher_content_edit_form_renders_summary(client, login_teacher, content):
+    login_teacher()
+    response = client.get(f'/teacher/content/{content.id}/edit')
+    assert response.status_code == 200
+    assert b'An introduction to algebra.' in response.data
+
+
+def test_teacher_dashboard_and_lists_render(client, login_teacher, content, subject, announcement):
+    login_teacher()
+    for path in (
+        '/teacher/dashboard',
+        '/teacher/content',
+        '/teacher/subjects',
+        '/teacher/students',
+        '/teacher/files',
+        '/teacher/profile',
+    ):
+        assert client.get(path).status_code == 200, path

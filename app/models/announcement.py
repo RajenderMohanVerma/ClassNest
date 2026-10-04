@@ -24,8 +24,8 @@ class Announcement(db.Model):
         self.is_published = False
         self.published_at = None
 
-    @property
     def summary(self, length=150):
+        """Plain-text preview for list views (``ann.summary(150)``)."""
         import re
         text = re.sub(r'<[^>]+>', ' ', self.body or '')
         text = re.sub(r'\s+', ' ', text).strip()

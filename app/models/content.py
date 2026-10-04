@@ -85,12 +85,13 @@ class Content(db.Model):
     def content_type_label(self):
         return CONTENT_TYPE_LABELS.get(self.content_type, self.content_type.replace('_', ' ').title())
 
-    @property
     def summary(self, length=90):
         """Plain-text preview that is safe for card listings.
 
-        Templates previously sliced ``body_html`` directly, which raised a
-        TypeError for content without a body.
+        Templates call ``content.summary(90)``; this must stay a method, not a
+        property, because the caller supplies the length. Templates previously
+        sliced ``body_html`` directly, which raised a TypeError for content
+        without a body.
         """
         if self.description:
             text = self.description.strip()
