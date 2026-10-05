@@ -9,14 +9,15 @@
   {% include 'partials/alerts.html' %}
 
   {% set f = form_data %}
-  {% set current_name = f.get('name') if f and f.get('name') else (subject.name if subject else '') %}
-  {% set current_description = f.get('description') if f and f.get('description') else (subject.description if subject else '') %}
-  {% set current_icon = f.get('icon') if f and f.get('icon') else (subject.icon if subject else 'bi-book') %}
+{% set current_name = f.get('name') if f and f.get('name') else (subject.name if subject else '') %}
+{% set current_description = f.get('description') if f and f.get('description') else (subject.description if subject else '') %}
+{% set current_icon = f.get('icon') if f and f.get('icon') else (subject.icon if subject else 'bi-book') %}
+{% set current_class_id = f.get('class_id') if f and f.get('class_id') else (subject.class_id if subject else request.args.get('class_id', '')) %}
 
   <div class="cn-page-header">
     <div>
       <h1 class="cn-page-header__title">{% if subject %}Edit subject{% else %}New subject{% endif %}</h1>
-      <p class="cn-page-header__subtitle">Subjects group lessons and power the student library.</p>
+      <p class="cn-page-header__subtitle">Choose the parent class first. Its subjects then appear under that class on the public site.</p>
     </div>
     <a href="{{ url_for('teacher.subjects') }}" class="cn-btn cn-btn--ghost">
       <i class="bi bi-arrow-left"></i> All subjects
@@ -25,6 +26,23 @@
 
   <form method="POST" class="cn-card cn-form cn-form--narrow" novalidate>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="cn-form-group">
+      <label class="cn-label" for="class_id">Class <span class="cn-required">*</span></label>
+      <select class="cn-select" id="class_id" name="class_id" required>
+        <option value="">Choose a class first</option>
+        {% for school_class in classes %}
+        <option value="{{ school_class.id }}" {% if current_class_id|string == school_class.id|string %}selected{% endif %}>
+          {{ school_class.name }}
+        </option>
+        {% endfor %}
+      </select>
+      {% if not classes %}
+      <small class="cn-hint">Create a class before adding subjects. <a href="{{ url_for('teacher.create_class') }}">Add a class</a></small>
+      {% else %}
+      <small class="cn-hint">Existing subjects can be assigned or moved here without deleting their content.</small>
+      {% endif %}
+    </div>
 
     <div class="cn-form-group">
       <label class="cn-label" for="name">Subject name <span class="cn-required">*</span></label>

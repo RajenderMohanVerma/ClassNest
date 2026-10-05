@@ -24,9 +24,9 @@ def _now():
 
 def _enabled_classes():
     """Classes a new student may pick from, in display order."""
-    return SchoolClass.query.filter_by(is_enabled=True).order_by(
-        SchoolClass.display_order, SchoolClass.name,
-    ).all()
+    return SchoolClass.query.filter(
+        SchoolClass.is_enabled.is_(True), SchoolClass.status == 'active',
+    ).order_by(SchoolClass.display_order, SchoolClass.name).all()
 
 
 def _home_for_role(role):
@@ -129,11 +129,7 @@ def register():
         phone = request.form.get('phone', '').strip()
         class_id = request.form.get('class_id', type=int)
 
-        school_class = None
-        if class_id:
-            school_class = db.session.get(SchoolClass, class_id)
-            if school_class is None or not school_class.is_enabled:
-                class_id = None
+        school_class = db.session.get(SchoolClass, class_id) if class_id else None
 
         errors = []
         if len(name) < 2:
@@ -142,6 +138,8 @@ def register():
             errors.append('Email is required.')
         elif not _valid_email(email):
             errors.append('Please enter a valid email address.')
+        if school_class is None or not school_class.is_available:
+            errors.append('Choose an active class to see the right learning material.')
         if len(password) < MIN_PASSWORD_LENGTH:
             errors.append(f'Password must be at least {MIN_PASSWORD_LENGTH} characters.')
         if password != confirm:

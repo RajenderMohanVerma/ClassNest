@@ -100,10 +100,10 @@
           </div>
 
           <div class="cn-form-group">
-            <label class="cn-label" for="class_id">Your class <span class="cn-label--muted">(optional)</span></label>
+            <label class="cn-label" for="class_id">Your class <span class="cn-required">*</span></label>
             <div class="cn-auth__input-wrap">
               <i class="bi bi-mortarboard" aria-hidden="true"></i>
-              <select class="cn-input" id="class_id" name="class_id" autocomplete="off">
+              <select class="cn-input" id="class_id" name="class_id" autocomplete="off" required>
                 <option value="">Choose your class</option>
                 {% for school_class in classes %}
                 <option value="{{ school_class.id }}" {% if class_id == school_class.id %}selected{% endif %}>

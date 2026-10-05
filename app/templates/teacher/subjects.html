@@ -11,12 +11,29 @@
   <div class="cn-page-header">
     <div>
       <h1 class="cn-page-header__title">Subjects</h1>
-      <p class="cn-page-header__subtitle">{{ subjects | length }} subject{{ '' if subjects | length == 1 else 's' }}</p>
+      <p class="cn-page-header__subtitle">{{ subjects | length }} subject{{ '' if subjects | length == 1 else 's' }} · Assign each subject to a class so it appears in the correct public catalog.</p>
     </div>
+    <div class="cn-btn-row">
+    <a href="{{ url_for('teacher.chapters') }}" class="cn-btn cn-btn--outline"><i class="bi bi-list-ol"></i> Manage chapters</a>
     <a href="{{ url_for('teacher.create_subject') }}" class="cn-btn cn-btn--primary">
       <i class="bi bi-plus-lg"></i> New Subject
     </a>
+    </div>
   </div>
+
+  <form method="GET" class="cn-filter-bar">
+    <div class="cn-filter-bar__field">
+      <label class="cn-label" for="subject-class-filter">Filter by class</label>
+      <select class="cn-select" id="subject-class-filter" name="class_id">
+        <option value="">All classes</option>
+        {% for school_class in classes %}
+        <option value="{{ school_class.id }}" {% if class_filter == school_class.id %}selected{% endif %}>{{ school_class.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="cn-btn cn-btn--outline" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+    {% if class_filter %}<a class="cn-btn cn-btn--ghost" href="{{ url_for('teacher.subjects') }}">Clear</a>{% endif %}
+  </form>
 
   {% if subjects %}
   <div class="cn-content-grid">
@@ -40,6 +57,11 @@
         </div>
       </div>
       <h2 class="cn-subject-card__name">{{ subj.name }}</h2>
+      {% if subj.school_class %}
+      <span class="cn-badge cn-badge--primary"><i class="bi bi-mortarboard" aria-hidden="true"></i> {{ subj.school_class.name }}</span>
+      {% else %}
+      <span class="cn-badge cn-badge--warning">Class not assigned · edit subject</span>
+      {% endif %}
       <p class="cn-subject-card__desc">{{ subj.description or 'No description provided.' }}</p>
       <div class="cn-subject-card__meta">
         <span class="cn-badge cn-badge--success">{{ subj.published_count }} published</span>
@@ -48,11 +70,16 @@
         </span>
       </div>
       <div class="cn-btn-row">
-        <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('teacher.create_content') }}">
+        {% if subj.school_class %}
+        <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('teacher.create_chapter', class_id=subj.class_id, subject_id=subj.id) }}">
+          <i class="bi bi-plus-lg"></i> Add chapter
+        </a>
+        <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('teacher.create_content') }}">
           <i class="bi bi-plus-lg"></i> Add lesson
         </a>
+        {% endif %}
         <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('teacher.content_list', subject=subj.id) }}">
-          View lessons
+          View content
         </a>
       </div>
     </article>

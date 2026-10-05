@@ -22,6 +22,7 @@ def test_register_page_offers_the_available_classes(client, school_class):
     body = client.get('/auth/register').data
     assert school_class.name.encode() in body
     assert b'name="class_id"' in body
+    assert b'name="class_id" autocomplete="off" required' in body
     assert b'name="phone"' in body
     assert b'Create your account' in body
     assert b'class="cn-auth__home" href="/"' in body
@@ -82,9 +83,22 @@ def test_registration_rejects_a_disabled_class(app, client):
         'class_id': str(hidden.id),
     })
 
-    user = User.query.filter_by(email='hidden@example.com').first()
-    assert user is not None
-    assert user.class_id is None
+    assert response.status_code == 400
+    assert b'active class' in response.data
+    assert User.query.filter_by(email='hidden@example.com').first() is None
+
+
+def test_registration_requires_a_class(client):
+    response = client.post('/auth/register', data={
+        'name': 'No Class Student',
+        'email': 'noclass@example.com',
+        'password': PASSWORD,
+        'confirm_password': PASSWORD,
+    })
+
+    assert response.status_code == 400
+    assert b'Choose an active class' in response.data
+    assert User.query.filter_by(email='noclass@example.com').first() is None
 
 
 def test_registration_rejects_mismatched_passwords(client):
@@ -112,7 +126,7 @@ def test_registration_rejects_duplicate_email(client, student):
     assert b'already exists' in response.data
 
 
-def test_registration_without_email_delivery_does_not_demand_verification(app, client):
+def test_registration_without_email_delivery_does_not_demand_verification(app, client, school_class):
     """With mail switched off, an unverifiable account must not be created."""
     assert mail_is_configured() is False
 
@@ -121,6 +135,7 @@ def test_registration_without_email_delivery_does_not_demand_verification(app, c
         'email': 'nomail@example.com',
         'password': PASSWORD,
         'confirm_password': PASSWORD,
+        'class_id': str(school_class.id),
     })
 
     assert response.status_code == 302
@@ -132,7 +147,7 @@ def test_registration_without_email_delivery_does_not_demand_verification(app, c
     ).count() == 0
 
 
-def test_registration_sends_a_verification_link_when_mail_is_on(app, client):
+def test_registration_sends_a_verification_link_when_mail_is_on(app, client, school_class):
     app.config.update(MAIL_ENABLED=True, MAIL_SERVER='smtp.example.com',
                       MAIL_FROM='no-reply@classnext.test')
 
@@ -142,6 +157,7 @@ def test_registration_sends_a_verification_link_when_mail_is_on(app, client):
             'email': 'verified@example.com',
             'password': PASSWORD,
             'confirm_password': PASSWORD,
+            'class_id': str(school_class.id),
         })
 
     user = User.query.filter_by(email='verified@example.com').first()
@@ -153,7 +169,7 @@ def test_registration_sends_a_verification_link_when_mail_is_on(app, client):
     ).count() == 1
 
 
-def test_registration_rolls_back_when_the_email_cannot_be_sent(app, client):
+def test_registration_rolls_back_when_the_email_cannot_be_sent(app, client, school_class):
     """A user must never be told 'check your inbox' if nothing was sent."""
     app.config.update(MAIL_ENABLED=True, MAIL_SERVER='smtp.example.com',
                       MAIL_FROM='no-reply@classnext.test')
@@ -164,6 +180,7 @@ def test_registration_rolls_back_when_the_email_cannot_be_sent(app, client):
             'email': 'undeliverable@example.com',
             'password': PASSWORD,
             'confirm_password': PASSWORD,
+            'class_id': str(school_class.id),
         })
 
     assert response.status_code == 503

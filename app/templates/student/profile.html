@@ -37,6 +37,17 @@
         </div>
 
         <div class="cn-form-group">
+          <label class="cn-label" for="profile-class">My class <span class="cn-required">*</span></label>
+          <select class="cn-select" id="profile-class" name="class_id" required>
+            <option value="">Choose your class</option>
+            {% for school_class in classes %}
+            <option value="{{ school_class.id }}" {% if user.class_id == school_class.id %}selected{% endif %}>{{ school_class.name }}</option>
+            {% endfor %}
+          </select>
+          <small class="cn-hint">Your learning library is filtered to this class. Update it here if your class changes.</small>
+        </div>
+
+        <div class="cn-form-group">
           <span class="cn-label">Role</span>
           <p class="cn-muted">Your account is registered as a <strong>{{ user.role_label }}</strong>.
             Only teachers can publish content.</p>

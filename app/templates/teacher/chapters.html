@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Chapters — {{ app_name }}{% endblock %}
+{% block body %}
+{% set page_title = 'Chapters' %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main" id="main-content">
+  {% include 'partials/alerts.html' %}
+  <div class="cn-page-header">
+    <div>
+      <p class="cn-eyebrow">CLASS → SUBJECT → CHAPTER</p>
+      <h1 class="cn-page-header__title">Chapters</h1>
+      <p class="cn-page-header__subtitle">Create the chapter that lessons and study material belong to.</p>
+    </div>
+    <a href="{{ url_for('teacher.create_chapter') }}" class="cn-btn cn-btn--primary"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add chapter</a>
+  </div>
+
+  <form method="GET" class="cn-filter-bar">
+    <div class="cn-filter-bar__field">
+      <label class="cn-label" for="chapter-class-filter">Class</label>
+      <select class="cn-select" id="chapter-class-filter" name="class_id">
+        <option value="">All classes</option>
+        {% for school_class in classes %}
+        <option value="{{ school_class.id }}" {% if class_filter == school_class.id %}selected{% endif %}>{{ school_class.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button class="cn-btn cn-btn--outline" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filter</button>
+    {% if class_filter %}<a class="cn-btn cn-btn--ghost" href="{{ url_for('teacher.chapters') }}">Clear</a>{% endif %}
+  </form>
+
+  {% if chapters %}
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th scope="col">Chapter</th><th scope="col">Class</th><th scope="col">Subject</th><th scope="col">Content</th><th scope="col">Status</th><th scope="col" class="cn-table__actions">Actions</th></tr></thead>
+      <tbody>
+      {% for chapter in chapters %}
+        <tr>
+          <td><strong>{{ chapter.title }}</strong>{% if chapter.description %}<small class="cn-muted cn-block">{{ chapter.description }}</small>{% endif %}</td>
+          <td>{{ chapter.school_class.name if chapter.school_class else 'Unassigned' }}</td>
+          <td>{{ chapter.subject.name }}</td>
+          <td>{{ chapter.content.count() }}</td>
+          <td><span class="cn-badge {{ 'cn-badge--success' if chapter.is_published else 'cn-badge--warning' }}">{{ chapter.status_label }}</span></td>
+          <td class="cn-table__actions"><div class="cn-btn-group">
+            <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('teacher.create_content', class_id=chapter.class_id, subject_id=chapter.subject_id, chapter_id=chapter.id) }}" title="Add content to {{ chapter.title }}" aria-label="Add content to {{ chapter.title }}"><i class="bi bi-plus-lg" aria-hidden="true"></i></a>
+            <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('teacher.edit_chapter', id=chapter.id) }}" title="Edit chapter" aria-label="Edit {{ chapter.title }}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+            <form method="POST" action="{{ url_for('teacher.delete_chapter', id=chapter.id) }}" data-confirm="Delete chapter '{{ chapter.title }}'?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="cn-btn cn-btn--ghost cn-btn--sm cn-btn--danger-ghost" type="submit" title="Delete chapter" aria-label="Delete {{ chapter.title }}"><i class="bi bi-trash" aria-hidden="true"></i></button>
+            </form>
+          </div></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="cn-card"><div class="cn-empty">
+    <div class="cn-empty__icon"><i class="bi bi-list-ol" aria-hidden="true"></i></div>
+    <h2 class="cn-empty__title">No chapters yet</h2>
+    <p>Choose a class and subject, then add its first chapter. Content can be placed inside a chapter when you create it.</p>
+    {% if classes and classes|selectattr('subject_count')|list %}
+    <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_chapter') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add first chapter</a>
+    {% else %}
+    <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.subjects') }}">Add a class subject</a>
+    {% endif %}
+  </div></div>
+  {% endif %}
+</main>
+{% endblock %}

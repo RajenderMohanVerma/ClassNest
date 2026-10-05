@@ -82,7 +82,7 @@ DEFAULT_FAQS = [
     {
         'category': 'Accounts and access',
         'question': 'How do I create a student account?',
-        'answer': '<p>Open Sign up, enter your name, email, and password, then optionally choose your class and add a phone number. Public registration creates student accounts only.</p>',
+        'answer': '<p>Open Sign up, enter your name, email, and password, then choose your class. A phone number is optional. Public registration creates student accounts only.</p>',
     },
     {
         'category': 'Accounts and access',
@@ -126,7 +126,7 @@ def index():
             return redirect(url_for('teacher.dashboard'))
         return redirect(url_for('student.dashboard'))
 
-    classes = access.published_classes().all()
+    classes = access.visible_classes_for(user)
     featured_classes = [item for item in classes if item.is_enabled][:6]
 
     latest = access.visible_contents(None) \
@@ -169,7 +169,7 @@ def index():
 
 @public_bp.route('/classes')
 def classes():
-    items = access.published_classes().all()
+    items = access.visible_classes_for(current_user())
     return render_template(
         'public/classes.html',
         meta=build_meta(title='Classes', path='/classes',
@@ -182,6 +182,9 @@ def classes():
 def class_detail(slug):
     item = SchoolClass.query.filter_by(slug=_slug_param(slug)).first()
     if item is None or not item.is_available:
+        abort(404)
+    user = current_user()
+    if not access.can_browse_class(user, item.id):
         abort(404)
 
     subjects = access.published_subjects(class_id=item.id).all()
@@ -228,10 +231,12 @@ def subject_detail(slug):
     item = Subject.query.filter_by(slug=_slug_param(slug)).first()
     if item is None or not item.is_enabled:
         abort(404)
+    user = current_user()
+    if not access.can_browse_class(user, item.class_id):
+        abort(404)
     if item.status != CONTENT_STATUS_PUBLISHED and not access.is_privileged(current_user()):
         abort(404)
 
-    user = current_user()
     chapters = item.chapters.filter_by(status=CONTENT_STATUS_PUBLISHED) \
         .order_by(Chapter.display_order, Chapter.title).all()
 
@@ -255,10 +260,12 @@ def chapter_detail(slug):
     item = Chapter.query.filter_by(slug=_slug_param(slug)).first()
     if item is None:
         abort(404)
+    user = current_user()
+    if not access.can_browse_class(user, item.class_id):
+        abort(404)
     if item.status != CONTENT_STATUS_PUBLISHED and not access.is_privileged(current_user()):
         abort(404)
 
-    user = current_user()
     pagination = access.visible_contents(user, item.content).order_by(
         Content.content_type, Content.title
     ).paginate(page=request.args.get('page', 1, type=int),
@@ -326,6 +333,13 @@ def library(kind):
 
     query = access.visible_contents(user).filter(Content.content_type.in_(types))
     query = _apply_library_filters(query, user)
+    class_ids = access.class_ids_for(user) if user and user.is_student else None
+    selected_class = request.args.get('class', type=int)
+    if class_ids is not None and selected_class not in class_ids:
+        selected_class = None
+    subjects = access.published_subjects().all()
+    if class_ids is not None:
+        subjects = [subject for subject in subjects if subject.class_id in class_ids]
 
     pagination = query.paginate(
         page=request.args.get('page', 1, type=int),
@@ -339,10 +353,10 @@ def library(kind):
         kind=kind,
         types=types,
         pagination=pagination,
-        classes=access.published_classes().all(),
-        selected_class=request.args.get('class', type=int),
+        classes=access.visible_classes_for(user),
+        selected_class=selected_class,
         selected_subject=request.args.get('subject', type=int),
-        subjects=Subject.query.filter_by(is_enabled=True).order_by(Subject.name).all(),
+        subjects=subjects,
     )
 
 
@@ -378,10 +392,10 @@ def _apply_library_filters(query, user):
     if subject_id:
         query = query.filter(Content.subject_id == subject_id)
     if class_id:
-        query = query.filter(
-            Content.class_id == class_id
-        ) | query.filter(Content.subject_id.in_(
-            Subject.query.filter_by(class_id=class_id).with_entities(Subject.id)
+        subject_ids = Subject.query.filter_by(class_id=class_id).with_entities(Subject.id)
+        query = query.filter(or_(
+            Content.class_id == class_id,
+            db.and_(Content.class_id.is_(None), Content.subject_id.in_(subject_ids)),
         ))
     if tag:
         query = query.filter(Content.tags.ilike(f'%{tag}%'))
@@ -399,8 +413,21 @@ def courses():
     query = Course.query.filter(Course.status == CONTENT_STATUS_PUBLISHED)
 
     class_id = request.args.get('class', type=int)
-    if class_id:
+    if user and user.is_student:
+        allowed_classes = access.class_ids_for(user)
+        if class_id:
+            query = query.filter(Course.class_id == class_id) if class_id in allowed_classes \
+                else query.filter(Course.id == -1)
+            selected_class = class_id if class_id in allowed_classes else None
+        else:
+            query = query.filter(Course.class_id.in_(allowed_classes)) if allowed_classes \
+                else query.filter(Course.id == -1)
+            selected_class = user.class_id if user.class_id in allowed_classes else None
+    elif class_id:
         query = query.filter(Course.class_id == class_id)
+        selected_class = class_id
+    else:
+        selected_class = None
 
     pagination = query.paginate(
         page=request.args.get('page', 1, type=int),
@@ -412,8 +439,8 @@ def courses():
         meta=build_meta(title='Courses', path='/courses',
                         description='Structured courses with sections, lessons and progress tracking.'),
         pagination=pagination,
-        classes=access.published_classes().all(),
-        selected_class=class_id,
+        classes=access.visible_classes_for(user),
+        selected_class=selected_class,
         enrolled=_enrolled_course_ids(user),
     )
 
@@ -421,10 +448,16 @@ def courses():
 @public_bp.route('/premium')
 def premium():
     """Premium course showcase. Shows nothing until a gateway is configured."""
-    items = Course.query.filter(
+    user = current_user()
+    query = Course.query.filter(
         Course.status == CONTENT_STATUS_PUBLISHED,
         Course.access_level == ACCESS_PREMIUM,
-    ).order_by(Course.is_featured.desc(), Course.published_at.desc().nullslast()).all()
+    )
+    if user and user.is_student:
+        allowed_classes = access.class_ids_for(user)
+        query = query.filter(Course.class_id.in_(allowed_classes)) if allowed_classes \
+            else query.filter(Course.id == -1)
+    items = query.order_by(Course.is_featured.desc(), Course.published_at.desc().nullslast()).all()
 
     return render_template(
         'public/premium.html',
@@ -444,6 +477,8 @@ def course_detail(slug):
     user = current_user()
     if item.status != CONTENT_STATUS_PUBLISHED and not access.is_privileged(user):
         abort(404)
+    if user and user.is_student and not access.can_browse_class(user, item.class_id):
+        abort(404)
 
     # The course *page* is public marketing: price, outline and free previews
     # are shown to anyone. Only the individual lessons are gated, by
@@ -456,6 +491,9 @@ def course_detail(slug):
         Course.status == CONTENT_STATUS_PUBLISHED,
         Course.subject_id == item.subject_id,
     ).limit(3).all()
+    if user and user.is_student:
+        allowed_classes = access.class_ids_for(user)
+        related = [course for course in related if course.class_id in allowed_classes]
 
     return render_template(
         'public/course_detail.html',

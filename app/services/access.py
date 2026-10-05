@@ -18,7 +18,7 @@ same question for a single record on a detail page.
 
 from datetime import timedelta
 
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 
 from app.extensions import db
 from app.models import (
@@ -57,7 +57,7 @@ def is_privileged(user):
 
 
 def class_ids_for(user):
-    """Every class id the user may browse, from their profile and grants."""
+    """Selected profile class plus any explicit, active teacher grants."""
     if not is_active(user):
         return set()
     ids = set()
@@ -66,7 +66,70 @@ def class_ids_for(user):
     for access in user.class_access:
         if access.is_effective:
             ids.add(access.class_id)
-    return ids
+    if not ids:
+        return set()
+    return {
+        class_id for (class_id,) in db.session.query(SchoolClass.id).filter(
+            SchoolClass.id.in_(ids),
+            SchoolClass.is_enabled.is_(True),
+            SchoolClass.status == 'active',
+        ).all()
+    }
+
+
+def can_browse_class(user, class_id):
+    """Whether a student may browse this class's public catalog pages."""
+    if user is None or is_privileged(user) or not getattr(user, 'is_student', False):
+        return True
+    return bool(class_id and class_id in class_ids_for(user))
+
+
+def content_in_class_scope(user, content):
+    """A student may only read content in their selected/granted classes.
+
+    Older content may have a null ``content.class_id``; for those rows the
+    subject's class is authoritative. Mismatched class/subject pairs are denied.
+    """
+    if user is None or is_privileged(user) or not getattr(user, 'is_student', False):
+        return True
+
+    allowed = class_ids_for(user)
+    if not allowed or content is None:
+        return False
+
+    subject = content.subject
+    subject_class_id = subject.class_id if subject is not None else None
+    if content.class_id is not None:
+        return (
+            content.class_id in allowed
+            and (subject_class_id is None or subject_class_id == content.class_id)
+        )
+    return subject_class_id in allowed
+
+
+def contents_in_class_scope(user, query=None):
+    """Filter a content query to the student's selected/granted classes."""
+    query = Content.query if query is None else query
+    if user is None or is_privileged(user) or not getattr(user, 'is_student', False):
+        return query
+
+    allowed = class_ids_for(user)
+    if not allowed:
+        return query.filter(Content.id == -1)
+
+    return query.filter(or_(
+        and_(
+            Content.class_id.in_(allowed),
+            Content.subject.has(or_(
+                Subject.class_id == Content.class_id,
+                Subject.class_id.is_(None),
+            )),
+        ),
+        and_(
+            Content.class_id.is_(None),
+            Content.subject.has(Subject.class_id.in_(allowed)),
+        ),
+    ))
 
 
 def enrolled_course_ids(user):
@@ -114,6 +177,8 @@ def can_view_content(user, content):
         return False
     if is_privileged(user):
         return True
+    if not content_in_class_scope(user, content):
+        return False
 
     # Draft, scheduled and archived records never reach a viewer.
     if content.status in HIDDEN_CONTENT_STATUSES:
@@ -154,10 +219,12 @@ def can_view_content(user, content):
 def visible_contents(user, query=None):
     """Filter a Content query down to what ``user`` may actually see."""
     query = Content.query if query is None else query
-    base = query.filter(Content.status == CONTENT_STATUS_PUBLISHED)
 
     if is_privileged(user):
         return query
+
+    query = contents_in_class_scope(user, query)
+    base = query.filter(Content.status == CONTENT_STATUS_PUBLISHED)
 
     # An anonymous visitor only ever sees genuinely public records. Treating
     # LOGGED_IN as free here would leak sign-in-only material into listings
@@ -214,6 +281,8 @@ def can_view_course(user, course):
         return False
     if is_privileged(user):
         return True
+    if getattr(user, 'is_student', False) and not can_browse_class(user, course.class_id):
+        return False
     if course.status != CONTENT_STATUS_PUBLISHED:
         return False
     if course.access_level in FREE_ACCESS_LEVELS:
@@ -260,9 +329,11 @@ def visible_classes_for(user):
     classes = list(published_classes())
     if is_privileged(user):
         return classes
+    if user is None or not getattr(user, 'is_student', False):
+        return classes
     allowed = class_ids_for(user)
     if not allowed:
-        return classes
+        return []
     return [item for item in classes if item.id in allowed]
 
 

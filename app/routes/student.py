@@ -3,10 +3,12 @@ from flask import (Blueprint, abort, current_app, flash, redirect,
 
 from app.extensions import db
 from app.models.announcement import Announcement
+from app.models.catalog import SchoolClass
 from app.models.content import CONTENT_TYPE_LABELS, Content
 from app.models.subject import Subject
 from app.models.user import User
 from app.services.accounts import change_password, update_profile
+from app.services import access
 from app.services.decorators import student_required
 
 student_bp = Blueprint('student', __name__)
@@ -15,14 +17,30 @@ CONTENT_PER_PAGE = 12
 ANNOUNCEMENTS_PER_PAGE = 10
 
 
-def _published_content_query():
-    return Content.query.filter(Content.status == 'published')
+def _student_user():
+    return db.session.get(User, session['user_id'])
+
+
+def _published_content_query(user):
+    query = Content.query.filter(Content.status == 'published')
+    return access.visible_contents(user, query)
+
+
+def _student_subject_query(user):
+    query = access.published_subjects()
+    class_ids = access.class_ids_for(user)
+    if not class_ids:
+        return query.filter(Subject.id == -1)
+    return query.filter(Subject.class_id.in_(class_ids))
 
 
 def _published_type_counts():
+    user = _student_user()
+    content_query = _published_content_query(user).with_entities(
+        Content.content_type, db.func.count(Content.id),
+    )
     rows = (
-        db.session.query(Content.content_type, db.func.count(Content.id))
-        .filter(Content.status == 'published')
+        content_query
         .group_by(Content.content_type)
         .all()
     )
@@ -32,11 +50,12 @@ def _published_type_counts():
 @student_bp.route('/dashboard')
 @student_required
 def dashboard():
-    recent_content = _published_content_query().order_by(
+    user = _student_user()
+    recent_content = _published_content_query(user).order_by(
         Content.published_at.desc().nullslast(), Content.created_at.desc()
     ).limit(6).all()
 
-    subjects = Subject.query.order_by(Subject.name).all()
+    subjects = _student_subject_query(user).order_by(Subject.name).all()
 
     announcements = Announcement.query.filter_by(is_published=True).order_by(
         Announcement.published_at.desc().nullslast()
@@ -47,22 +66,27 @@ def dashboard():
         recent_content=recent_content,
         subjects=subjects,
         announcements=announcements,
+        student_class=(db.session.get(SchoolClass, user.class_id)
+                       if user and user.class_id else None),
     )
 
 
 @student_bp.route('/subjects')
 @student_required
 def subjects():
-    all_subjects = Subject.query.order_by(Subject.name).all()
+    all_subjects = _student_subject_query(_student_user()).order_by(Subject.name).all()
     return render_template('student/subjects.html', subjects=all_subjects)
 
 
 @student_bp.route('/subjects/<slug>')
 @student_required
 def subject_detail(slug):
+    user = _student_user()
     subj = Subject.query.filter_by(slug=slug).first_or_404()
+    if not access.can_browse_class(user, subj.class_id) or not subj.is_enabled or subj.status != 'published':
+        abort(404)
     page = request.args.get('page', 1, type=int)
-    pagination = _published_content_query().filter_by(subject_id=subj.id).order_by(
+    pagination = _published_content_query(user).filter_by(subject_id=subj.id).order_by(
         Content.published_at.desc().nullslast(), Content.created_at.desc()
     ).paginate(page=page, per_page=CONTENT_PER_PAGE, error_out=False)
 
@@ -74,13 +98,14 @@ def subject_detail(slug):
 @student_bp.route('/content')
 @student_required
 def content_library():
+    user = _student_user()
     page = request.args.get('page', 1, type=int)
     search = request.args.get('q', '').strip()
     subject_filter = request.args.get('subject', '', type=int)
     type_filter = request.args.get('type', '').strip()
     sort = request.args.get('sort', 'newest')
 
-    query = _published_content_query()
+    query = _published_content_query(user)
 
     if search:
         pattern = f'%{search}%'
@@ -102,7 +127,7 @@ def content_library():
     )
 
     pagination = query.paginate(page=page, per_page=CONTENT_PER_PAGE, error_out=False)
-    subjects = Subject.query.order_by(Subject.name).all()
+    subjects = _student_subject_query(user).order_by(Subject.name).all()
 
     return render_template(
         'student/content_library.html',
@@ -119,8 +144,9 @@ def content_library():
 @student_bp.route('/content/<slug>')
 @student_required
 def content_detail(slug):
-    item = _published_content_query().filter_by(slug=slug).first_or_404()
-    related = _published_content_query().filter(
+    user = _student_user()
+    item = _published_content_query(user).filter_by(slug=slug).first_or_404()
+    related = _published_content_query(user).filter(
         Content.subject_id == item.subject_id,
         Content.id != item.id,
     ).order_by(Content.created_at.desc()).limit(4).all()
@@ -133,7 +159,8 @@ def content_detail(slug):
 @student_bp.route('/content/<slug>/download')
 @student_required
 def download_attachment(slug):
-    item = _published_content_query().filter_by(slug=slug).first_or_404()
+    user = _student_user()
+    item = _published_content_query(user).filter_by(slug=slug).first_or_404()
     if not item.attachment:
         abort(404)
     return redirect(url_for('files.serve_file', stored_name=item.attachment))
@@ -175,19 +202,23 @@ def profile():
             flash('Unknown profile action.', 'error')
         return redirect(url_for('student.profile'))
 
-    return render_template('student/profile.html', user=user)
+    classes = SchoolClass.query.filter(
+        SchoolClass.is_enabled.is_(True), SchoolClass.status == 'active',
+    ).order_by(SchoolClass.display_order, SchoolClass.name).all()
+    return render_template('student/profile.html', user=user, classes=classes)
 
 
 @student_bp.route('/search')
 @student_required
 def search():
+    user = _student_user()
     q = request.args.get('q', '').strip()
     page = request.args.get('page', 1, type=int)
 
     pagination = None
     if q:
         pattern = f'%{q}%'
-        pagination = _published_content_query().filter(
+        pagination = _published_content_query(user).filter(
             db.or_(
                 Content.title.ilike(pattern),
                 Content.description.ilike(pattern),

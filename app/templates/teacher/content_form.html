@@ -16,15 +16,17 @@
   {% set current_body = f.get('body_html') if f and f.get('body_html') else (content.body_html if content else '') %}
   {% set current_video = f.get('video_url') if f and f.get('video_url') else (content.video_url if content else '') %}
   {% set current_resource = f.get('resource_url') if f and f.get('resource_url') else (content.resource_url if content else '') %}
-  {% set current_tags = f.get('tags') if f and f.get('tags') else (content.tags if content else '') %}
-  {% set current_subject = f.get('subject_id') if f and f.get('subject_id') else (content.subject_id if content else '') %}
+{% set current_tags = f.get('tags') if f and f.get('tags') else (content.tags if content else '') %}
+{% set current_subject = f.get('subject_id') if f and f.get('subject_id') else (content.subject_id if content else '') %}
+{% set current_class = f.get('class_id') if f and f.get('class_id') else (content.class_id if content and content.class_id else (content.subject.class_id if content else '')) %}
+{% set current_chapter = f.get('chapter_id') if f and f.get('chapter_id') else (content.chapter_id if content else '') %}
   {% set is_published = (f.get('status') == 'published') if f and f.get('status') else (content.is_published if content else false) %}
 
   <div class="cn-page-header">
     <div>
       <h1 class="cn-page-header__title">{% if content %}Edit content{% else %}Create content{% endif %}</h1>
       <p class="cn-page-header__subtitle">
-        Saved lessons can stay as drafts until you are ready to publish them.
+        Choose class, subject, and chapter so this resource appears in the right place in the learning catalog.
       </p>
     </div>
     {% if content %}
@@ -34,15 +36,36 @@
     {% endif %}
   </div>
 
-  {% if not subjects %}
+  {% if not classes %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-mortarboard"></i></div>
+      <div class="cn-empty__title">Create a class first</div>
+      <p>Content is organized under a class, subject, and chapter.</p>
+      <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_class') }}">
+        <i class="bi bi-plus-lg"></i> Add class
+      </a>
+    </div>
+  </div>
+  {% elif not subjects %}
   <div class="cn-card">
     <div class="cn-empty">
       <div class="cn-empty__icon"><i class="bi bi-bookmark"></i></div>
-      <div class="cn-empty__title">Create a subject first</div>
-      <p>Every lesson belongs to a subject, so students can find it.</p>
-      <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_subject') }}">
-        <i class="bi bi-plus-lg"></i> New subject
-      </a>
+      <div class="cn-empty__title">Assign a subject to a class</div>
+      <p>Create a subject, or edit an existing subject and choose its class before adding content.</p>
+      <div class="cn-btn-row">
+        <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_subject') }}"><i class="bi bi-plus-lg"></i> New subject</a>
+        <a class="cn-btn cn-btn--outline" href="{{ url_for('teacher.subjects') }}">Manage subjects</a>
+      </div>
+    </div>
+  </div>
+  {% elif not chapters and not content %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-list-ol"></i></div>
+      <div class="cn-empty__title">Create a chapter first</div>
+      <p>Place learning content inside a chapter so students can find it under the right class and subject.</p>
+      <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_chapter') }}"><i class="bi bi-plus-lg"></i> Add chapter</a>
     </div>
   </div>
   {% else %}
@@ -62,16 +85,38 @@
 
         <div class="cn-form-row">
           <div class="cn-form-group">
-            <label class="cn-label" for="subject_id">Subject <span class="cn-required">*</span></label>
-            <select class="cn-select" id="subject_id" name="subject_id" required>
-              <option value="">Select a subject…</option>
-              {% for s in subjects %}
-              <option value="{{ s.id }}" {% if current_subject | string == s.id | string %}selected{% endif %}>{{ s.name }}</option>
+            <label class="cn-label" for="class_id">Class <span class="cn-required">*</span></label>
+            <select class="cn-select" id="class_id" name="class_id" data-catalog-class required>
+              <option value="">Select a class</option>
+              {% for c in classes %}
+              <option value="{{ c.id }}" {% if current_class|string == c.id|string %}selected{% endif %}>{{ c.name }}</option>
               {% endfor %}
             </select>
           </div>
           <div class="cn-form-group">
-            <label class="cn-label" for="topic">Topic / chapter</label>
+            <label class="cn-label" for="subject_id">Subject <span class="cn-required">*</span></label>
+            <select class="cn-select" id="subject_id" name="subject_id" data-catalog-subject required>
+              <option value="">Choose the class first</option>
+              {% for s in subjects %}
+              <option value="{{ s.id }}" data-class-id="{{ s.class_id }}" {% if current_subject | string == s.id | string %}selected{% endif %}>{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="cn-form-row">
+          <div class="cn-form-group">
+            <label class="cn-label" for="chapter_id">Chapter <span class="cn-required">*</span></label>
+            <select class="cn-select" id="chapter_id" name="chapter_id" data-catalog-chapter required>
+              <option value="">Choose a subject first</option>
+              {% for chapter in chapters %}
+              <option value="{{ chapter.id }}" data-class-id="{{ chapter.class_id }}" data-subject-id="{{ chapter.subject_id }}" {% if current_chapter|string == chapter.id|string %}selected{% endif %}>{{ chapter.title }}</option>
+              {% endfor %}
+            </select>
+            <small class="cn-hint">Content is saved under the selected chapter. <a href="{{ url_for('teacher.chapters') }}">Manage chapters</a>.</small>
+          </div>
+          <div class="cn-form-group">
+            <label class="cn-label" for="topic">Topic within chapter <span class="cn-label--muted">(optional)</span></label>
             <input type="text" class="cn-input" id="topic" name="topic" value="{{ current_topic }}" maxlength="200">
           </div>
         </div>

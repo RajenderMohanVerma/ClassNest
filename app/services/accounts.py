@@ -2,6 +2,8 @@
 
 from email_validator import EmailNotValidError, validate_email
 
+from app.extensions import db
+
 MIN_PASSWORD_LENGTH = 6
 
 
@@ -24,9 +26,26 @@ def update_profile(user, form):
     if email and email != user.email and User.query.filter_by(email=email).first():
         return False, 'Email already in use.'
 
+    selected_class_id = None
+    if user.is_student and 'class_id' in form:
+        raw_class_id = (form.get('class_id') or '').strip()
+        if not raw_class_id:
+            return False, 'Choose your class to see the right learning material.'
+        try:
+            selected_class_id = int(raw_class_id)
+        except (TypeError, ValueError):
+            return False, 'Choose a valid class.'
+        from app.models.catalog import SchoolClass
+
+        school_class = db.session.get(SchoolClass, selected_class_id)
+        if school_class is None or not school_class.is_available:
+            return False, 'Choose an active class.'
+
     user.name = name
     if email:
         user.email = email
+    if selected_class_id is not None:
+        user.class_id = selected_class_id
     return True, 'Profile updated!'
 
 

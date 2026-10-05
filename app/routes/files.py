@@ -5,9 +5,11 @@ from flask import (Blueprint, abort, request, send_from_directory, session)
 
 from app.extensions import db
 from app.models.content import Content
+from app.models.user import User
 from app.models.uploaded_file import UploadedFile
 from app.services.decorators import login_required
 from app.services.uploads import stored_path
+from app.services import access
 
 files_bp = Blueprint('files', __name__)
 
@@ -48,8 +50,10 @@ def serve_file(stored_name):
     if content is None:
         abort(404)
 
-    if session.get('user_role') != 'teacher' and not content.is_published:
-        abort(403)
+    if session.get('user_role') != 'teacher':
+        user = db.session.get(User, session.get('user_id'))
+        if user is None or not access.can_view_content(user, content):
+            abort(403)
 
     extension = stored_name.rsplit('.', 1)[-1].lower()
     as_attachment = extension not in IMAGE_EXTENSIONS or request.args.get('download') == '1'
@@ -74,7 +78,8 @@ def download_by_id(id):
         abort(404)
     content = db.session.get(Content, record.content_id) if record.content_id else None
     if session.get('user_role') != 'teacher':
-        if content is None or not content.is_published:
+        user = db.session.get(User, session.get('user_id'))
+        if content is None or user is None or not access.can_view_content(user, content):
             abort(403)
     resolved = stored_path(record.stored_name)
     response = send_from_directory(

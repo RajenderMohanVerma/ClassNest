@@ -56,15 +56,18 @@
 
 ### Authentication (Phase 4)
 - Login with validated `next`, student registration (name, email, password,
-  class, optional phone), POST logout
+  required class, optional phone), POST logout
 - Email verification and password reset via single-use, expiring, hashed
   `account_tokens`; verification resend; forgot-password that never reveals
   whether an address has an account
 - Account status (`active` / `suspended` / `disabled`) enforced at login and on
   every request; `last_login_at` recorded
+- Student content/search/course/catalog/file access scoped to the selected class;
+  current students can change class from their profile
 
 ### Teacher
-- Dashboard, subjects CRUD, content CRUD with unique slugs, preview, publish
+- Dashboard, classes CRUD, class-assigned subjects CRUD, chapter CRUD, content
+  CRUD with required class/subject/chapter parents, unique slugs, preview, publish
   toggle, list filters/search/sort/pagination, announcements CRUD, student
   search, file list/delete, profile
 

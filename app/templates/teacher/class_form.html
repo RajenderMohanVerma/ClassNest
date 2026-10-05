@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{% if school_class %}Edit {{ school_class.name }}{% else %}Add class{% endif %} — {{ app_name }}{% endblock %}
+{% block body %}
+{% set page_title = 'Classes' %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+{% set f = form_data %}
+{% set current_name = f.get('name') if f and f.get('name') else (school_class.name if school_class else '') %}
+{% set current_description = f.get('description') if f and f.get('description') else (school_class.description if school_class else '') %}
+{% set current_order = f.get('display_order') if f and f.get('display_order') else (school_class.display_order if school_class else 0) %}
+
+<main class="cn-main" id="main-content">
+  {% include 'partials/alerts.html' %}
+  <div class="cn-page-header">
+    <div>
+      <h1 class="cn-page-header__title">{% if school_class %}Edit class{% else %}Add a class{% endif %}</h1>
+      <p class="cn-page-header__subtitle">Classes are the first level in the Class → Subject → Chapter → Content structure.</p>
+    </div>
+    <a href="{{ url_for('teacher.classes') }}" class="cn-btn cn-btn--ghost"><i class="bi bi-arrow-left" aria-hidden="true"></i> All classes</a>
+  </div>
+
+  <form method="POST" class="cn-card cn-form cn-form--narrow" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="cn-form-group">
+      <label class="cn-label" for="name">Class name <span class="cn-required">*</span></label>
+      <input class="cn-input" id="name" name="name" value="{{ current_name }}" required minlength="2" maxlength="120" placeholder="e.g. Class 10" autofocus>
+      <small class="cn-hint">Use the name students should see in the catalog.</small>
+    </div>
+    <div class="cn-form-group">
+      <label class="cn-label" for="description">Description</label>
+      <textarea class="cn-textarea cn-textarea--sm" id="description" name="description" maxlength="1200" placeholder="What classes or subjects does this catalog section cover?">{{ current_description }}</textarea>
+    </div>
+    <div class="cn-form-group">
+      <label class="cn-label" for="display_order">Display order</label>
+      <input class="cn-input" type="number" id="display_order" name="display_order" value="{{ current_order }}" min="0" step="1">
+      <small class="cn-hint">Lower numbers appear first. Classes remain manageable without deleting existing learning records.</small>
+    </div>
+    <div class="cn-btn-row">
+      <button type="submit" class="cn-btn cn-btn--primary cn-btn--lg"><i class="bi bi-check-lg" aria-hidden="true"></i> Save class</button>
+      <a href="{{ url_for('teacher.classes') }}" class="cn-btn cn-btn--outline cn-btn--lg">Cancel</a>
+    </div>
+  </form>
+</main>
+{% endblock %}

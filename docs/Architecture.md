@@ -82,8 +82,10 @@ sidebar visibility.
 | Model | Purpose | Key relationships |
 |-------|---------|-------------------|
 | `User` | Account, role, profile, password hash, avatar | owns subjects/content/announcements/files |
-| `Subject` | Teacher-owned learning subject | has many content records |
-| `Content` | Learning item and publication state | belongs to a subject and author; owns uploaded files |
+| `SchoolClass` | Public class catalog entry and ordering | has subjects, chapters, content, and students |
+| `Subject` | A subject within one class | belongs to a class; has chapters and content |
+| `Chapter` | Ordered learning unit within a subject | belongs to the same class and subject as its content |
+| `Content` | Learning item and publication state | belongs to a class, subject, chapter, and author; owns uploaded files |
 | `Announcement` | Teacher message with publication state | belongs to an author |
 | `UploadedFile` | Stored attachment metadata | belongs to uploader and optional content |
 
@@ -94,6 +96,22 @@ a name repeats and supports `exclude_id` so renaming keeps the slug stable.
 `publish()`/`unpublish()` maintain `published_at`; unpublishing clears it.
 `content_type`, `status`, and `users.role` also carry CHECK constraints that
 mirror `config.py`.
+
+The teacher catalog workflow preserves `Class → Subject → Chapter → Content`.
+Class creation/editing, subject class assignment, and chapter management are
+available under `/teacher/classes`, `/teacher/subjects`, and `/teacher/chapters`.
+Content forms require the teacher to select all three parents; server-side
+validation rejects a subject or chapter from a different class. Moving a subject
+to another class updates its chapters and content class ids in the same
+transaction. Existing classless subjects can be assigned from the subject editor
+without deleting their existing rows.
+
+Student registration requires an active class. Student-facing listings, search,
+subject/chapter pages, course pages, direct content requests, and uploaded-file
+delivery are scoped to that selected class. Existing students can change their
+class in Profile. Explicit active teacher grants remain auditable exceptions;
+unassigned legacy content is matched through its subject's class, while
+mismatched content/subject class ids are denied.
 
 ## Storage boundaries
 

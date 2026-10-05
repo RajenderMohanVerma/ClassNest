@@ -4,7 +4,7 @@ import io
 import os
 
 from app.extensions import db
-from app.models import Announcement, Content, UploadedFile
+from app.models import Announcement, Chapter, Content, Course, SchoolClass, Subject, UploadedFile
 
 
 def test_dashboard_renders_for_student(client, login_student, published_content, subject):
@@ -34,6 +34,112 @@ def test_dashboard_handles_content_without_body(client, login_student, subject, 
     response = client.get('/student/dashboard')
     assert response.status_code == 200
     assert b'Bare Lesson' in response.data
+
+
+def test_student_library_dashboard_and_search_are_scoped_to_their_class(
+    client, login_student, student, school_class, subject, teacher,
+):
+    other_class = SchoolClass(name='Class 11', slug='class-11', created_by=teacher.id)
+    db.session.add(other_class)
+    db.session.flush()
+    other_subject = Subject(
+        name='Other Class Physics', slug='other-class-physics',
+        class_id=other_class.id, created_by=teacher.id,
+    )
+    db.session.add(other_subject)
+    db.session.flush()
+
+    same_class = Content(
+        title='My Class Learning', slug='my-class-learning',
+        class_id=school_class.id, subject_id=subject.id,
+        content_type='notes', status='published', access_level='public',
+        created_by=teacher.id,
+    )
+    other_class_content = Content(
+        title='Other Class Secret', slug='other-class-secret',
+        class_id=other_class.id, subject_id=other_subject.id,
+        content_type='notes', status='published', access_level='public',
+        created_by=teacher.id,
+    )
+    same_class.publish()
+    other_class_content.publish()
+    same_class_course = Course(
+        title='My Class Course', slug='my-class-course', class_id=school_class.id,
+        access_level='public', status='published', created_by=teacher.id,
+    )
+    other_class_course = Course(
+        title='Other Class Course', slug='other-class-course', class_id=other_class.id,
+        access_level='public', status='published', created_by=teacher.id,
+    )
+    db.session.add_all([same_class, other_class_content, same_class_course, other_class_course])
+    db.session.commit()
+
+    assert student.class_id == school_class.id
+    login_student()
+
+    for path in (
+        '/student/dashboard', '/student/content', '/student/search?q=class',
+        '/notes', '/search?q=class',
+    ):
+        response = client.get(path)
+        assert response.status_code == 200, path
+        assert b'My Class Learning' in response.data, path
+        assert b'Other Class Secret' not in response.data, path
+        assert b'Other Class Physics' not in response.data, path
+
+    assert b'Other Class Physics' not in client.get('/student/subjects').data
+    classes_page = client.get('/classes').data
+    assert school_class.name.encode() in classes_page
+    assert other_class.name.encode() not in classes_page
+    courses_page = client.get('/courses').data
+    assert b'My Class Course' in courses_page
+    assert b'Other Class Course' not in courses_page
+
+
+def test_student_cannot_open_another_class_content_subject_chapter_or_file(
+    app, client, login_student, student, school_class, subject, teacher, png_bytes,
+):
+    other_class = SchoolClass(name='Class 11', slug='class-11', created_by=teacher.id)
+    db.session.add(other_class)
+    db.session.flush()
+    other_subject = Subject(
+        name='Other Class Physics', slug='other-class-physics',
+        class_id=other_class.id, created_by=teacher.id,
+    )
+    db.session.add(other_subject)
+    db.session.flush()
+    other_chapter = Chapter(
+        title='Other Class Chapter', slug='other-class-chapter',
+        class_id=other_class.id, subject_id=other_subject.id,
+        status='published', created_by=teacher.id,
+    )
+    db.session.add(other_chapter)
+    db.session.flush()
+    stored_name = 'e' * 32 + '.png'
+    other_content = Content(
+        title='Other Class Secret', slug='other-class-secret',
+        class_id=other_class.id, subject_id=other_subject.id,
+        chapter_id=other_chapter.id, thumbnail=stored_name,
+        content_type='notes', status='published', access_level='public',
+        created_by=teacher.id,
+    )
+    other_content.publish()
+    db.session.add(other_content)
+    db.session.commit()
+    with open(f"{app.config['UPLOAD_FOLDER']}/{stored_name}", 'wb') as handle:
+        handle.write(png_bytes)
+
+    login_student()
+
+    assert client.get(f'/student/content/{other_content.slug}').status_code == 404
+    assert client.get(f'/content/{other_content.slug}').status_code == 404
+    assert client.get(f'/student/subjects/{other_subject.slug}').status_code == 404
+    assert client.get(f'/subjects/{other_subject.slug}').status_code == 404
+    assert client.get(f'/chapters/{other_chapter.slug}').status_code == 404
+    assert client.get(f'/classes/{other_class.slug}').status_code == 404
+    assert client.get(f'/files/{stored_name}').status_code == 403
+
+    os.remove(f"{app.config['UPLOAD_FOLDER']}/{stored_name}")
 
 
 def test_students_never_see_drafts(client, login_student, content, published_content):
@@ -152,6 +258,42 @@ def test_student_profile_update(client, login_student, student):
     assert db.session.get(type(student), student.id).name == 'Renamed Student'
 
 
+def test_student_can_change_their_class_from_profile(
+    client, login_student, student, teacher,
+):
+    other_class = SchoolClass(name='Class 11', slug='class-11', created_by=teacher.id)
+    db.session.add(other_class)
+    db.session.commit()
+    login_student()
+
+    response = client.post('/student/profile', data={
+        'action': 'update_profile',
+        'name': student.name,
+        'email': student.email,
+        'class_id': str(other_class.id),
+    })
+
+    assert response.status_code == 302
+    assert student.class_id == other_class.id
+
+
+def test_legacy_student_without_a_class_is_prompted_and_sees_no_catalog(
+    client, login_student, student, published_content,
+):
+    student.class_id = None
+    db.session.commit()
+    login_student()
+
+    dashboard = client.get('/student/dashboard')
+    assert dashboard.status_code == 200
+    assert b'Choose your class' in dashboard.data
+    assert published_content.title.encode() not in dashboard.data
+
+    assert published_content.title.encode() not in client.get('/student/content').data
+    assert client.get(f'/student/content/{published_content.slug}').status_code == 404
+    assert b'Class 10' not in client.get('/classes').data
+
+
 def test_student_password_change(client, login_student, student):
     login_student()
     response = client.post(
@@ -219,13 +361,14 @@ def test_teacher_can_fetch_draft_thumbnail(app, client, login_teacher, subject, 
 
 
 def test_student_download_uses_original_filename(
-    client, login, student, teacher, subject, fake_pdf
+    client, login, student, teacher, subject, chapter, fake_pdf
 ):
     login(teacher.email, 'teacherpass')
     client.post(
         '/teacher/content/create',
         data={
-            'title': 'Downloadable', 'subject_id': subject.id,
+            'title': 'Downloadable', 'class_id': subject.class_id,
+            'subject_id': subject.id, 'chapter_id': chapter.id,
             'description': 'Has a PDF', 'content_type': 'pdf_resource',
             'body_html': '<p>Body</p>', 'status': 'published',
             'attachment': (io.BytesIO(fake_pdf), 'semester-notes.pdf'),

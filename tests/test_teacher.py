@@ -4,37 +4,38 @@ import io
 import os
 
 from app.extensions import db
-from app.models import Announcement, Content, Subject, UploadedFile
+from app.models import Announcement, Chapter, Content, SchoolClass, Subject, UploadedFile
 
 
 # ── Subjects ───────────────────────────────────────────────
-def test_teacher_can_create_subject(client, login_teacher):
+def test_teacher_can_create_subject(client, login_teacher, school_class):
     login_teacher()
     response = client.post(
         '/teacher/subjects/create',
-        data={'name': 'Physics', 'description': 'Motion and energy', 'icon': 'bi-lightning'},
+        data={'name': 'Physics', 'description': 'Motion and energy', 'icon': 'bi-lightning', 'class_id': school_class.id},
         follow_redirects=False,
     )
     assert response.status_code == 302
     subject = Subject.query.filter_by(name='Physics').first()
     assert subject is not None
     assert subject.slug == 'physics'
+    assert subject.class_id == school_class.id
     assert subject.total_count == 0
 
 
-def test_duplicate_subject_names_get_unique_slugs(client, login_teacher):
+def test_duplicate_subject_names_get_unique_slugs(client, login_teacher, school_class):
     login_teacher()
-    client.post('/teacher/subjects/create', data={'name': 'Physics'})
-    client.post('/teacher/subjects/create', data={'name': 'physics'})
+    client.post('/teacher/subjects/create', data={'name': 'Physics', 'class_id': school_class.id})
+    client.post('/teacher/subjects/create', data={'name': 'physics', 'class_id': school_class.id})
     assert Subject.query.count() == 2
     slugs = sorted(subject.slug for subject in Subject.query.all())
     assert slugs == ['physics', 'physics-2']
     assert len(set(slugs)) == 2
 
 
-def test_subject_creation_requires_name(client, login_teacher):
+def test_subject_creation_requires_name(client, login_teacher, school_class):
     login_teacher()
-    response = client.post('/teacher/subjects/create', data={'name': ''})
+    response = client.post('/teacher/subjects/create', data={'name': '', 'class_id': school_class.id})
     assert response.status_code == 400
     assert Subject.query.count() == 0
 
@@ -53,15 +54,162 @@ def test_empty_subject_can_be_deleted(client, login_teacher, subject):
     assert db.session.get(Subject, subject.id) is None
 
 
-def test_subject_edit_updates_fields(client, login_teacher, subject):
+def test_subject_edit_updates_fields(client, login_teacher, subject, school_class):
     login_teacher()
     client.post(
         f'/teacher/subjects/{subject.id}/edit',
-        data={'name': 'Advanced Mathematics', 'description': 'Updated', 'icon': 'bi-book'},
+        data={'name': 'Advanced Mathematics', 'description': 'Updated', 'icon': 'bi-book', 'class_id': school_class.id},
     )
     updated = db.session.get(Subject, subject.id)
     assert updated.name == 'Advanced Mathematics'
     assert updated.slug == 'advanced-mathematics'
+
+
+def test_teacher_can_create_class_subject_chapter_and_chapter_content(client, login_teacher, teacher):
+    login_teacher()
+    response = client.post('/teacher/classes/create', data={
+        'name': 'Class 6', 'description': 'Middle school', 'display_order': '1',
+    })
+    assert response.status_code == 302
+    school_class = SchoolClass.query.filter_by(name='Class 6').one()
+
+    response = client.post('/teacher/subjects/create', data={
+        'name': 'Science', 'class_id': str(school_class.id),
+    })
+    assert response.status_code == 302
+    subject = Subject.query.filter_by(name='Science').one()
+    assert subject.class_id == school_class.id
+
+    response = client.post('/teacher/chapters/create', data={
+        'class_id': str(school_class.id),
+        'subject_id': str(subject.id),
+        'title': 'Living Things',
+        'status': 'published',
+    })
+    assert response.status_code == 302
+    chapter = Chapter.query.filter_by(title='Living Things').one()
+    assert chapter.class_id == school_class.id
+    assert chapter.subject_id == subject.id
+
+    response = client.post('/teacher/content/create', data={
+        **_content_payload(
+            title='Plant Cells', class_id=school_class.id,
+            subject_id=subject.id, chapter_id=chapter.id,
+        ),
+    }, content_type='multipart/form-data')
+    assert response.status_code == 302
+    content = Content.query.filter_by(title='Plant Cells').one()
+    assert content.class_id == school_class.id
+    assert content.subject_id == subject.id
+    assert content.chapter_id == chapter.id
+
+    public_page = client.get(f'/classes/{school_class.slug}')
+    assert public_page.status_code == 200
+    assert b'Science' in public_page.data
+
+
+def test_catalog_management_pages_render_before_any_records_exist(client, login_teacher):
+    login_teacher()
+    for path in (
+        '/teacher/classes', '/teacher/classes/create',
+        '/teacher/subjects', '/teacher/subjects/create',
+        '/teacher/chapters', '/teacher/chapters/create',
+        '/teacher/content/create',
+    ):
+        assert client.get(path).status_code == 200, path
+
+
+def test_content_form_offers_class_subject_and_chapter(client, login_teacher, subject, chapter):
+    login_teacher()
+    response = client.get('/teacher/content/create')
+    assert response.status_code == 200
+    assert b'data-catalog-class' in response.data
+    assert b'data-catalog-subject' in response.data
+    assert b'data-catalog-chapter' in response.data
+    assert b'Chapter' in response.data
+
+
+def test_content_cannot_be_assigned_to_a_subject_from_another_class(
+    client, login_teacher, subject, chapter, teacher,
+):
+    login_teacher()
+    other_class = SchoolClass(
+        name='Class 7', slug='class-7', created_by=teacher.id,
+    )
+    db.session.add(other_class)
+    db.session.commit()
+
+    response = client.post('/teacher/content/create', data={
+        **_content_payload(
+            title='Wrong Class Content', class_id=other_class.id,
+            subject_id=subject.id, chapter_id=chapter.id,
+        ),
+    }, content_type='multipart/form-data')
+
+    assert response.status_code == 400
+    assert b'does not belong to this class' in response.data
+    assert Content.query.filter_by(title='Wrong Class Content').first() is None
+
+
+def test_chapter_cannot_be_added_to_a_subject_from_another_class(client, login_teacher, subject, teacher):
+    login_teacher()
+    other_class = SchoolClass(
+        name='Class 7', slug='class-7', created_by=teacher.id,
+    )
+    db.session.add(other_class)
+    db.session.commit()
+
+    response = client.post('/teacher/chapters/create', data={
+        'class_id': str(other_class.id),
+        'subject_id': str(subject.id),
+        'title': 'Motion',
+    })
+
+    assert response.status_code == 400
+    assert b'does not belong to this class' in response.data
+    assert Chapter.query.filter_by(title='Motion').first() is None
+
+
+def test_moving_subject_updates_its_chapters_and_existing_content(
+    client, login_teacher, subject, chapter, content, teacher,
+):
+    other_class = SchoolClass(
+        name='Class 7', slug='class-7', created_by=teacher.id,
+    )
+    db.session.add(other_class)
+    content.class_id = subject.class_id
+    content.chapter_id = chapter.id
+    db.session.commit()
+    login_teacher()
+
+    response = client.post(f'/teacher/subjects/{subject.id}/edit', data={
+        'name': subject.name,
+        'description': subject.description or '',
+        'icon': subject.icon,
+        'class_id': str(other_class.id),
+    })
+
+    assert response.status_code == 302
+    assert subject.class_id == chapter.class_id == content.class_id == other_class.id
+
+
+def test_published_content_requires_its_chapter_to_be_published(
+    client, login_teacher, subject, chapter,
+):
+    login_teacher()
+    chapter.status = 'draft'
+    db.session.commit()
+
+    response = client.post('/teacher/content/create', data={
+        **_content_payload(
+            title='Blocked Publish', class_id=subject.class_id,
+            subject_id=subject.id, chapter_id=chapter.id, status='published',
+        ),
+    }, content_type='multipart/form-data')
+
+    assert response.status_code == 400
+    assert b'Publish the chapter before publishing its content' in response.data
+    assert Content.query.filter_by(title='Blocked Publish').first() is None
 
 
 # ── Content ────────────────────────────────────────────────
@@ -77,6 +225,24 @@ def _content_payload(**overrides):
         'resource_url': '',
     }
     payload.update(overrides)
+    subject_id = payload.get('subject_id')
+    subject = db.session.get(Subject, int(subject_id)) if subject_id else None
+    if subject is not None:
+        payload.setdefault('class_id', subject.class_id)
+        chapter = subject.chapters.first()
+        if chapter is None and subject.class_id:
+            chapter = Chapter(
+                title='Test Chapter',
+                slug=Chapter.unique_slug(f'test-chapter-{subject.id}'),
+                subject_id=subject.id,
+                class_id=subject.class_id,
+                status='published',
+                created_by=subject.created_by,
+            )
+            db.session.add(chapter)
+            db.session.commit()
+        if chapter is not None:
+            payload.setdefault('chapter_id', chapter.id)
     return payload
 
 
@@ -210,7 +376,10 @@ def test_edit_content_keeps_slug_stable_for_same_title(client, login_teacher, co
     assert db.session.get(Content, content.id).slug == original_slug
 
 
-def test_toggle_publish_flips_state_and_timestamp(client, login_teacher, content):
+def test_toggle_publish_flips_state_and_timestamp(client, login_teacher, content, chapter):
+    content.class_id = chapter.class_id
+    content.chapter_id = chapter.id
+    db.session.commit()
     login_teacher()
     client.post(f'/teacher/content/{content.id}/toggle', follow_redirects=True)
     item = db.session.get(Content, content.id)

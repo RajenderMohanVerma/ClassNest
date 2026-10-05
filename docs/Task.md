@@ -1,4 +1,4 @@
-# ClassNest Task Log
+# ClassNext Task Log
 
 ## Working agreement
 
@@ -79,6 +79,11 @@ Mark a task complete only after the relevant check passes.
       completion.
 - [ ] Phase 6: admin CMS under `/admin/*` for classes, subjects, chapters,
       content, courses, notices, students and site settings.
+- [x] Catalog workflow foundation: teacher class management, subject-to-class
+      assignment, chapter CRUD, and class/subject/chapter validation when saving
+      content. Existing unassigned subjects can be assigned without data loss.
+- [x] Require a class at student registration; scope student catalogs, search,
+      courses, direct content pages, and file downloads to that class.
 - [ ] Phase 7: premium checkout with server-side payment verification, orders
       and receipts.
 - [ ] Phase 8-10: security audit, performance pass, PWA offline behaviour, final
@@ -123,6 +128,7 @@ git log -1 --oneline
 
 | Date | Update |
 |------|--------|
+| 2026-10-05 | Added teacher-managed Class → Subject → Chapter → Content workflow and server-side hierarchy validation |
 | 2026-10-05 | Completed Phases 1-4 and recorded the 234-test suite, live smoke scripts, and Phase 5 acceptance criteria |
 | 2026-10-03 | Replaced the old TypeScript foundation task list with the completed Flask implementation log |
 | 2026-10-03 | Added GitHub delivery status and production deployment follow-up tasks |

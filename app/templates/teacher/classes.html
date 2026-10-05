@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Classes — {{ app_name }}{% endblock %}
+{% block body %}
+{% set page_title = 'Classes' %}
+{% include 'partials/teacher_sidebar.html' %}
+{% include 'partials/topbar.html' %}
+
+<main class="cn-main" id="main-content">
+  {% include 'partials/alerts.html' %}
+  <div class="cn-page-header">
+    <div>
+      <p class="cn-eyebrow">ACADEMIC CATALOG</p>
+      <h1 class="cn-page-header__title">Classes</h1>
+      <p class="cn-page-header__subtitle">Start the learning structure here: create a class, add subjects, add chapters, then place lessons inside chapters.</p>
+    </div>
+    <a href="{{ url_for('teacher.create_class') }}" class="cn-btn cn-btn--primary">
+      <i class="bi bi-plus-lg" aria-hidden="true"></i> Add class
+    </a>
+  </div>
+
+  <ol class="cn-catalog-steps" aria-label="Catalog setup order">
+    <li class="is-current"><span>1</span> Class</li>
+    <li><span>2</span> Subject</li>
+    <li><span>3</span> Chapter</li>
+    <li><span>4</span> Content</li>
+  </ol>
+
+  {% if classes %}
+  <div class="cn-content-grid">
+    {% for school_class in classes %}
+    <article class="cn-card cn-class-admin-card">
+      <div class="cn-class-admin-card__top">
+        <span class="cn-class-admin-card__icon"><i class="bi bi-mortarboard" aria-hidden="true"></i></span>
+        <a class="cn-icon-btn" href="{{ url_for('teacher.edit_class', id=school_class.id) }}" aria-label="Edit {{ school_class.name }}" title="Edit class">
+          <i class="bi bi-pencil" aria-hidden="true"></i>
+        </a>
+      </div>
+      <h2>{{ school_class.name }}</h2>
+      <p>{{ school_class.description or 'Add a description to introduce this class on the public site.' }}</p>
+      <div class="cn-class-admin-card__counts">
+        <span><strong>{{ school_class.subjects.count() }}</strong> subject{{ '' if school_class.subjects.count() == 1 else 's' }}</span>
+        <span><strong>{{ school_class.chapters.count() }}</strong> chapter{{ '' if school_class.chapters.count() == 1 else 's' }}</span>
+        <span><strong>{{ school_class.content.count() }}</strong> item{{ '' if school_class.content.count() == 1 else 's' }}</span>
+      </div>
+      <div class="cn-btn-row">
+        <a class="cn-btn cn-btn--primary cn-btn--sm" href="{{ url_for('teacher.create_subject', class_id=school_class.id) }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add subject</a>
+        <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('teacher.subjects', class_id=school_class.id) }}">View subjects</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="cn-card">
+    <div class="cn-empty">
+      <div class="cn-empty__icon"><i class="bi bi-mortarboard" aria-hidden="true"></i></div>
+      <h2 class="cn-empty__title">No classes yet</h2>
+      <p>Create the first class. You can then build its subjects, chapters, and content.</p>
+      <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_class') }}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add first class</a>
+    </div>
+  </div>
+  {% endif %}
+</main>
+{% endblock %}

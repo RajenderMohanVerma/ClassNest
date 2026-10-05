@@ -11,12 +11,25 @@
   <div class="cn-page-header">
     <div>
       <h1 class="cn-page-header__title">Welcome, {{ current_user.name }}</h1>
-      <p class="cn-page-header__subtitle">Manage your learning material, announcements and students.</p>
+      <p class="cn-page-header__subtitle">Build and publish the catalog, manage announcements, and support students.</p>
     </div>
     <a href="{{ url_for('teacher.create_content') }}" class="cn-btn cn-btn--primary cn-btn--lg">
       <i class="bi bi-plus-lg"></i> Create Content
     </a>
   </div>
+
+  <section class="cn-catalog-workflow" aria-label="Build the learning catalog">
+    <div class="cn-catalog-workflow__intro">
+      <span>BUILD YOUR CATALOG</span>
+      <p>Every class on the home page is populated through this sequence.</p>
+    </div>
+    <ol>
+      <li><a href="{{ url_for('teacher.classes') }}"><span>1</span><i class="bi bi-mortarboard" aria-hidden="true"></i><strong>Choose class</strong><small>{{ total_classes }} in catalog</small></a></li>
+      <li><a href="{{ url_for('teacher.subjects') }}"><span>2</span><i class="bi bi-book" aria-hidden="true"></i><strong>Add subject</strong><small>{{ total_subjects }} subjects</small></a></li>
+      <li><a href="{{ url_for('teacher.chapters') }}"><span>3</span><i class="bi bi-list-ol" aria-hidden="true"></i><strong>Add chapter</strong><small>{{ total_chapters }} chapters</small></a></li>
+      <li><a href="{{ url_for('teacher.create_content') }}"><span>4</span><i class="bi bi-journal-plus" aria-hidden="true"></i><strong>Add content</strong><small>Place it in a chapter</small></a></li>
+    </ol>
+  </section>
 
   <div class="cn-stats-grid">
     <div class="cn-card">
@@ -99,7 +112,7 @@
       <div class="cn-empty">
         <div class="cn-empty__icon"><i class="bi bi-inbox"></i></div>
         <div class="cn-empty__title">No content yet</div>
-        <p>Create your first subject and lesson to get started.</p>
+        <p>Start by creating a class, then add its subjects and chapters before placing content.</p>
         <a class="cn-btn cn-btn--primary" href="{{ url_for('teacher.create_content') }}">
           <i class="bi bi-plus-lg"></i> Create content
         </a>

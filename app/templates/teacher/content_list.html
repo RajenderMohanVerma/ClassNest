@@ -11,7 +11,7 @@
   <div class="cn-page-header">
     <div>
       <h1 class="cn-page-header__title">Content Management</h1>
-      <p class="cn-page-header__subtitle">{{ pagination.total }} content item{{ '' if pagination.total == 1 else 's' }}</p>
+      <p class="cn-page-header__subtitle">{{ pagination.total }} content item{{ '' if pagination.total == 1 else 's' }} · Each item belongs to a class, subject, and chapter.</p>
     </div>
     <a href="{{ url_for('teacher.create_content') }}" class="cn-btn cn-btn--primary">
       <i class="bi bi-plus-lg"></i> Create Content
@@ -38,11 +38,21 @@
     </div>
 
     <div class="cn-filter-bar__field">
+      <label class="cn-sr-only" for="content-class">Class</label>
+      <select class="cn-select" id="content-class" name="class_id">
+        <option value="">All classes</option>
+        {% for c in classes %}
+        <option value="{{ c.id }}" {% if class_filter == c.id %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="cn-filter-bar__field">
       <label class="cn-sr-only" for="content-subject">Subject</label>
       <select class="cn-select" id="content-subject" name="subject">
         <option value="">All subjects</option>
         {% for s in subjects %}
-        <option value="{{ s.id }}" {% if subject_filter == s.id %}selected{% endif %}>{{ s.name }}</option>
+        <option value="{{ s.id }}" {% if subject_filter == s.id %}selected{% endif %}>{{ s.school_class.name }} · {{ s.name }}</option>
         {% endfor %}
       </select>
     </div>
@@ -77,7 +87,9 @@
       <thead>
         <tr>
           <th scope="col">Title</th>
+          <th scope="col">Class</th>
           <th scope="col">Subject</th>
+          <th scope="col">Chapter</th>
           <th scope="col">Type</th>
           <th scope="col">Status</th>
           <th scope="col">Published</th>
@@ -91,7 +103,9 @@
             <strong>{{ item.title }}</strong>
             {% if item.topic %}<small class="cn-muted cn-block">{{ item.topic }}</small>{% endif %}
           </td>
+          <td>{{ item.school_class.name if item.school_class else 'Unassigned' }}</td>
           <td>{{ item.subject.name }}</td>
+          <td>{{ item.chapter.title if item.chapter else 'No chapter' }}</td>
           <td><small>{{ item.content_type_label }}</small></td>
           <td>
             <span class="cn-badge {{ 'cn-badge--success' if item.is_published else 'cn-badge--warning' }}">

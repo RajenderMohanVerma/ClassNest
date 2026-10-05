@@ -106,6 +106,54 @@
       });
     });
 
+    /* ── Class -> subject -> chapter selectors ──────────── */
+    document.querySelectorAll('.cn-catalog-form').forEach(function (form) {
+      var classSelect = form.querySelector('[data-catalog-class]');
+      var subjectSelect = form.querySelector('[data-catalog-subject]');
+      var chapterSelect = form.querySelector('[data-catalog-chapter]');
+      if (!classSelect || !subjectSelect) return;
+
+      var filterOptions = function (select, predicate, emptyLabel) {
+        var selected = select.value;
+        var visibleCount = 0;
+        Array.prototype.forEach.call(select.options, function (option) {
+          if (!option.value) {
+            option.hidden = false;
+            option.disabled = false;
+            return;
+          }
+          var visible = predicate(option);
+          option.hidden = !visible;
+          option.disabled = !visible;
+          if (visible) visibleCount += 1;
+        });
+        if (selected && select.selectedOptions.length && select.selectedOptions[0].disabled) {
+          select.value = '';
+        }
+        if (select.options[0]) select.options[0].textContent = emptyLabel;
+        select.disabled = visibleCount === 0;
+      };
+
+      var updateCatalogOptions = function () {
+        var classId = classSelect.value;
+        filterOptions(subjectSelect, function (option) {
+          return Boolean(classId) && option.dataset.classId === classId;
+        }, classId ? 'Choose a subject' : 'Choose the class first');
+
+        if (!chapterSelect) return;
+        var subjectId = subjectSelect.value;
+        filterOptions(chapterSelect, function (option) {
+          return Boolean(classId && subjectId)
+            && option.dataset.classId === classId
+            && option.dataset.subjectId === subjectId;
+        }, subjectId ? 'Choose a chapter' : 'Choose a subject first');
+      };
+
+      classSelect.addEventListener('change', updateCatalogOptions);
+      subjectSelect.addEventListener('change', updateCatalogOptions);
+      updateCatalogOptions();
+    });
+
     /* ── Service worker ─────────────────────────────────── */
     if ('serviceWorker' in navigator && window.isSecureContext) {
       window.addEventListener('load', function () {

@@ -64,8 +64,11 @@ def teacher(app):
 
 
 @pytest.fixture()
-def student(app):
-    user = User(name='Test Student', email='student@example.com', role='student')
+def student(app, school_class):
+    user = User(
+        name='Test Student', email='student@example.com', role='student',
+        class_id=school_class.id,
+    )
     user.set_password('studentpass')
     db.session.add(user)
     db.session.commit()

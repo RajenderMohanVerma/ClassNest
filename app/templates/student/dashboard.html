@@ -8,6 +8,21 @@
 <main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
+  {% if student_class and student_class.is_available %}
+  <div class="cn-student-class-banner">
+    <span><i class="bi bi-mortarboard" aria-hidden="true"></i></span>
+    <div><small>YOUR CLASS LIBRARY</small><strong>{{ student_class.name }}</strong></div>
+    <a href="{{ url_for('student.profile') }}">Change class <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+  </div>
+  {% else %}
+  <div class="cn-notice cn-notice--warning" role="status">
+    <i class="bi bi-mortarboard" aria-hidden="true"></i>
+    <div><strong>Choose your class to see your learning material.</strong><br>
+      <a href="{{ url_for('student.profile') }}">Select a class in your profile</a> to populate your dashboard and resource library.
+    </div>
+  </div>
+  {% endif %}
+
   <div class="cn-page-header">
     <div>
       <h1 class="cn-page-header__title">Welcome back, {{ current_user.name }}</h1>

@@ -12,6 +12,21 @@
     </a>
 
     <div class="cn-sidebar__section">Content</div>
+    <a class="cn-sidebar__link {% if request.endpoint in ('teacher.classes', 'teacher.create_class', 'teacher.edit_class') %}active{% endif %}"
+       {% if request.endpoint in ('teacher.classes', 'teacher.create_class', 'teacher.edit_class') %}aria-current="page"{% endif %}
+       href="{{ url_for('teacher.classes') }}">
+      <i class="bi bi-mortarboard"></i> Classes
+    </a>
+    <a class="cn-sidebar__link {% if request.endpoint in ('teacher.subjects', 'teacher.create_subject', 'teacher.edit_subject', 'teacher.delete_subject') %}active{% endif %}"
+       {% if request.endpoint in ('teacher.subjects', 'teacher.create_subject', 'teacher.edit_subject', 'teacher.delete_subject') %}aria-current="page"{% endif %}
+       href="{{ url_for('teacher.subjects') }}">
+      <i class="bi bi-bookmark"></i> Subjects
+    </a>
+    <a class="cn-sidebar__link {% if request.endpoint in ('teacher.chapters', 'teacher.create_chapter', 'teacher.edit_chapter', 'teacher.delete_chapter') %}active{% endif %}"
+       {% if request.endpoint in ('teacher.chapters', 'teacher.create_chapter', 'teacher.edit_chapter', 'teacher.delete_chapter') %}aria-current="page"{% endif %}
+       href="{{ url_for('teacher.chapters') }}">
+      <i class="bi bi-list-ol"></i> Chapters
+    </a>
     <a class="cn-sidebar__link {% if request.endpoint == 'teacher.content_list' or request.endpoint == 'teacher.create_content' or request.endpoint == 'teacher.edit_content' %}active{% endif %}"
        {% if request.endpoint == 'teacher.content_list' or request.endpoint == 'teacher.create_content' or request.endpoint == 'teacher.edit_content' %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.content_list') }}">
@@ -22,12 +37,6 @@
        href="{{ url_for('teacher.create_content') }}">
       <i class="bi bi-plus-circle"></i> Create Content
     </a>
-    <a class="cn-sidebar__link {% if request.endpoint and 'teacher.subject' in request.endpoint %}active{% endif %}"
-       {% if request.endpoint and 'teacher.subject' in request.endpoint %}aria-current="page"{% endif %}
-       href="{{ url_for('teacher.subjects') }}">
-      <i class="bi bi-bookmark"></i> Subjects
-    </a>
-
     <div class="cn-sidebar__section">Communication</div>
     <a class="cn-sidebar__link {% if request.endpoint and 'teacher.announcement' in request.endpoint %}active{% endif %}"
        {% if request.endpoint and 'teacher.announcement' in request.endpoint %}aria-current="page"{% endif %}

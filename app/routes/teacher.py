@@ -3,7 +3,9 @@ from flask import (Blueprint, abort, flash, redirect, render_template,
 
 from app.extensions import db
 from app.models.announcement import Announcement
+from app.models.catalog import Chapter, SchoolClass
 from app.models.content import CONTENT_TYPE_LABELS, Content
+from app.models.enums import CONTENT_STATUS_DRAFT, CONTENT_STATUS_PUBLISHED
 from app.models.subject import Subject
 from app.models.uploaded_file import UploadedFile
 from app.models.user import User
@@ -67,7 +69,9 @@ def _content_form_payload():
     return {
         'title': request.form.get('title', '').strip(),
         'description': request.form.get('description', '').strip(),
+        'class_id': request.form.get('class_id', type=int),
         'subject_id': request.form.get('subject_id', type=int),
+        'chapter_id': request.form.get('chapter_id', type=int),
         'topic': request.form.get('topic', '').strip(),
         'content_type': request.form.get('content_type', 'notes').strip(),
         'body_html': sanitize_html(request.form.get('body_html', '')),
@@ -78,17 +82,50 @@ def _content_form_payload():
     }
 
 
-def _validate_content_payload(payload):
+def _validate_content_payload(payload, existing=None):
     """Return a list of human-readable validation errors."""
     errors = []
     if not payload['title']:
         errors.append('Title is required.')
     elif len(payload['title']) > 300:
         errors.append('Title must be 300 characters or fewer.')
+    subject = None
     if not payload['subject_id']:
         errors.append('Please select a subject.')
-    elif db.session.get(Subject, payload['subject_id']) is None:
+    else:
+        subject = db.session.get(Subject, payload['subject_id'])
+    if payload['subject_id'] and subject is None:
         errors.append('The selected subject no longer exists.')
+
+    school_class = None
+    if not payload['class_id']:
+        errors.append('Please select a class.')
+    else:
+        school_class = db.session.get(SchoolClass, payload['class_id'])
+        if school_class is None:
+            errors.append('The selected class no longer exists.')
+        elif not school_class.is_available and (
+            existing is None or existing.class_id != school_class.id
+        ):
+            errors.append('Please select an active class.')
+
+    if subject is not None and school_class is not None:
+        if subject.class_id != school_class.id:
+            errors.append('The selected subject does not belong to this class.')
+
+    chapter = None
+    if not payload['chapter_id']:
+        errors.append('Please select a chapter for this content.')
+    else:
+        chapter = db.session.get(Chapter, payload['chapter_id'])
+        if chapter is None:
+            errors.append('The selected chapter no longer exists.')
+        elif subject is not None and chapter.subject_id != subject.id:
+            errors.append('The selected chapter does not belong to this subject.')
+        elif school_class is not None and chapter.class_id != school_class.id:
+            errors.append('The selected chapter does not belong to this class.')
+        elif payload['status'] == 'published' and not chapter.is_published:
+            errors.append('Publish the chapter before publishing its content.')
     if payload['content_type'] not in CONTENT_TYPE_LABELS:
         errors.append('Please choose a valid content type.')
     for field, label in (('video_url', 'Video URL'), ('resource_url', 'Resource URL')):
@@ -98,6 +135,30 @@ def _validate_content_payload(payload):
     return errors
 
 
+def _catalog_form_options():
+    return {
+        'classes': SchoolClass.query.order_by(
+            SchoolClass.display_order, SchoolClass.name,
+        ).all(),
+        'subjects': Subject.query.filter(Subject.class_id.isnot(None)).order_by(
+            Subject.name,
+        ).all(),
+        'chapters': Chapter.query.order_by(
+            Chapter.display_order, Chapter.title,
+        ).all(),
+    }
+
+
+def _display_order_value():
+    raw_value = request.form.get('display_order', '').strip()
+    if not raw_value:
+        return 0
+    try:
+        return int(raw_value)
+    except ValueError:
+        return None
+
+
 # ── Dashboard ──────────────────────────────────────────────
 @teacher_bp.route('/dashboard')
 @teacher_required
@@ -105,7 +166,9 @@ def dashboard():
     total_content = Content.query.count()
     published = Content.query.filter_by(status='published').count()
     drafts = Content.query.filter_by(status='draft').count()
+    total_classes = SchoolClass.query.count()
     total_subjects = Subject.query.count()
+    total_chapters = Chapter.query.count()
     total_students = User.query.filter_by(role='student').count()
     total_files = UploadedFile.query.count()
 
@@ -120,7 +183,9 @@ def dashboard():
         total_content=total_content,
         published=published,
         drafts=drafts,
+        total_classes=total_classes,
         total_subjects=total_subjects,
+        total_chapters=total_chapters,
         total_students=total_students,
         total_files=total_files,
         recent_content=recent_content,
@@ -129,40 +194,144 @@ def dashboard():
     )
 
 
+# ── Academic classes ───────────────────────────────────────
+@teacher_bp.route('/classes')
+@teacher_required
+def classes():
+    all_classes = SchoolClass.query.order_by(
+        SchoolClass.display_order, SchoolClass.name,
+    ).all()
+    return render_template('teacher/classes.html', classes=all_classes)
+
+
+@teacher_bp.route('/classes/create', methods=['GET', 'POST'])
+@teacher_required
+def create_class():
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        display_order = _display_order_value()
+        errors = []
+        if len(name) < 2:
+            errors.append('Class name must be at least 2 characters.')
+        if len(name) > 120:
+            errors.append('Class name must be 120 characters or fewer.')
+        if display_order is None or display_order < 0:
+            errors.append('Display order must be zero or greater.')
+
+        if errors:
+            for message in errors:
+                flash(message, 'error')
+            return render_template(
+                'teacher/class_form.html', form_data=request.form,
+            ), 400
+
+        school_class = SchoolClass(
+            name=name,
+            slug=SchoolClass.unique_slug(name),
+            description=description,
+            display_order=display_order,
+            created_by=session['user_id'],
+        )
+        db.session.add(school_class)
+        db.session.commit()
+        flash(f'{school_class.name} created. Add its subjects to organize learning material.', 'success')
+        return redirect(url_for('teacher.classes'))
+
+    return render_template('teacher/class_form.html', form_data=request.form)
+
+
+@teacher_bp.route('/classes/<int:id>/edit', methods=['GET', 'POST'])
+@teacher_required
+def edit_class(id):
+    school_class = db.session.get(SchoolClass, id)
+    if school_class is None:
+        abort(404)
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        display_order = _display_order_value()
+        errors = []
+        if len(name) < 2:
+            errors.append('Class name must be at least 2 characters.')
+        if len(name) > 120:
+            errors.append('Class name must be 120 characters or fewer.')
+        if display_order is None or display_order < 0:
+            errors.append('Display order must be zero or greater.')
+
+        if errors:
+            for message in errors:
+                flash(message, 'error')
+            return render_template(
+                'teacher/class_form.html', school_class=school_class,
+                form_data=request.form,
+            ), 400
+
+        school_class.name = name
+        school_class.slug = SchoolClass.unique_slug(name, exclude_id=school_class.id)
+        school_class.description = description
+        school_class.display_order = display_order
+        db.session.commit()
+        flash('Class details updated.', 'success')
+        return redirect(url_for('teacher.classes'))
+
+    return render_template(
+        'teacher/class_form.html', school_class=school_class,
+        form_data=request.form,
+    )
+
+
 # ── Subjects ───────────────────────────────────────────────
 @teacher_bp.route('/subjects')
 @teacher_required
 def subjects():
-    all_subjects = Subject.query.order_by(Subject.name).all()
-    return render_template('teacher/subjects.html', subjects=all_subjects)
+    class_filter = request.args.get('class_id', type=int)
+    query = Subject.query.order_by(Subject.class_id, Subject.name)
+    if class_filter:
+        query = query.filter_by(class_id=class_filter)
+    all_subjects = query.all()
+    all_classes = SchoolClass.query.order_by(
+        SchoolClass.display_order, SchoolClass.name,
+    ).all()
+    return render_template(
+        'teacher/subjects.html', subjects=all_subjects, classes=all_classes,
+        class_filter=class_filter,
+    )
 
 
 @teacher_bp.route('/subjects/create', methods=['GET', 'POST'])
 @teacher_required
 def create_subject():
+    classes = SchoolClass.query.filter_by(is_enabled=True).order_by(
+        SchoolClass.display_order, SchoolClass.name,
+    ).all()
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
         icon = request.form.get('icon', 'bi-book').strip() or 'bi-book'
+        class_id = request.form.get('class_id', type=int)
+        school_class = db.session.get(SchoolClass, class_id) if class_id else None
 
+        errors = []
         if len(name) < 2:
-            flash('Subject name must be at least 2 characters.', 'error')
+            errors.append('Subject name must be at least 2 characters.')
+        if school_class is None or not school_class.is_available:
+            errors.append('Choose an active class for this subject.')
+        if errors:
+            for message in errors:
+                flash(message, 'error')
             return render_template(
-                'teacher/subject_form.html', form_data=request.form
+                'teacher/subject_form.html', form_data=request.form, classes=classes,
             ), 400
 
         slug = Subject.unique_slug(name)
-        if Subject.query.filter_by(slug=slug).first():
-            flash('A subject with this name already exists.', 'error')
-            return render_template(
-                'teacher/subject_form.html', form_data=request.form
-            ), 400
-
         subject = Subject(
             name=name,
             slug=slug,
             description=description,
             icon=icon,
+            class_id=school_class.id,
             created_by=session['user_id'],
         )
         db.session.add(subject)
@@ -170,7 +339,9 @@ def create_subject():
         flash('Subject created successfully!', 'success')
         return redirect(url_for('teacher.subjects'))
 
-    return render_template('teacher/subject_form.html', form_data=request.form)
+    return render_template(
+        'teacher/subject_form.html', form_data=request.args, classes=classes,
+    )
 
 
 @teacher_bp.route('/subjects/<int:id>/edit', methods=['GET', 'POST'])
@@ -180,27 +351,52 @@ def edit_subject(id):
     if subject is None:
         abort(404)
 
+    classes = SchoolClass.query.order_by(
+        SchoolClass.display_order, SchoolClass.name,
+    ).all()
+
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         description = request.form.get('description', '').strip()
         icon = request.form.get('icon', 'bi-book').strip() or 'bi-book'
+        class_id = request.form.get('class_id', type=int)
+        school_class = db.session.get(SchoolClass, class_id) if class_id else None
 
         if len(name) < 2:
             flash('Subject name must be at least 2 characters.', 'error')
             return render_template(
-                'teacher/subject_form.html', subject=subject, form_data=request.form
+                'teacher/subject_form.html', subject=subject, form_data=request.form,
+                classes=classes,
+            ), 400
+        if school_class is None or (
+            not school_class.is_available and school_class.id != subject.class_id
+        ):
+            flash('Choose an active class for this subject.', 'error')
+            return render_template(
+                'teacher/subject_form.html', subject=subject, form_data=request.form,
+                classes=classes,
             ), 400
 
+        previous_class_id = subject.class_id
         subject.name = name
         subject.slug = Subject.unique_slug(name, exclude_id=subject.id)
         subject.description = description
         subject.icon = icon
+        subject.class_id = school_class.id
+        if previous_class_id != school_class.id:
+            for chapter in subject.chapters.all():
+                chapter.class_id = school_class.id
+                for content in chapter.content.all():
+                    content.class_id = school_class.id
+            for content in subject.content.all():
+                content.class_id = school_class.id
         db.session.commit()
         flash('Subject updated!', 'success')
         return redirect(url_for('teacher.subjects'))
 
     return render_template(
-        'teacher/subject_form.html', subject=subject, form_data=request.form
+        'teacher/subject_form.html', subject=subject, form_data=request.form,
+        classes=classes,
     )
 
 
@@ -210,10 +406,10 @@ def delete_subject(id):
     subject = db.session.get(Subject, id)
     if subject is None:
         abort(404)
-    if subject.total_count:
+    if subject.total_count or subject.chapter_count:
         flash(
-            f'Cannot delete "{subject.name}" while it still has content. '
-            'Remove or move the content first.',
+            f'Cannot delete "{subject.name}" while it has chapters or content. '
+            'Remove or move those records first.',
             'error',
         )
         return redirect(url_for('teacher.subjects'))
@@ -223,6 +419,166 @@ def delete_subject(id):
     return redirect(url_for('teacher.subjects'))
 
 
+# ── Chapters ───────────────────────────────────────────────
+def _chapter_form_options():
+    return {
+        'classes': SchoolClass.query.order_by(
+            SchoolClass.display_order, SchoolClass.name,
+        ).all(),
+        'subjects': Subject.query.filter(Subject.class_id.isnot(None)).order_by(
+            Subject.name,
+        ).all(),
+    }
+
+
+def _validate_chapter_payload(payload, existing=None):
+    errors = []
+    if len(payload['title']) < 2:
+        errors.append('Chapter title must be at least 2 characters.')
+    elif len(payload['title']) > 200:
+        errors.append('Chapter title must be 200 characters or fewer.')
+    if payload['display_order'] is None or payload['display_order'] < 0:
+        errors.append('Display order must be zero or greater.')
+
+    school_class = db.session.get(SchoolClass, payload['class_id']) if payload['class_id'] else None
+    if school_class is None:
+        errors.append('Choose a class for this chapter.')
+    elif not school_class.is_available and (
+        existing is None or existing.class_id != school_class.id
+    ):
+        errors.append('Choose an active class for this chapter.')
+
+    subject = db.session.get(Subject, payload['subject_id']) if payload['subject_id'] else None
+    if subject is None:
+        errors.append('Choose a subject for this chapter.')
+    elif school_class is not None and subject.class_id != school_class.id:
+        errors.append('The selected subject does not belong to this class.')
+    return errors, subject
+
+
+def _chapter_payload():
+    return {
+        'title': request.form.get('title', '').strip(),
+        'class_id': request.form.get('class_id', type=int),
+        'subject_id': request.form.get('subject_id', type=int),
+        'description': request.form.get('description', '').strip(),
+        'display_order': _display_order_value(),
+        'status': CONTENT_STATUS_PUBLISHED if request.form.get('status') == 'published'
+                  else CONTENT_STATUS_DRAFT,
+    }
+
+
+@teacher_bp.route('/chapters')
+@teacher_required
+def chapters():
+    class_filter = request.args.get('class_id', type=int)
+    query = Chapter.query.join(Subject).order_by(
+        Chapter.class_id, Chapter.subject_id, Chapter.display_order, Chapter.title,
+    )
+    if class_filter:
+        query = query.filter(Chapter.class_id == class_filter)
+    return render_template(
+        'teacher/chapters.html', chapters=query.all(),
+        classes=SchoolClass.query.order_by(SchoolClass.display_order, SchoolClass.name).all(),
+        class_filter=class_filter,
+    )
+
+
+@teacher_bp.route('/chapters/create', methods=['GET', 'POST'])
+@teacher_required
+def create_chapter():
+    options = _chapter_form_options()
+    if request.method == 'POST':
+        payload = _chapter_payload()
+        errors, subject = _validate_chapter_payload(payload)
+        if errors:
+            for message in errors:
+                flash(message, 'error')
+            return render_template(
+                'teacher/chapter_form.html', form_data=request.form, **options,
+            ), 400
+
+        chapter = Chapter(
+            title=payload['title'],
+            slug=Chapter.unique_slug(payload['title']),
+            class_id=subject.class_id,
+            subject_id=subject.id,
+            description=payload['description'],
+            display_order=payload['display_order'],
+            status=payload['status'],
+            created_by=session['user_id'],
+        )
+        db.session.add(chapter)
+        db.session.commit()
+        flash(f'Chapter "{chapter.title}" added to {subject.name}.', 'success')
+        return redirect(url_for('teacher.chapters', class_id=subject.class_id))
+
+    return render_template(
+        'teacher/chapter_form.html', form_data=request.args, **options,
+    )
+
+
+@teacher_bp.route('/chapters/<int:id>/edit', methods=['GET', 'POST'])
+@teacher_required
+def edit_chapter(id):
+    chapter = db.session.get(Chapter, id)
+    if chapter is None:
+        abort(404)
+    options = _chapter_form_options()
+
+    if request.method == 'POST':
+        payload = _chapter_payload()
+        errors, subject = _validate_chapter_payload(payload, existing=chapter)
+        if subject is not None and chapter.content.count() and (
+            subject.id != chapter.subject_id or subject.class_id != chapter.class_id
+        ):
+            errors.append('Move this chapter’s content before changing its class or subject.')
+        if (
+            payload['status'] != CONTENT_STATUS_PUBLISHED
+            and chapter.content.filter_by(status='published').count()
+        ):
+            errors.append('Unpublish or move this chapter’s published content before hiding the chapter.')
+        if errors:
+            for message in errors:
+                flash(message, 'error')
+            return render_template(
+                'teacher/chapter_form.html', chapter=chapter,
+                form_data=request.form, **options,
+            ), 400
+
+        chapter.title = payload['title']
+        chapter.slug = Chapter.unique_slug(payload['title'], exclude_id=chapter.id)
+        chapter.class_id = subject.class_id
+        chapter.subject_id = subject.id
+        chapter.description = payload['description']
+        chapter.display_order = payload['display_order']
+        chapter.status = payload['status']
+        db.session.commit()
+        flash('Chapter updated.', 'success')
+        return redirect(url_for('teacher.chapters', class_id=subject.class_id))
+
+    return render_template(
+        'teacher/chapter_form.html', chapter=chapter,
+        form_data=request.form, **options,
+    )
+
+
+@teacher_bp.route('/chapters/<int:id>/delete', methods=['POST'])
+@teacher_required
+def delete_chapter(id):
+    chapter = db.session.get(Chapter, id)
+    if chapter is None:
+        abort(404)
+    if chapter.content.count() or chapter.assignments.count():
+        flash('This chapter still has content or assignments. Remove those first.', 'error')
+        return redirect(url_for('teacher.chapters', class_id=chapter.class_id))
+    class_id = chapter.class_id
+    db.session.delete(chapter)
+    db.session.commit()
+    flash('Chapter deleted.', 'success')
+    return redirect(url_for('teacher.chapters', class_id=class_id))
+
+
 # ── Content ────────────────────────────────────────────────
 @teacher_bp.route('/content')
 @teacher_required
@@ -230,12 +586,15 @@ def content_list():
     page = request.args.get('page', 1, type=int)
     status_filter = request.args.get('status', '').strip()
     subject_filter = request.args.get('subject', '', type=int)
+    class_filter = request.args.get('class_id', '', type=int)
     search = request.args.get('q', '').strip()
     type_filter = request.args.get('type', '').strip()
     sort = request.args.get('sort', 'newest')
 
     query = Content.query
 
+    if class_filter:
+        query = query.filter_by(class_id=class_filter)
     if status_filter in ('draft', 'published'):
         query = query.filter_by(status=status_filter)
     if subject_filter:
@@ -258,12 +617,15 @@ def content_list():
     )
 
     pagination = query.paginate(page=page, per_page=CONTENT_PER_PAGE, error_out=False)
-    subjects = Subject.query.order_by(Subject.name).all()
+    subjects = Subject.query.filter(Subject.class_id.isnot(None)).order_by(Subject.name).all()
+    classes = SchoolClass.query.order_by(SchoolClass.display_order, SchoolClass.name).all()
 
     return render_template(
         'teacher/content_list.html',
         pagination=pagination,
+        classes=classes,
         subjects=subjects,
+        class_filter=class_filter,
         status_filter=status_filter,
         subject_filter=subject_filter,
         type_filter=type_filter,
@@ -275,7 +637,7 @@ def content_list():
 @teacher_bp.route('/content/create', methods=['GET', 'POST'])
 @teacher_required
 def create_content():
-    subjects = Subject.query.order_by(Subject.name).all()
+    options = _catalog_form_options()
 
     if request.method == 'POST':
         payload = _content_form_payload()
@@ -285,7 +647,7 @@ def create_content():
                 flash(message, 'error')
             return render_template(
                 'teacher/content_form.html',
-                subjects=subjects,
+                **options,
                 content=None,
                 form_data=request.form,
             ), 400
@@ -294,7 +656,9 @@ def create_content():
             title=payload['title'],
             slug=Content.unique_slug(payload['title']),
             description=payload['description'],
+            class_id=payload['class_id'],
             subject_id=payload['subject_id'],
+            chapter_id=payload['chapter_id'],
             topic=payload['topic'],
             content_type=payload['content_type'],
             body_html=payload['body_html'],
@@ -318,7 +682,7 @@ def create_content():
         return redirect(url_for('teacher.content_list'))
 
     return render_template(
-        'teacher/content_form.html', subjects=subjects, content=None, form_data=request.form
+        'teacher/content_form.html', **options, content=None, form_data=request.args
     )
 
 
@@ -328,18 +692,18 @@ def edit_content(id):
     item = db.session.get(Content, id)
     if item is None:
         abort(404)
-    subjects = Subject.query.order_by(Subject.name).all()
+    options = _catalog_form_options()
 
     if request.method == 'POST':
         payload = _content_form_payload()
-        errors = _validate_content_payload(payload)
+        errors = _validate_content_payload(payload, existing=item)
         if errors:
             for message in errors:
                 flash(message, 'error')
             return render_template(
                 'teacher/content_form.html',
                 content=item,
-                subjects=subjects,
+                **options,
                 form_data=request.form,
             ), 400
 
@@ -347,7 +711,9 @@ def edit_content(id):
         item.title = payload['title']
         item.slug = Content.unique_slug(payload['title'], exclude_id=item.id)
         item.description = payload['description']
+        item.class_id = payload['class_id']
         item.subject_id = payload['subject_id']
+        item.chapter_id = payload['chapter_id']
         item.topic = payload['topic']
         item.content_type = payload['content_type']
         item.body_html = payload['body_html']
@@ -377,7 +743,7 @@ def edit_content(id):
     return render_template(
         'teacher/content_form.html',
         content=item,
-        subjects=subjects,
+        **options,
         form_data=request.form,
     )
 
@@ -397,6 +763,11 @@ def toggle_content(id):
     item = db.session.get(Content, id)
     if item is None:
         abort(404)
+    if not item.is_published and (
+        item.chapter is None or not item.chapter.is_published
+    ):
+        flash('Assign this content to a published chapter before publishing it.', 'error')
+        return redirect(url_for('teacher.content_list'))
     now_published = item.toggle_published()
     db.session.commit()
     flash(
