@@ -1,0 +1,41 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page cn-page--narrow">
+
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">Notices</h1>
+    <p class="cn-page-lead">Announcements and updates from {{ teacher_name }}.</p>
+  </header>
+
+  {% if notices %}
+    <ul class="cn-notice-list cn-notice-list--stacked">
+      {% for notice in notices %}
+        <li class="cn-notice cn-notice--card">
+          <i class="bi bi-megaphone" aria-hidden="true"></i>
+          <div>
+            <h2 class="cn-notice__title">{{ notice.title }}</h2>
+            <div class="cn-reading cn-reading--compact">
+              {{ notice.body|safe }}
+            </div>
+            {% if notice.published_at %}
+              <p class="cn-muted cn-text-xs">
+                <time datetime="{{ notice.published_at.isoformat() }}">
+                  {{ notice.published_at.strftime('%d %b %Y') }}
+                </time>
+              </p>
+            {% endif %}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <div class="cn-empty">
+      <i class="bi bi-megaphone" aria-hidden="true"></i>
+      <h2>No notices right now</h2>
+      <p>New announcements will show up on this page.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

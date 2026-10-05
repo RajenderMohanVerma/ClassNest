@@ -1,0 +1,81 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page">
+
+  <header class="cn-page-intro">
+    <p class="cn-eyebrow">Premium</p>
+    <h1 class="cn-page-title">Premium Courses</h1>
+    <p class="cn-page-lead">
+      Buy a course once and keep access to every section and lesson inside it.
+      Enrolment is confirmed on the server after payment verification — a browser
+      "success" message alone never unlocks content.
+    </p>
+  </header>
+
+  {% if not premium_enabled %}
+    {# Configured state is reported honestly instead of a dead "Buy now". #}
+    <div class="cn-alert cn-alert--warning">
+      <i class="bi bi-cone-striped" aria-hidden="true"></i>
+      <div>
+        <strong>Online payments are not switched on yet.</strong>
+        Premium course prices are listed below, but self-service checkout is
+        unavailable at the moment. Contact us and access will be granted manually.
+      </div>
+    </div>
+    <div class="cn-btn-row">
+      <a class="cn-btn cn-btn--primary" href="{{ url_for('public.contact') }}">Request access</a>
+      <a class="cn-btn cn-btn--ghost" href="{{ url_for('public.courses') }}">Browse all courses</a>
+    </div>
+  {% endif %}
+
+  {% if courses %}
+    <div class="cn-course-grid cn-course-grid--premium">
+      {% for course in courses %}
+        <article class="cn-card cn-course-card cn-course-card--premium">
+          <a class="cn-course-card__thumb" href="{{ url_for('public.course_detail', slug=course.slug) }}" tabindex="-1" aria-hidden="true">
+            {% if course.thumbnail %}
+              <img src="{{ url_for('files.serve_file', stored_name=course.thumbnail) }}" alt="" loading="lazy" width="480" height="270">
+            {% else %}
+              <i class="bi bi-gem" aria-hidden="true"></i>
+            {% endif %}
+            <span class="cn-course-card__ribbon">Premium</span>
+          </a>
+          <div class="cn-course-card__body">
+            <h3 class="cn-course-card__title">
+              <a href="{{ url_for('public.course_detail', slug=course.slug) }}">{{ course.title }}</a>
+            </h3>
+            <p class="cn-course-card__meta">
+              {% if course.school_class %}<span>{{ course.school_class.name }}</span>{% endif %}
+              {% if course.subject %}<span>{{ course.subject.name }}</span>{% endif %}
+              <span>{{ course.lesson_count }} lesson{{ '' if course.lesson_count == 1 else 's' }}</span>
+            </p>
+            {% if course.summary() %}<p class="cn-course-card__desc">{{ course.summary(96) }}</p>{% endif %}
+            <div class="cn-course-card__foot">
+              <span class="cn-course-card__price">
+                {% if course.has_discount %}
+                  <s class="cn-course-card__strike">&#8377;{{ course.strike_price_label }}</s>
+                {% endif %}
+                <strong>&#8377;{{ course.price_label }}</strong>
+              </span>
+              {% if premium_enabled %}
+                <a class="cn-btn cn-btn--primary cn-btn--sm" href="{{ url_for('public.course_detail', slug=course.slug) }}">Buy now</a>
+              {% else %}
+                <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('public.course_detail', slug=course.slug) }}">View details</a>
+              {% endif %}
+            </div>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="cn-empty">
+      <i class="bi bi-gem" aria-hidden="true"></i>
+      <h2>No premium courses yet</h2>
+      <p>Free notes and video lessons are available right now.</p>
+      <a class="cn-btn cn-btn--primary" href="{{ url_for('public.library', kind='free-resources') }}">Browse free resources</a>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

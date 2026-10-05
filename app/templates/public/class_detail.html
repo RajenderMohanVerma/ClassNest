@@ -1,0 +1,99 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page">
+
+  <nav class="cn-breadcrumb" aria-label="Breadcrumb">
+    <ol class="cn-breadcrumb__list">
+      <li><a href="{{ url_for('public.index') }}">Home</a></li>
+      <li><a href="{{ url_for('public.classes') }}">Classes</a></li>
+      <li aria-current="page">{{ item.name }}</li>
+    </ol>
+  </nav>
+
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">{{ item.name }}</h1>
+    {% if item.description %}
+      <p class="cn-page-lead">{{ item.description }}</p>
+    {% endif %}
+  </header>
+
+  {# ── Subjects ────────────────────────────────────────────────── #}
+  <section class="cn-section" aria-labelledby="class-subjects">
+    <div class="cn-section__head">
+      <h2 class="cn-section__title" id="class-subjects">Subjects</h2>
+    </div>
+    {% if subjects %}
+      <div class="cn-subject-grid">
+        {% for subject in subjects %}
+          <a class="cn-subject-card" href="{{ url_for('public.subject_detail', slug=subject.slug) }}">
+            <span class="cn-subject-card__icon" aria-hidden="true">
+              <i class="bi {{ subject.icon or 'bi-book' }}"></i>
+            </span>
+            <span class="cn-subject-card__body">
+              <strong>{{ subject.name }}</strong>
+              {% if subject.description %}
+                <span class="cn-muted">{{ subject.description|truncate(90) }}</span>
+              {% endif %}
+              <span class="cn-subject-card__meta">
+                {{ subject.published_count }} resource{{ '' if subject.published_count == 1 else 's' }}
+                · {{ subject.chapter_count }} chapter{{ '' if subject.chapter_count == 1 else 's' }}
+              </span>
+            </span>
+            <i class="bi bi-chevron-right cn-subject-card__chevron" aria-hidden="true"></i>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="cn-empty">
+        <i class="bi bi-journal-x" aria-hidden="true"></i>
+        <p>No subjects have been added for {{ item.name }} yet.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {# ── Chapters ────────────────────────────────────────────────── #}
+  {% if chapters %}
+    <section class="cn-section" aria-labelledby="class-chapters">
+      <div class="cn-section__head">
+        <h2 class="cn-section__title" id="class-chapters">Chapters</h2>
+      </div>
+      <ul class="cn-chapter-list">
+        {% for chapter in chapters %}
+          <li class="cn-chapter-row">
+            <a href="{{ url_for('public.chapter_detail', slug=chapter.slug) }}">
+              <span class="cn-chapter-row__index" aria-hidden="true">{{ loop.index }}</span>
+              <span class="cn-chapter-row__body">
+                <strong>{{ chapter.title }}</strong>
+                {% if chapter.description %}
+                  <span class="cn-muted">{{ chapter.description|truncate(110) }}</span>
+                {% endif %}
+              </span>
+              <span class="cn-badge cn-badge--primary">
+                {{ content_counts.get(chapter.id, 0) }} resource{{ '' if content_counts.get(chapter.id, 0) == 1 else 's' }}
+              </span>
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            </a>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {# ── Courses ─────────────────────────────────────────────────── #}
+  {% if courses %}
+    <section class="cn-section" aria-labelledby="class-courses">
+      <div class="cn-section__head">
+        <h2 class="cn-section__title" id="class-courses">Courses for {{ item.name }}</h2>
+        <a class="cn-section__more" href="{{ url_for('public.courses') }}">All courses</a>
+      </div>
+      <div class="cn-course-grid">
+        {% for course in courses %}
+          {% include "partials/course_card.html" with context %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+</div>
+{% endblock %}

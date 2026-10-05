@@ -1,7 +1,7 @@
 {
-  "name": "ClassNest",
-  "short_name": "ClassNest",
-  "description": "Teacher & Student Learning Portal",
+  "name": "ClassNext",
+  "short_name": "ClassNext",
+  "description": "Classes, notes, videos and courses by Er. Amit Sir.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

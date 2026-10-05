@@ -1,0 +1,80 @@
+{# Public site footer: quick links, learning links, support and legal. #}
+<footer class="cn-site-footer">
+  <div class="cn-container">
+    <div class="cn-site-footer__grid">
+
+      <div class="cn-site-footer__brand">
+        <a class="cn-brand cn-brand--footer" href="{{ url_for('public.index') }}">
+          <span class="cn-brand__mark" aria-hidden="true">
+            <img src="{{ url_for('static', filename='icons/logo.svg') }}" alt="" width="40" height="40">
+          </span>
+          <span class="cn-brand__text">
+            <strong class="cn-brand__name">{{ app_name }}</strong>
+            <span class="cn-brand__tagline">{{ app_tagline }}</span>
+          </span>
+        </a>
+        <p class="cn-site-footer__about">
+          {{ app_description }}
+        </p>
+        <p class="cn-site-footer__teacher">
+          Taught by <strong>{{ teacher_name }}</strong>
+        </p>
+      </div>
+
+      <nav class="cn-site-footer__col" aria-label="Explore">
+        <h2 class="cn-site-footer__heading">Explore</h2>
+        <ul class="cn-site-footer__list">
+          <li><a href="{{ url_for('public.classes') }}">Classes</a></li>
+          <li><a href="{{ url_for('public.library', kind='notes') }}">Notes &amp; PDFs</a></li>
+          <li><a href="{{ url_for('public.library', kind='videos') }}">Video Lessons</a></li>
+          <li><a href="{{ url_for('public.courses') }}">Courses</a></li>
+          <li><a href="{{ url_for('public.premium') }}">Premium</a></li>
+        </ul>
+      </nav>
+
+      <nav class="cn-site-footer__col" aria-label="Learning">
+        <h2 class="cn-site-footer__heading">Learning</h2>
+        <ul class="cn-site-footer__list">
+          {% if current_user %}
+            {% if current_user.is_teacher %}
+              <li><a href="{{ url_for('teacher.dashboard') }}">Admin Dashboard</a></li>
+            {% else %}
+              <li><a href="{{ url_for('student.dashboard') }}">My Learning</a></li>
+              <li><a href="{{ url_for('student.subjects') }}">Subjects</a></li>
+            {% endif %}
+          {% else %}
+            <li><a href="{{ url_for('auth.register') }}">Create Account</a></li>
+            <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+          {% endif %}
+          <li><a href="{{ url_for('public.notices') }}">Notices</a></li>
+          <li><a href="{{ url_for('public.faq') }}">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav class="cn-site-footer__col" aria-label="Support">
+        <h2 class="cn-site-footer__heading">Support</h2>
+        <ul class="cn-site-footer__list">
+          <li><a href="{{ url_for('public.about') }}">About</a></li>
+          <li><a href="{{ url_for('public.contact') }}">Contact</a></li>
+          <li><a href="{{ url_for('public.search') }}">Search</a></li>
+        </ul>
+      </nav>
+
+      <nav class="cn-site-footer__col" aria-label="Legal">
+        <h2 class="cn-site-footer__heading">Legal</h2>
+        <ul class="cn-site-footer__list">
+          <li><a href="{{ url_for('public.legal', page='privacy') }}">Privacy Policy</a></li>
+          <li><a href="{{ url_for('public.legal', page='terms') }}">Terms &amp; Conditions</a></li>
+          <li><a href="{{ url_for('public.legal', page='refund-policy') }}">Refund Policy</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="cn-site-footer__bottom">
+      <p class="cn-site-footer__copy">
+        &copy; {{ current_year }} {{ app_name }}. All rights reserved.
+      </p>
+      <p class="cn-site-footer__tagline">{{ app_tagline }}</p>
+    </div>
+  </div>
+</footer>

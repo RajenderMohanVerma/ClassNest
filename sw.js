@@ -1,4 +1,4 @@
-/* ClassNest service worker
+/* ClassNext service worker
  *
  * Strategy:
  *   - Static assets (/static/*, manifest, offline page): cache-first.
@@ -6,7 +6,7 @@
  *     cache, so a shared device cannot read another user's data offline.
  *   - Anything else: passthrough to the network.
  */
-const CACHE_VERSION = 'classnest-v3';
+const CACHE_VERSION = 'ClassNext-v3';
 const STATIC_ASSETS = [
   '/static/css/tokens.css',
   '/static/css/components.css',

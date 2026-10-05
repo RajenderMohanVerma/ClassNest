@@ -51,6 +51,47 @@
 .cn-auth__footer p { margin: 0; }
 .cn-auth__footer a { font-weight: 500; }
 
+/* Label + link on one line, used by "Password ... Forgot password?" */
+.cn-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--cn-space-3);
+  flex-wrap: wrap;
+}
+.cn-label--muted { color: var(--cn-text-secondary); font-weight: 400; }
+.cn-form-link { font-size: var(--cn-font-size-sm); white-space: nowrap; }
+
+/* A form inside running text, e.g. "resend verification" next to a sentence */
+.cn-inline-form { display: inline; margin: 0; }
+.cn-link-btn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--cn-indigo);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.cn-link-btn:hover { color: var(--cn-indigo-dark); }
+
+/* Inline warning banner inside the auth card (unverified email) */
+.cn-notice--warning {
+  display: flex;
+  gap: var(--cn-space-3);
+  align-items: flex-start;
+  padding: var(--cn-space-3) var(--cn-space-4);
+  margin-bottom: var(--cn-space-4);
+  border: 1px solid var(--cn-warning-border, #f6d68a);
+  border-radius: var(--cn-radius-md);
+  background: var(--cn-warning-bg, #fff8e8);
+  font-size: var(--cn-font-size-sm);
+  color: var(--cn-text);
+}
+.cn-notice--warning > i { color: var(--cn-warning, #b45309); flex-shrink: 0; margin-top: 2px; }
+.cn-notice--warning strong { display: block; margin-bottom: 2px; }
+
 /* ── Page header ───────────────────────────────────────── */
 .cn-page-header {
   display: flex;

@@ -42,6 +42,26 @@
       </div>
 
       <div class="cn-form-group">
+        <label class="cn-label" for="class_id">Class</label>
+        <select class="cn-input" id="class_id" name="class_id">
+          <option value="">Not decided yet</option>
+          {% for school_class in classes %}
+          <option value="{{ school_class.id }}"
+                  {% if class_id == school_class.id %}selected{% endif %}>
+            {{ school_class.name }}
+          </option>
+          {% endfor %}
+        </select>
+        <small class="cn-hint">You can change this later from your profile.</small>
+      </div>
+
+      <div class="cn-form-group">
+        <label class="cn-label" for="phone">Phone <span class="cn-label--muted">(optional)</span></label>
+        <input type="tel" class="cn-input" id="phone" name="phone" value="{{ phone or '' }}"
+               autocomplete="tel" inputmode="tel">
+      </div>
+
+      <div class="cn-form-group">
         <label class="cn-label" for="confirm">Confirm Password</label>
         <div class="cn-password-wrap">
           <input type="password" class="cn-input" name="confirm_password" id="confirm" required
@@ -56,6 +76,10 @@
         <i class="bi bi-person-plus"></i> Create Account
       </button>
     </form>
+
+    <a class="cn-btn cn-btn--outline cn-btn--block" href="{{ url_for('public.home') }}">
+      <i class="bi bi-house-door"></i> Go to Home
+    </a>
 
     <div class="cn-auth__footer">
       <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>

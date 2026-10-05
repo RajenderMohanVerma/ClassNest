@@ -55,3 +55,24 @@ def strip_html(html_content):
     if not html_content:
         return ''
     return bleach.clean(html_content, tags=[], attributes={}, strip=True)
+
+
+def plain_text(value, max_length=None):
+    """Normalise untrusted form input to a single-line, length-capped string.
+
+    Tags are stripped, control characters are removed and runs of whitespace
+    collapse, so a contact-form submission cannot inject markup or smuggle a
+    multi-line value into a single-line column.
+    """
+    if value is None:
+        text = ''
+    elif not isinstance(value, str):
+        text = str(value)
+    else:
+        text = value
+    text = strip_html(text)
+    text = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', text)
+    text = re.sub(r'\s+', ' ', text).strip()
+    if max_length is not None:
+        text = text[:max_length].rstrip()
+    return text

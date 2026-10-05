@@ -17,12 +17,23 @@ os.environ.setdefault('FLASK_ENV', 'testing')
 
 from app import create_app, db  # noqa: E402
 from app.config import TestingConfig  # noqa: E402
-from app.models import Announcement, Content, Subject, UploadedFile, User  # noqa: E402
+from app.models import (  # noqa: E402
+    Announcement,
+    Chapter,
+    Content,
+    Course,
+    CourseLesson,
+    CourseSection,
+    SchoolClass,
+    Subject,
+    UploadedFile,
+    User,
+)
 
 
 @pytest.fixture()
 def app():
-    upload_dir = tempfile.mkdtemp(prefix='classnest-test-')
+    upload_dir = tempfile.mkdtemp(prefix='classnext-test-')
 
     class _TestConfig(TestingConfig):
         UPLOAD_FOLDER = upload_dir
@@ -62,12 +73,13 @@ def student(app):
 
 
 @pytest.fixture()
-def subject(app, teacher):
+def subject(app, teacher, school_class):
     item = Subject(
         name='Mathematics',
         slug=Subject.unique_slug('Mathematics'),
         description='Numbers and logic',
         icon='bi-calculator',
+        class_id=school_class.id,
         created_by=teacher.id,
     )
     db.session.add(item)
@@ -119,6 +131,98 @@ def announcement(app, teacher):
         created_by=teacher.id,
     )
     item.publish()
+    db.session.add(item)
+    db.session.commit()
+    return item
+
+
+@pytest.fixture()
+def school_class(app, teacher):
+    item = SchoolClass(
+        name='Class 10',
+        slug=SchoolClass.unique_slug('Class 10'),
+        description='Secondary stage',
+        display_order=1,
+        created_by=teacher.id,
+    )
+    db.session.add(item)
+    db.session.commit()
+    return item
+
+
+@pytest.fixture()
+def chapter(app, subject, school_class, teacher):
+    item = Chapter(
+        title='Real Numbers',
+        slug=Chapter.unique_slug('Real Numbers'),
+        subject_id=subject.id,
+        class_id=school_class.id,
+        display_order=1,
+        status='published',
+        created_by=teacher.id,
+    )
+    db.session.add(item)
+    db.session.commit()
+    return item
+
+
+@pytest.fixture()
+def course(app, teacher, subject, school_class):
+    item = Course(
+        title='Class 10 Mathematics Complete Course',
+        slug=Course.unique_slug('Class 10 Mathematics Complete Course'),
+        description='Full syllabus course.',
+        class_id=school_class.id,
+        subject_id=subject.id,
+        instructor_id=teacher.id,
+        price=499,
+        access_level='premium',
+        status='published',
+        created_by=teacher.id,
+    )
+    item.published_at = item.created_at
+    db.session.add(item)
+    db.session.commit()
+    return item
+
+
+@pytest.fixture()
+def course_section(app, course):
+    item = CourseSection(
+        course_id=course.id,
+        title='Chapter 1',
+        slug='chapter-1',
+        display_order=0,
+    )
+    db.session.add(item)
+    db.session.commit()
+    return item
+
+
+@pytest.fixture()
+def course_lesson(app, course, course_section, teacher, subject):
+    lesson_content = Content(
+        title='Introduction Lesson',
+        slug=Content.unique_slug('Introduction Lesson'),
+        subject_id=subject.id,
+        class_id=course.class_id,
+        content_type='video_lesson',
+        video_url='https://example.com/v/intro.mp4',
+        status='published',
+        created_by=teacher.id,
+    )
+    lesson_content.publish()
+    db.session.add(lesson_content)
+    db.session.flush()
+
+    item = CourseLesson(
+        course_id=course.id,
+        section_id=course_section.id,
+        content_id=lesson_content.id,
+        title='Introduction',
+        display_order=0,
+        is_preview=True,
+    )
     db.session.add(item)
     db.session.commit()
     return item

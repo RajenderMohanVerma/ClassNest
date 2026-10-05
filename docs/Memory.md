@@ -1,16 +1,18 @@
-# ClassNest Project Memory
+# ClassNext Project Memory
 
 ## Current project state
 
-- Project: ClassNest Teacher-Student Learning Portal
-- Status: Flask MVP implemented and pushed to GitHub
+- Project: ClassNext — online teaching platform by Er. Amit Sir
+- Tagline: `Learn • Practice • Achieve`
+- Status: Phases 1-4 built; Phase 5 (student area) is next
+- Canonical specification: `docs/ClassNext — Final A-to-Z Master Development Prompt.md`
+  (111 sections). It supersedes any earlier prompt for this project.
 - Repository: `https://github.com/RajenderMohanVerma/ClassNest`
 - Branch: `main`
 - Vercel entry point: `api/index.py`
-- Vercel configuration: `vercel.json` (build + rewrite to the Flask function)
 - Database provider: Supabase PostgreSQL
 - Runtime: Flask app factory with Jinja2 templates
-- Upload storage: `instance/uploads` by default, `/tmp/classnest-uploads` on Vercel
+- Upload storage: `instance/uploads` by default, `/tmp/classnext-uploads` on Vercel
 
 ## Implemented decisions
 
@@ -33,16 +35,45 @@
 - Keep the UI server-rendered and progressively enhanced with vanilla JS.
 - Support a light/dark theme with a pre-paint bootstrap script and
   `prefers-color-scheme` default.
+- Use additive migrations only. Never reset or rebuild the database.
+- Require email verification only when a mail transport is configured; a failed
+  send rolls the new account back rather than stranding an unverifiable user.
+- Re-check `account_status` on every request, so a suspension ends the live
+  session immediately rather than at the next login.
+- Keep premium checkout disabled until a gateway is configured, so an
+  incomplete integration can never present a fake payment success.
 
 ## Current feature inventory
 
-- Authentication: login with validated `next`, student registration, POST logout
-- Teacher: dashboard, subjects CRUD, content CRUD with unique slugs, preview,
-  publish toggle, list filters/search/sort/pagination, announcements CRUD,
-  student search, file list/delete, profile
-- Student: dashboard, subjects with published counts, content library with
+### Public website (Phase 3)
+- Home, classes, subject, chapter and content pages; notes / videos /
+  free-resources libraries; courses and course detail; premium; notices; about;
+  FAQ; contact; legal (privacy, terms, refund); search; `sitemap.xml`;
+  `robots.txt`
+- Shared shell: responsive header, footer, dark/light theme, search, account menu
+- SEO: canonical URL, Open Graph, JSON-LD, per-page titles and descriptions,
+  `noindex` on gated pages
+
+### Authentication (Phase 4)
+- Login with validated `next`, student registration (name, email, password,
+  class, optional phone), POST logout
+- Email verification and password reset via single-use, expiring, hashed
+  `account_tokens`; verification resend; forgot-password that never reveals
+  whether an address has an account
+- Account status (`active` / `suspended` / `disabled`) enforced at login and on
+  every request; `last_login_at` recorded
+
+### Teacher
+- Dashboard, subjects CRUD, content CRUD with unique slugs, preview, publish
+  toggle, list filters/search/sort/pagination, announcements CRUD, student
+  search, file list/delete, profile
+
+### Student
+- Dashboard, subjects with published counts, content library with
   filters/sort/pagination, content detail, download through `/files`, search over
   title/topic/body, announcements, profile
+
+### Platform
 - Files: authenticated serving by stored name and by upload id
 - API: statistics at `/api/stats`, content types at `/api/content-types`
 - App routes: `/healthz` (database probe), `/offline`, `/manifest.webmanifest`
@@ -54,23 +85,25 @@
   `#4f35e8`
 - Theming: light and dark design tokens with a persistent toggle
 - Error handling: 400, 403, 404, 413, 429, and 500 templates (JSON for API clients)
-- Tests: 110 pytest tests in `tests/` against in-memory SQLite, including PWA asset
-  and head-tag assertions
+- Verification scripts: `tools/smoke_live.py`, `tools/smoke_auth.py`,
+  `tools/check_seo.py`
+- Tests: 234 pytest tests in `tests/` against in-memory SQLite (110 original,
+  54 schema, 60 public site, 31 auth, plus route coverage)
 
 ## Known gaps and follow-up decisions
 
-- Add a real Flask-Migrate initial migration before production schema changes.
-- Complete the Vercel project import, environment variables, and production
-  smoke test.
+- Phase 5 student area: `/student/learning`, bookmarks, progress, notifications.
+- Phase 6 admin CMS: `/admin/*` CRUD for classes, chapters, courses, notices,
+  site settings, audit log.
+- Phase 7 premium: checkout, server-side payment verification, orders, receipts.
 - Move file objects from local disk to persistent object storage for Vercel or
-  other serverless hosting (currently `/tmp/classnest-uploads`).
+  other serverless hosting (currently `/tmp/classnext-uploads`).
 - Configure shared Flask-Limiter storage (`RATE_LIMIT_STORAGE_URI`) for multiple
   instances.
-- Add deployment smoke tests; CSRF and rate limiting are disabled in
-  `TestingConfig` and are verified manually.
-- Add email delivery only when password reset or verification is approved.
-- Add background jobs, payments, progress tracking, or notifications only as
-  separately scoped features.
+- Set `MAIL_*` in production to enable verification and password-reset email.
+- Two production `Content` rows reference thumbnails
+  (`84e110d6defe4111b79b6064d24a1e99.png`, `78eacaa7a91a4f68be67cb5f3a85886d.jpg`)
+  that are not among the 6 `uploaded_files` records; confirm before publishing.
 
 ## Documentation workflow
 
@@ -84,6 +117,8 @@
 
 | Date | Decision or update |
 |------|-------------------|
+| 2026-10-05 | Rebuilt the project as ClassNext; additive schema foundation, responsive UI shell, and the full public website |
+| 2026-10-05 | Added email verification, password reset, account-status enforcement, and 31 auth tests (234 total) |
 | 2026-10-03 | Reconciled project memory with the implemented Flask application |
 | 2026-10-03 | Recorded current features, GitHub state, deployment gaps, and follow-up work |
 | 2026-10-03 | Added the Vercel entry point and deployment configuration |

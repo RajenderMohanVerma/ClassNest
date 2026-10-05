@@ -1,0 +1,68 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page cn-page--narrow">
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">{{ heading }}</h1>
+    <p class="cn-page-lead">Last updated: {{ current_year }}</p>
+  </header>
+
+  {% if not premium_enabled %}
+    <div class="cn-alert cn-alert--info">
+      <i class="bi bi-info-circle" aria-hidden="true"></i>
+      <div>
+        <strong>Online payments are not switched on yet.</strong>
+        No course can be purchased on the website at the moment, so no payment can
+        be taken and no refund can arise from an online purchase. Access is granted
+        manually instead. This page still describes the policy that applies as soon
+        as payments are enabled.
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="cn-reading">
+    <h2>Scope</h2>
+    <p>
+      This policy applies to premium course purchases made on {{ app_name }}.
+      Free material needs no refund because nothing was charged.
+    </p>
+
+    <h2>Before you buy</h2>
+    <p>
+      Each course page shows the price, the number of lessons and which lessons are
+      free previews. You can read the previews and the course outline before paying,
+      and you can view any free lessons on the site without buying anything.
+    </p>
+
+    <h2>Refunds are granted</h2>
+    <ul class="cn-check-list">
+      <li>You were charged and the course was never granted because of a fault on our side.</li>
+      <li>You bought the same course twice by mistake.</li>
+      <li>The course was withdrawn and no equivalent material is offered.</li>
+      <li>You purchased in error within 7 days and have not completed any lesson.</li>
+    </ul>
+
+    <h2>Refunds are not granted</h2>
+    <ul class="cn-check-list">
+      <li>You have completed a significant portion of the lessons.</li>
+      <li>The request is made more than 14 days after purchase.</li>
+      <li>The reason is a change of mind after starting the course.</li>
+      <li>The content is still available and working as described.</li>
+    </ul>
+
+    <h2>How to request one</h2>
+    <ol class="cn-check-list cn-check-list--ordered">
+      <li>Use the <a href="{{ url_for('public.contact') }}">contact page</a> with your order number.</li>
+      <li>We confirm the order on the server against the recorded payment reference.</li>
+      <li>If approved, access is revoked and the refund is issued to the original payment method.</li>
+    </ol>
+
+    <h2>Duplicate charges</h2>
+    <p>
+      A repeated payment notification never creates a second purchase. If you see
+      a duplicated charge on your statement, contact us with both references and we
+      will resolve it.
+    </p>
+  </div>
+</div>
+{% endblock %}

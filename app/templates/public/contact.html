@@ -1,0 +1,107 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page cn-page--narrow">
+
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">Contact</h1>
+    <p class="cn-page-lead">
+      Questions about a class, a course or an order? Send a message and it will
+      reach {{ teacher_name }} directly.
+    </p>
+  </header>
+
+  {% if sent %}
+    <div class="cn-alert cn-alert--success">
+      <i class="bi bi-check-circle" aria-hidden="true"></i>
+      <div>
+        <strong>Message received.</strong>
+        We will get back to you soon.
+      </div>
+    </div>
+  {% endif %}
+
+  {% if errors %}
+    <div class="cn-alert cn-alert--error">
+      <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+      <div>
+        <strong>Please fix the following:</strong>
+        <ul>
+          {% for error in errors %}<li>{{ error }}</li>{% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+
+  <div class="cn-two-column">
+    <div class="cn-card cn-contact-form">
+      <form method="post" action="{{ url_for('public.contact') }}" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="cn-form-group">
+          <label class="cn-label" for="contact-name">
+            Name <span class="cn-required" aria-hidden="true">*</span>
+          </label>
+          <input class="cn-input" type="text" id="contact-name" name="name" required
+                 maxlength="120" autocomplete="name"
+                 value="{{ form.name if form is defined and form else '' }}">
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label" for="contact-email">
+            Email <span class="cn-required" aria-hidden="true">*</span>
+          </label>
+          <input class="cn-input" type="email" id="contact-email" name="email" required
+                 maxlength="255" autocomplete="email"
+                 value="{{ form.email if form is defined and form else '' }}">
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label" for="contact-subject">Subject</label>
+          <input class="cn-input" type="text" id="contact-subject" name="subject" maxlength="200"
+                 value="{{ form.subject if form is defined and form else '' }}">
+        </div>
+
+        <div class="cn-form-group">
+          <label class="cn-label" for="contact-message">
+            Message <span class="cn-required" aria-hidden="true">*</span>
+          </label>
+          <textarea class="cn-textarea" id="contact-message" name="message" rows="6" required
+                    maxlength="4000">{{ form.message if form is defined and form else '' }}</textarea>
+          <p class="cn-hint">Please describe your question so it can be answered quickly.</p>
+        </div>
+
+        <button class="cn-btn cn-btn--primary cn-btn--lg" type="submit">
+          <i class="bi bi-send" aria-hidden="true"></i> Send message
+        </button>
+      </form>
+    </div>
+
+    <aside class="cn-aside">
+      <section class="cn-card cn-aside__card">
+        <h2 class="cn-aside__title">Other ways to reach us</h2>
+        <ul class="cn-list">
+          <li class="cn-list-item">
+            <a href="{{ url_for('public.faq') }}"><i class="bi bi-question-circle" aria-hidden="true"></i> Read the FAQ</a>
+          </li>
+          <li class="cn-list-item">
+            <a href="{{ url_for('public.notices') }}"><i class="bi bi-megaphone" aria-hidden="true"></i> Check notices</a>
+          </li>
+          <li class="cn-list-item">
+            <a href="{{ url_for('public.about') }}"><i class="bi bi-person" aria-hidden="true"></i> About {{ teacher_name }}</a>
+          </li>
+        </ul>
+      </section>
+
+      <section class="cn-card cn-aside__card">
+        <h2 class="cn-aside__title">Response time</h2>
+        <p class="cn-muted">
+          Messages are reviewed in order. Enrolment and payment questions are
+          answered first because they block study.
+        </p>
+      </section>
+    </aside>
+  </div>
+
+</div>
+{% endblock %}

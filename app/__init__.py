@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask, abort, g, jsonify, render_template
+from flask import Flask, abort, flash, g, jsonify, render_template
 
 from app.config import Config, DevelopmentConfig, ProductionConfig, TestingConfig
 from app.extensions import csrf, db, limiter, migrate
@@ -22,7 +22,7 @@ def create_app(config_class=None):
 
     # Vercel's deployment filesystem is read-only; only /tmp is writable.
     if os.environ.get('VERCEL') or os.environ.get('AWS_LAMBDA_FUNCTION_VERSION'):
-        app.config['UPLOAD_FOLDER'] = '/tmp/classnest-uploads'
+        app.config['UPLOAD_FOLDER'] = '/tmp/classnext-uploads'
 
     # Initialize extensions
     db.init_app(app)
@@ -49,22 +49,32 @@ def create_app(config_class=None):
 
     app.jinja_env.globals['pagination_args'] = pagination_args
 
-    # Context processor — inject branding & user into all templates
+    # Context processor: inject branding & user into all templates
     @app.context_processor
     def inject_globals():
+        from datetime import datetime
+
         from flask import session
         from app.models.content import CONTENT_TYPE_LABELS
+        from app.models.enums import ACCESS_LEVEL_LABELS, CONTENT_STATUS_LABELS
         from app.models.user import User
-        user = None
-        user_id = session.get('user_id')
-        if user_id:
-            user = db.session.get(User, user_id)
+        # Reuse the user loaded by the account-status check instead of
+        # querying the same row again on every template render.
+        user = getattr(g, 'current_user', None)
+        if user is None and session.get('user_id'):
+            user = db.session.get(User, session['user_id'])
         return {
             'app_name': app.config['APP_NAME'],
             'app_tagline': app.config['APP_TAGLINE'],
             'app_description': app.config['APP_DESCRIPTION'],
             'theme_color': app.config['THEME_COLOR'],
+            'teacher_name': app.config['TEACHER_NAME'],
+            'site_url': app.config['SITE_URL'],
+            'premium_enabled': app.config['PREMIUM_ENABLED'],
+            'current_year': datetime.now().year,
             'content_type_labels': CONTENT_TYPE_LABELS,
+            'content_status_labels': CONTENT_STATUS_LABELS,
+            'access_level_labels': ACCESS_LEVEL_LABELS,
             'current_user': user,
         }
 
@@ -205,6 +215,47 @@ def create_app(config_class=None):
         ):
             g.no_store = True
 
+    @app.before_request
+    def enforce_account_status():
+        """End the session as soon as an account is suspended or deleted.
+
+        Checking only at login is not enough: an admin suspending a student must
+        take effect on the student's very next request, not at their next login.
+        """
+        from flask import redirect, request, session, url_for
+
+        user_id = session.get('user_id')
+        if not user_id:
+            return None
+
+        if request.path.startswith('/static/') or request.path.startswith('/auth/logout'):
+            return None
+
+        from app.models.user import User
+        user = db.session.get(User, user_id)
+
+        if user is None:
+            session.clear()
+            flash('Your account is no longer available. Please contact the teacher.', 'error')
+            return redirect(url_for('auth.login'))
+
+        if not user.can_login:
+            session.clear()
+            flash(
+                f'Your account has been {user.account_status_label.lower()}. '
+                f'Please contact the teacher.',
+                'error',
+            )
+            return redirect(url_for('auth.login'))
+
+        # Keep the cached role and name honest even if they were changed.
+        if session.get('user_role') != user.role or session.get('user_name') != user.name:
+            session['user_role'] = user.role
+            session['user_name'] = user.name
+
+        g.current_user = user
+        return None
+
     @app.after_request
     def no_store_authenticated_pages(response):
         if getattr(g, 'no_store', False):
@@ -239,7 +290,7 @@ def _ensure_upload_folder(app):
         return
     except OSError:
         pass
-    if folder == '/tmp/classnest-uploads':
+    if folder == '/tmp/classnext-uploads':
         raise
-    app.config['UPLOAD_FOLDER'] = '/tmp/classnest-uploads'
+    app.config['UPLOAD_FOLDER'] = '/tmp/classnext-uploads'
     os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)

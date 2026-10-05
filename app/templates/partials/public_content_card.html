@@ -1,0 +1,31 @@
+{# Public card for a single content item. Expects `item` in context. #}
+<article class="cn-card cn-content-card">
+  <a class="cn-content-card__thumb" href="{{ url_for('public.content_detail', slug=item.slug) }}" tabindex="-1" aria-hidden="true">
+    {% if item.thumbnail %}
+      <img src="{{ url_for('files.serve_file', stored_name=item.thumbnail) }}" alt="" loading="lazy" width="320" height="160">
+    {% else %}
+      <i class="bi {{ 'bi-file-earmark-pdf' if item.content_type == 'pdf_resource' else ('bi-play-circle' if item.content_type == 'video_lesson' else ('bi-music-note-beamed' if item.content_type == 'audio' else 'bi-file-earmark-text')) }}" aria-hidden="true"></i>
+    {% endif %}
+  </a>
+  <div class="cn-content-card__body">
+    <div class="cn-chip-row cn-chip-row--compact">
+      <span class="cn-badge cn-badge--primary">{{ item.content_type_label }}</span>
+      {% if item.is_premium %}<span class="cn-badge cn-badge--warning">Premium</span>{% endif %}
+      {% if item.is_featured %}<span class="cn-badge cn-badge--success">Featured</span>{% endif %}
+    </div>
+    <h3 class="cn-content-card__title">
+      <a href="{{ url_for('public.content_detail', slug=item.slug) }}">{{ item.title }}</a>
+    </h3>
+    {% if item.summary %}<p class="cn-content-card__desc">{{ item.summary(110) }}</p>{% endif %}
+    <div class="cn-content-card__meta">
+      <span>
+        {{ item.subject.name if item.subject else 'General' }}
+        {%- if item.chapter %} · {{ item.chapter.title }}{% endif %}
+      </span>
+      {% set stamp = item.published_at or item.created_at %}
+      {% if stamp %}
+        <time datetime="{{ stamp.isoformat() }}">{{ stamp.strftime('%b %d, %Y') }}</time>
+      {% endif %}
+    </div>
+  </div>
+</article>

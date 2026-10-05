@@ -1,0 +1,82 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page">
+
+  <nav class="cn-breadcrumb" aria-label="Breadcrumb">
+    <ol class="cn-breadcrumb__list">
+      <li><a href="{{ url_for('public.index') }}">Home</a></li>
+      {% if item.school_class %}
+        <li><a href="{{ url_for('public.class_detail', slug=item.school_class.slug) }}">{{ item.school_class.name }}</a></li>
+      {% endif %}
+      <li><a href="{{ url_for('public.classes') }}">Subjects</a></li>
+      <li aria-current="page">{{ item.name }}</li>
+    </ol>
+  </nav>
+
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">{{ item.name }}</h1>
+    {% if item.description %}<p class="cn-page-lead">{{ item.description }}</p>{% endif %}
+  </header>
+
+  <div class="cn-two-column">
+    <div>
+      <h2 class="cn-section__title">Resources</h2>
+      {% if pagination.items %}
+        <div class="cn-content-grid">
+          {% for entry in pagination.items %}
+            {% with item = entry %}
+              {% include "partials/public_content_card.html" with context %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+        {% include "partials/pagination.html" with context %}
+      {% else %}
+        <div class="cn-empty">
+          <i class="bi bi-inbox" aria-hidden="true"></i>
+          <h3>Nothing published here yet</h3>
+          <p>Resources for {{ item.name }} will appear once they are published.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <aside class="cn-aside">
+      {% if chapters %}
+        <section class="cn-card cn-aside__card" aria-labelledby="subject-chapters">
+          <h2 class="cn-aside__title" id="subject-chapters">Chapters</h2>
+          <ul class="cn-list">
+            {% for chapter in chapters %}
+              <li class="cn-list-item">
+                <a href="{{ url_for('public.chapter_detail', slug=chapter.slug) }}">
+                  <i class="bi bi-list-ol" aria-hidden="true"></i>
+                  {{ chapter.title }}
+                </a>
+              </li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+
+      <section class="cn-card cn-aside__card" aria-labelledby="subject-shortcuts">
+        <h2 class="cn-aside__title" id="subject-shortcuts">Jump to</h2>
+        <ul class="cn-list">
+          <li class="cn-list-item">
+            <a href="{{ url_for('public.library', kind='notes', subject=item.id) }}">
+              <i class="bi bi-file-earmark-text" aria-hidden="true"></i> Notes &amp; PDFs
+            </a>
+          </li>
+          <li class="cn-list-item">
+            <a href="{{ url_for('public.library', kind='videos', subject=item.id) }}">
+              <i class="bi bi-play-circle" aria-hidden="true"></i> Video lessons
+            </a>
+          </li>
+          <li class="cn-list-item">
+            <a href="{{ url_for('public.courses') }}"><i class="bi bi-collection-play" aria-hidden="true"></i> Courses</a>
+          </li>
+        </ul>
+      </section>
+    </aside>
+  </div>
+
+</div>
+{% endblock %}

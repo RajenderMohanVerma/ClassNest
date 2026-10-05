@@ -1,0 +1,173 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page">
+
+  <nav class="cn-breadcrumb" aria-label="Breadcrumb">
+    <ol class="cn-breadcrumb__list">
+      <li><a href="{{ url_for('public.index') }}">Home</a></li>
+      <li><a href="{{ url_for('public.courses') }}">Courses</a></li>
+      <li aria-current="page">{{ item.title }}</li>
+    </ol>
+  </nav>
+
+  <div class="cn-course-hero">
+    <div class="cn-course-hero__media">
+      {% if item.thumbnail %}
+        <img src="{{ url_for('files.serve_file', stored_name=item.thumbnail) }}" alt="" width="720" height="405">
+      {% else %}
+        <span class="cn-course-hero__placeholder" aria-hidden="true">
+          <i class="bi bi-collection-play"></i>
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="cn-course-hero__body">
+      <div class="cn-chip-row cn-chip-row--compact">
+        {% if item.is_premium %}<span class="cn-badge cn-badge--warning">Premium</span>
+        {% else %}<span class="cn-badge cn-badge--success">Free</span>{% endif %}
+        {% if item.is_featured %}<span class="cn-badge cn-badge--primary">Featured</span>{% endif %}
+        {% if owned %}<span class="cn-badge cn-badge--success">Enrolled</span>{% endif %}
+      </div>
+
+      <h1 class="cn-page-title">{{ item.title }}</h1>
+
+      <p class="cn-course-hero__teacher">
+        <i class="bi bi-person-badge" aria-hidden="true"></i>
+        Instructor: {{ teacher_name }}
+      </p>
+
+      <dl class="cn-course-hero__meta">
+        {% if item.school_class %}
+          <div><dt>Class</dt><dd>{{ item.school_class.name }}</dd></div>
+        {% endif %}
+        {% if item.subject %}
+          <div><dt>Subject</dt><dd>{{ item.subject.name }}</dd></div>
+        {% endif %}
+        <div><dt>Lessons</dt><dd>{{ lessons|length }}</dd></div>
+        <div><dt>Sections</dt><dd>{{ sections|length }}</dd></div>
+      </dl>
+
+      {% if item.summary() %}
+        <p class="cn-page-lead">{{ item.summary() }}</p>
+      {% endif %}
+
+      <div class="cn-course-hero__price">
+        {% if item.price_label == 'Free' %}
+          <strong class="cn-course-hero__amount">Free</strong>
+        {% else %}
+          {% if item.has_discount %}
+            <s class="cn-course-hero__strike">&#8377;{{ item.strike_price_label }}</s>
+            <strong class="cn-course-hero__amount">&#8377;{{ item.price_label }}</strong>
+            <span class="cn-badge cn-badge--success">{{ item.discount_percent }}% off</span>
+          {% else %}
+            <strong class="cn-course-hero__amount">&#8377;{{ item.price_label }}</strong>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {# ── Buy / continue ──────────────────────────────────────── #}
+      {% if owned %}
+        <div class="cn-alert cn-alert--success">
+          <i class="bi bi-check-circle" aria-hidden="true"></i>
+          <div>
+            <strong>You have access to this course.</strong>
+            Open any unlocked lesson below to continue.
+          </div>
+        </div>
+      {% elif item.price_label == 'Free' %}
+        <a class="cn-btn cn-btn--primary cn-btn--lg" href="{{ url_for('auth.login') }}">
+          Start learning
+        </a>
+      {% elif not current_user %}
+        {# Never advertise a checkout to a visitor who cannot complete it. #}
+        <div class="cn-btn-row">
+          <a class="cn-btn cn-btn--primary cn-btn--lg" href="{{ url_for('auth.login') }}">Login to enroll</a>
+          <a class="cn-btn cn-btn--outline cn-btn--lg" href="{{ url_for('auth.register') }}">Create account</a>
+        </div>
+        {% if not premium_enabled %}
+          <div class="cn-alert cn-alert--warning">
+            <i class="bi bi-info-circle" aria-hidden="true"></i>
+            <div>Payments are not switched on yet. Enrolment will open once payment is configured.</div>
+          </div>
+        {% endif %}
+      {% elif not premium_enabled %}
+        {# Payments disabled: show the fact, never a fake success screen. #}
+        <div class="cn-alert cn-alert--warning">
+          <i class="bi bi-cone-striped" aria-hidden="true"></i>
+          <div>
+            <strong>Payments are not switched on yet.</strong>
+            Online enrolment for this course is not available at the moment. Please
+            contact us and access will be granted manually.
+          </div>
+        </div>
+        <a class="cn-btn cn-btn--outline" href="{{ url_for('public.contact') }}">Contact us</a>
+      {% else %}
+        <a class="cn-btn cn-btn--primary cn-btn--lg" href="{{ url_for('public.premium') }}">
+          Buy now
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ── Curriculum ───────────────────────────────────────────────── #}
+  <section class="cn-section" aria-labelledby="curriculum">
+    <div class="cn-section__head">
+      <h2 class="cn-section__title" id="curriculum">Course content</h2>
+      <span class="cn-muted">{{ lessons|length }} lesson{{ '' if lessons|length == 1 else 's' }}</span>
+    </div>
+
+    {% if sections %}
+      <ol class="cn-curriculum">
+        {% for section in sections %}
+          <li class="cn-curriculum__section">
+            <h3 class="cn-curriculum__title">{{ section.title }}</h3>
+            {% set section_lessons = lessons|selectattr('section_id', 'equalto', section.id)|list %}
+            {% if section_lessons %}
+              <ul class="cn-curriculum__list">
+                {% for lesson in section_lessons %}
+                  <li class="cn-curriculum__lesson{{ ' is-locked' if not owned and not lesson.is_preview }}">
+                    <i class="bi {{ 'bi-play-circle' if lesson.is_preview else ('bi-lock-fill' if not owned else 'bi-play-circle') }}"
+                       aria-hidden="true"></i>
+                    <span class="cn-curriculum__lesson-title">{{ lesson.title }}</span>
+                    {% if lesson.is_preview %}
+                      <span class="cn-badge cn-badge--success">Free preview</span>
+                    {% elif not owned %}
+                      <span class="cn-badge cn-badge--warning">Locked</span>
+                    {% endif %}
+                    {% if lesson.duration_label %}
+                      <span class="cn-muted cn-text-xs">{{ lesson.duration_label }}</span>
+                    {% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="cn-muted">No lessons in this section yet.</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ol>
+    {% else %}
+      <div class="cn-empty">
+        <i class="bi bi-list-task" aria-hidden="true"></i>
+        <p>The curriculum for this course has not been published yet.</p>
+      </div>
+    {% endif %}
+  </section>
+
+  {# ── Related ─────────────────────────────────────────────────── #}
+  {% if related %}
+    <section class="cn-section" aria-labelledby="related-courses">
+      <div class="cn-section__head">
+        <h2 class="cn-section__title" id="related-courses">Related courses</h2>
+      </div>
+      <div class="cn-course-grid">
+        {% for course in related %}
+          {% include "partials/course_card.html" with context %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+</div>
+{% endblock %}

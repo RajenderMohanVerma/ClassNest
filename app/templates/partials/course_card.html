@@ -1,0 +1,52 @@
+{# Public course card. Expects `course` in context; `enrolled` is optional. #}
+{% set owned = enrolled is defined and course.id in enrolled %}
+<article class="cn-card cn-course-card{% if owned %} is-owned{% endif %}">
+  <a class="cn-course-card__thumb" href="{{ url_for('public.course_detail', slug=course.slug) }}" tabindex="-1" aria-hidden="true">
+    {% if course.thumbnail %}
+      <img src="{{ url_for('files.serve_file', stored_name=course.thumbnail) }}" alt="" loading="lazy" width="480" height="270">
+    {% else %}
+      <i class="bi bi-collection-play" aria-hidden="true"></i>
+    {% endif %}
+  </a>
+  <div class="cn-course-card__body">
+    <div class="cn-chip-row cn-chip-row--compact">
+      {% if course.is_premium %}
+        <span class="cn-badge cn-badge--warning">Premium</span>
+      {% else %}
+        <span class="cn-badge cn-badge--success">Free</span>
+      {% endif %}
+      {% if course.is_featured %}<span class="cn-badge cn-badge--primary">Featured</span>{% endif %}
+      {% if owned %}<span class="cn-badge cn-badge--success">Enrolled</span>{% endif %}
+    </div>
+
+    <h3 class="cn-course-card__title">
+      <a href="{{ url_for('public.course_detail', slug=course.slug) }}">{{ course.title }}</a>
+    </h3>
+
+    <p class="cn-course-card__meta">
+      <span>
+        {% if course.school_class %}{{ course.school_class.name }}{% endif %}
+        {%- if course.subject %} · {{ course.subject.name }}{% endif %}
+      </span>
+      <span>{{ course.lesson_count }} lesson{{ '' if course.lesson_count == 1 else 's' }}</span>
+    </p>
+
+    {% if course.summary() %}
+      <p class="cn-course-card__desc">{{ course.summary(96) }}</p>
+    {% endif %}
+
+    <div class="cn-course-card__foot">
+      <span class="cn-course-card__price">
+        {% if course.price_label == 'Free' %}
+          <strong>Free</strong>
+        {% else %}
+          {% if course.has_discount %}<s class="cn-course-card__strike">{{ course.strike_price_label }}</s>{% endif %}
+          <strong>&#8377;{{ course.price_label }}</strong>
+        {% endif %}
+      </span>
+      <span class="cn-btn cn-btn--primary cn-btn--sm">
+        {% if owned %}Continue{% elif course.price_label == 'Free' %}Start{% else %}View{% endif %}
+      </span>
+    </div>
+  </div>
+</article>

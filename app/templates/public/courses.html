@@ -1,0 +1,51 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page">
+
+  <header class="cn-page-intro">
+    <p class="cn-eyebrow">Structured learning</p>
+    <h1 class="cn-page-title">Courses</h1>
+    <p class="cn-page-lead">
+      Each course is split into sections and lessons, so you always know what to
+      study next and can return to exactly where you stopped.
+    </p>
+  </header>
+
+  {% if classes %}
+    <form class="cn-filter-bar" method="get" action="{{ url_for('public.courses') }}">
+      <div class="cn-filter-bar__field">
+        <label class="cn-label" for="course-class">Class</label>
+        <select class="cn-select" id="course-class" name="class">
+          <option value="">All classes</option>
+          {% for item in classes %}
+            <option value="{{ item.id }}" {% if selected_class == item.id %}selected{% endif %}>{{ item.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="cn-filter-bar__actions">
+        <button class="cn-btn cn-btn--primary" type="submit">Apply</button>
+        {% if selected_class %}
+          <a class="cn-btn cn-btn--ghost" href="{{ url_for('public.courses') }}">Reset</a>
+        {% endif %}
+      </div>
+    </form>
+  {% endif %}
+
+  {% if pagination.items %}
+    <div class="cn-course-grid">
+      {% for course in pagination.items %}
+        {% include "partials/course_card.html" with context %}
+      {% endfor %}
+    </div>
+    {% include "partials/pagination.html" with context %}
+  {% else %}
+    <div class="cn-empty">
+      <i class="bi bi-collection-play" aria-hidden="true"></i>
+      <h2>No courses published yet</h2>
+      <p>Courses appear here as soon as the teacher publishes them.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

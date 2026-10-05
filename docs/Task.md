@@ -67,43 +67,49 @@ Mark a task complete only after the relevant check passes.
 - [x] Reconcile all six `docs/` files with the actual Flask implementation.
 - [x] Push the project to GitHub `RajenderMohanVerma/ClassNest` on `main`.
 
-## Current priority: production deployment readiness
+## Current priority: Phase 5 — student area
 
-- [ ] Add and verify an initial Flask-Migrate migration.
-- [x] Add Vercel `api/index.py` and `vercel.json` for the selected deployment
-      target.
-- [ ] Provision managed PostgreSQL and run `python init_db.py`.
-- [ ] Replace local uploads with durable object storage.
-- [ ] Configure production `SECRET_KEY`, secure cookies, and
-      `RATE_LIMIT_STORAGE_URI`.
-- [x] Add automated authentication, authorization, CRUD, and upload tests.
-- [ ] Run a production smoke test against the deployed URL (`/healthz`).
+- [x] Phase 1: additive ClassNext schema foundation, applied to production
+      without touching existing rows.
+- [x] Phase 2: access-control service and the responsive shared UI shell.
+- [x] Phase 3: public website (22 routes) with SEO, sitemap and robots.
+- [x] Phase 4: email verification, password reset, and account-status
+      enforcement on every request.
+- [ ] Phase 5: `/student/learning`, bookmarks, progress, notifications, profile
+      completion.
+- [ ] Phase 6: admin CMS under `/admin/*` for classes, subjects, chapters,
+      content, courses, notices, students and site settings.
+- [ ] Phase 7: premium checkout with server-side payment verification, orders
+      and receipts.
+- [ ] Phase 8-10: security audit, performance pass, PWA offline behaviour, final
+      verification.
 
-## Acceptance criteria for the next deployment task
+## Acceptance criteria for Phase 5
 
-- The application boots from the deployment entry point.
-- All required environment variables are configured without secrets in Git.
-- Database tables exist in managed PostgreSQL.
-- Teacher login and student registration work.
-- Teacher content creation and student content reading work.
-- Unauthorized role access is rejected.
-- Uploaded objects remain available after a new deployment.
-- Production logs contain no credentials or sensitive session values.
+- A signed-in student reaches `/student/learning` and sees only content they are
+  entitled to.
+- Bookmarks, progress and notifications read and write through authorized
+  server-side routes with CSRF protection.
+- No premium or draft content is reachable by an unauthorized request.
+- The student area works from 360px to 1920px and passes the keyboard and focus
+  checks in `docs/Design.md`.
+- `pytest` stays green and no existing production row is modified.
 
 ## Verification commands
-
-### Local smoke check
-
-```powershell
-python init_db.py
-python -c "from run import app; print(sorted(rule.rule for rule in app.url_map.iter_rules()))"
-```
 
 ### Automated tests
 
 ```powershell
 pip install -r requirements-dev.txt
 pytest
+```
+
+### Read-only live checks
+
+```powershell
+python tools/smoke_live.py     # public pages against the configured database
+python tools/smoke_auth.py     # auth pages render, no token leakage
+python tools/check_seo.py      # canonical URLs and sitemap are absolute
 ```
 
 ### Git delivery check
@@ -117,6 +123,7 @@ git log -1 --oneline
 
 | Date | Update |
 |------|--------|
+| 2026-10-05 | Completed Phases 1-4 and recorded the 234-test suite, live smoke scripts, and Phase 5 acceptance criteria |
 | 2026-10-03 | Replaced the old TypeScript foundation task list with the completed Flask implementation log |
 | 2026-10-03 | Added GitHub delivery status and production deployment follow-up tasks |
 | 2026-10-03 | Added Vercel serverless entry point and deployment configuration |

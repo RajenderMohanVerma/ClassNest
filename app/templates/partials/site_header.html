@@ -1,0 +1,81 @@
+{# Public site header: brand, primary navigation, search and auth actions. #}
+<header class="cn-site-header" data-site-header>
+  <div class="cn-site-header__inner cn-container">
+
+    <a class="cn-brand" href="{{ url_for('public.index') }}">
+      <span class="cn-brand__mark" aria-hidden="true">
+        <img src="{{ url_for('static', filename='icons/logo.svg') }}" alt="" width="40" height="40">
+      </span>
+      <span class="cn-brand__text">
+        <strong class="cn-brand__name">{{ app_name }}</strong>
+        <span class="cn-brand__tagline">{{ app_tagline }}</span>
+      </span>
+    </a>
+
+    <button class="cn-site-header__burger cn-icon-btn"
+            type="button"
+            data-nav-toggle
+            aria-expanded="false"
+            aria-controls="site-nav"
+            aria-label="Open navigation menu">
+      <i class="bi bi-list" aria-hidden="true"></i>
+    </button>
+
+    <div class="cn-site-header__panel" id="site-nav" data-nav-panel>
+      <nav class="cn-site-nav" aria-label="Primary">
+        <ul class="cn-site-nav__list">
+          {% set nav_items = [
+            ('public.index', 'Home'),
+            ('public.classes', 'Classes'),
+            ('public.library', 'Notes'),
+            ('public.library', 'Videos'),
+            ('public.courses', 'Courses'),
+            ('public.premium', 'Premium'),
+            ('public.notices', 'Notices'),
+            ('public.about', 'About'),
+            ('public.faq', 'FAQ'),
+            ('public.contact', 'Contact')
+          ] %}
+          {% for endpoint, label in nav_items %}
+            {% set target = url_for(endpoint, kind='notes') if endpoint == 'public.library' and label == 'Notes' else url_for(endpoint, kind='videos') if endpoint == 'public.library' else url_for(endpoint) %}
+            <li>
+              <a class="cn-site-nav__link{% if request.endpoint == endpoint and label in ('Home','Classes','Courses','Premium','Notices','About','FAQ','Contact') %} is-active{% endif %}"
+                 href="{{ target }}"
+                 {% if request.endpoint == endpoint and label in ('Home','Classes','Courses','Premium','Notices','About','FAQ','Contact') %}aria-current="page"{% endif %}>
+                {{ label }}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      <form class="cn-site-search" action="{{ url_for('public.search') }}" method="get" role="search">
+        <label class="cn-sr-only" for="site-search">Search ClassNext</label>
+        <input class="cn-input" type="search" id="site-search" name="q"
+               placeholder="Search notes, videos, chapters" maxlength="120"
+               value="{{ request.args.get('q', '') }}">
+        <button class="cn-btn cn-btn--primary cn-btn--sm" type="submit">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <span class="cn-sr-only">Search</span>
+        </button>
+      </form>
+
+      <div class="cn-site-header__actions">
+        {% if current_user %}
+          {% if current_user.is_teacher %}
+            <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('teacher.dashboard') }}">Dashboard</a>
+          {% else %}
+            <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('student.dashboard') }}">My Learning</a>
+          {% endif %}
+        {% else %}
+          <a class="cn-btn cn-btn--ghost cn-btn--sm" href="{{ url_for('auth.login') }}">Login</a>
+          <a class="cn-btn cn-btn--primary cn-btn--sm" href="{{ url_for('auth.register') }}">Get Started</a>
+        {% endif %}
+        <button class="cn-icon-btn" type="button" data-theme-toggle aria-label="Switch colour theme">
+          <i class="bi bi-moon-stars" data-theme-icon aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="cn-site-nav__overlay" data-nav-overlay hidden></div>

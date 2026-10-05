@@ -105,7 +105,7 @@ def test_legacy_manifest_path_still_works(client):
     response = client.get('/manifest.json')
     assert response.status_code == 200
     assert response.mimetype == 'application/manifest+json'
-    assert json.loads(response.get_data(as_text=True))['short_name'] == 'ClassNest'
+    assert json.loads(response.get_data(as_text=True))['short_name'] == 'ClassNext'
 
 
 def test_service_worker_is_served_with_install_headers(client):
@@ -197,10 +197,10 @@ def test_head_tags_are_present_on_every_page(client, app):
     assert 'icons/icon-192.png' in body
     assert '<meta name="mobile-web-app-capable" content="yes">' in body
     assert '<meta name="apple-mobile-web-app-capable" content="yes">' in body
-    assert '<meta name="apple-mobile-web-app-title" content="ClassNest">' in body
+    assert '<meta name="apple-mobile-web-app-title" content="ClassNext">' in body
     assert '<meta name="apple-mobile-web-app-status-bar-style" content="default">' in body
     assert '<meta name="theme-color" content="#4f35e8">' in body
-    assert 'ClassNest - Your Smart Learning Companion' in body
+    assert 'Classes, notes, videos and courses by Er. Amit Sir.' in body
 
 
 def test_offline_page_carries_the_same_icons(client):

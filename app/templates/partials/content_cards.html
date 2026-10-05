@@ -1,0 +1,6 @@
+{# Grid of public content cards. Expects a sequence in `latest`. #}
+<div class="cn-content-grid">
+  {% for item in latest %}
+    {% include "partials/public_content_card.html" with context %}
+  {% endfor %}
+</div>

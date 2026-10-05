@@ -3,6 +3,11 @@ from datetime import timedelta
 
 from dotenv import load_dotenv
 
+from app.models.enums import (
+    ACCESS_LEVELS,
+    CONTENT_STATUSES,
+)
+
 load_dotenv()
 
 DEFAULT_SECRET_KEY = 'dev-secret-change-me'
@@ -45,7 +50,7 @@ class Config:
     }
 
     # Session security
-    SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME', 'classnest_session')
+    SESSION_COOKIE_NAME = os.environ.get('SESSION_COOKIE_NAME', 'classnext_session')
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = 'Lax'
     PERMANENT_SESSION_LIFETIME = timedelta(
@@ -70,8 +75,40 @@ class Config:
     CONTENT_TYPES = (
         'notes', 'study_material', 'pdf_resource',
         'video_lesson', 'announcement', 'reference_link',
+        'audio', 'image', 'notice', 'playlist', 'course', 'assignment',
     )
-    CONTENT_STATUSES = ('draft', 'published')
+    CONTENT_STATUSES = CONTENT_STATUSES
+    ACCESS_LEVELS = ACCESS_LEVELS
+
+    # Public site URL, used for canonical links, sitemap and Open Graph.
+    # Falls back to the host the platform injects (Vercel / Render) so canonical
+    # URLs are never generated against localhost in production.
+    SITE_URL = (
+        os.environ.get('SITE_URL')
+        or (f'https://{os.environ["VERCEL_URL"]}' if os.environ.get('VERCEL_URL') else '')
+        or (f'https://{os.environ["RENDER_EXTERNAL_HOSTNAME"]}'
+            if os.environ.get('RENDER_EXTERNAL_HOSTNAME') else '')
+    ).rstrip('/')
+    TEACHER_NAME = os.environ.get('TEACHER_NAME', 'Er. Amit Sir')
+
+    # Payment gateway. Premium stays disabled until a gateway is configured so
+    # an incomplete integration can never present a fake "payment success".
+    PAYMENT_GATEWAY = os.environ.get('PAYMENT_GATEWAY', '').strip().lower()
+    PAYMENT_CURRENCY = os.environ.get('PAYMENT_CURRENCY', 'INR')
+    PAYMENT_KEY_ID = os.environ.get('PAYMENT_KEY_ID', '')
+    PAYMENT_KEY_SECRET = os.environ.get('PAYMENT_KEY_SECRET', '')
+    PAYMENT_WEBHOOK_SECRET = os.environ.get('PAYMENT_WEBHOOK_SECRET', '')
+    PREMIUM_ENABLED = bool(PAYMENT_KEY_ID and PAYMENT_KEY_SECRET)
+
+    # Outbound email for verification / password-reset links.
+    MAIL_ENABLED = _env_flag('MAIL_ENABLED', '0')
+    MAIL_FROM = os.environ.get('MAIL_FROM', '')
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', '')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
+    MAIL_USE_TLS = _env_flag('MAIL_USE_TLS', '1')
+    PASSWORD_RESET_TTL_MINUTES = int(os.environ.get('PASSWORD_RESET_TTL_MINUTES', '30'))
 
     # Rate limiting (in-memory unless a Redis/memcached URI is supplied)
     RATELIMIT_STORAGE_URI = os.environ.get('RATE_LIMIT_STORAGE_URI') or 'memory://'
@@ -96,11 +133,11 @@ class Config:
     )
 
     # Branding
-    APP_NAME = os.environ.get('APP_NAME', 'ClassNest')
-    APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Teacher & Student Learning Portal')
+    APP_NAME = os.environ.get('APP_NAME', 'ClassNext')
+    APP_TAGLINE = os.environ.get('APP_TAGLINE', 'Learn • Practice • Achieve')
     APP_DESCRIPTION = os.environ.get(
         'APP_DESCRIPTION',
-        'ClassNest - Your Smart Learning Companion',
+        'ClassNext - Classes, notes, videos and courses by Er. Amit Sir.',
     )
     THEME_COLOR = os.environ.get('THEME_COLOR', '#4f35e8')
 

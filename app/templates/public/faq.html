@@ -1,0 +1,42 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page cn-page--narrow">
+
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">Frequently Asked Questions</h1>
+    <p class="cn-page-lead">Everything students usually ask before they start.</p>
+  </header>
+
+  {% if faqs %}
+    {% set grouped = faqs|groupby('category') %}
+    {% for category, items in grouped %}
+      <section class="cn-section" aria-labelledby="faq-{{ loop.index }}">
+        <h2 class="cn-section__title" id="faq-{{ loop.index }}">
+          {{ category or 'General' }}
+        </h2>
+        <div class="cn-faq">
+          {% for faq in items %}
+            <details class="cn-faq__item">
+              <summary class="cn-faq__question">
+                {{ faq.question }}
+                <i class="bi bi-chevron-down" aria-hidden="true"></i>
+              </summary>
+              <div class="cn-faq__answer cn-reading cn-reading--compact">
+                {{ faq.answer|safe }}
+              </div>
+            </details>
+          {% endfor %}
+        </div>
+      </section>
+    {% endfor %}
+  {% else %}
+    <div class="cn-empty">
+      <i class="bi bi-question-circle" aria-hidden="true"></i>
+      <h2>No FAQs published yet</h2>
+      <p>Ask a question on the <a href="{{ url_for('public.contact') }}">contact page</a> and it will be answered there.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

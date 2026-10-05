@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{#
+  Shell for every public ClassNext page.
+
+  `meta` is supplied by the view (app.services.seo.build_meta) so canonical
+  URLs and Open Graph tags always match the record being rendered.
+#}
+
+{% block title %}{{ meta.title }}{% endblock %}
+
+{% block head %}
+<link rel="canonical" href="{{ meta.canonical }}">
+<meta property="og:site_name" content="{{ meta.site_name }}">
+<meta property="og:title" content="{{ meta.og_title }}">
+<meta property="og:description" content="{{ meta.og_description }}">
+<meta property="og:type" content="{{ meta.og_type }}">
+<meta property="og:url" content="{{ meta.og_url }}">
+<meta property="og:image" content="{{ meta.og_image }}">
+<meta name="twitter:card" content="summary_large_image">
+{% if meta.noindex %}<meta name="robots" content="noindex,nofollow">{% endif %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+{% endblock %}
+
+{% block body %}
+{% include "partials/site_header.html" %}
+
+<main id="main-content" class="cn-site-main">
+  {% block content %}{% endblock %}
+</main>
+
+{% include "partials/site_footer.html" %}
+<script src="{{ url_for('static', filename='js/site.js') }}"></script>
+{% endblock %}
+
+{% block scripts %}{{ super() }}{% endblock %}

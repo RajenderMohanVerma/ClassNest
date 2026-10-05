@@ -104,7 +104,7 @@ outside `app/static`, and `/static/uploads/*` is rejected before routing.
 `LEGACY_UPLOAD_FOLDER` (`app/static/uploads`) is a read-only fallback for files
 created before the move; `init_db.py` migrates them into the current folder.
 If the configured folder is unwritable, or on Vercel/Lambda, the application
-falls back to `/tmp/classnest-uploads`.
+falls back to `/tmp/classnext-uploads`.
 
 Local storage is suitable for development only. Production deployments on
 serverless platforms must move uploaded objects to persistent storage such as
@@ -143,9 +143,21 @@ and `vercel.json` builds that function and rewrites all requests to it.
   `Referrer-Policy`, `Permissions-Policy`, CSP, and HSTS in production) and
   `Cache-Control: no-store` on authenticated pages.
 - Keep teacher role assignment outside public registration.
+- Store only a SHA-256 hash of email-verification and password-reset tokens.
+  Tokens are single use, expire after `PASSWORD_RESET_TTL_MINUTES`, and are
+  scoped to one purpose, so a verification link cannot be replayed as a reset.
+- Never request email verification unless a mail transport is configured.
+  Otherwise nobody could ever confirm an address; if a send fails after the
+  account row was written, the row is rolled back so no permanently unusable
+  account is left behind.
+- Answer the forgot-password form identically for known and unknown addresses so
+  accounts cannot be enumerated.
+- Re-check `account_status` on every request, not only at login, so suspending an
+  account ends the active session immediately.
 - Use Redis-backed rate-limit storage (`RATE_LIMIT_STORAGE_URI`) when running
   multiple production instances; the default limit is 300 requests per hour
-  plus per-route limits on login and registration.
+  plus per-route limits on login, registration, password reset and verification
+  resend.
 
 ## Testing architecture
 

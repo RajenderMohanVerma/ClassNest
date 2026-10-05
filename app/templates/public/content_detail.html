@@ -1,0 +1,152 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page cn-page--narrow">
+
+  <nav class="cn-breadcrumb" aria-label="Breadcrumb">
+    <ol class="cn-breadcrumb__list">
+      <li><a href="{{ url_for('public.index') }}">Home</a></li>
+      {% if item.subject %}
+        <li><a href="{{ url_for('public.subject_detail', slug=item.subject.slug) }}">{{ item.subject.name }}</a></li>
+      {% endif %}
+      {% if item.chapter %}
+        <li><a href="{{ url_for('public.chapter_detail', slug=item.chapter.slug) }}">{{ item.chapter.title }}</a></li>
+      {% endif %}
+      <li aria-current="page">{{ item.title }}</li>
+    </ol>
+  </nav>
+
+  <article class="cn-article">
+    <header class="cn-article__header">
+      <div class="cn-chip-row cn-chip-row--compact">
+        <span class="cn-badge cn-badge--primary">{{ item.content_type_label }}</span>
+        {% if item.is_premium %}<span class="cn-badge cn-badge--warning">Premium</span>{% endif %}
+        {% if item.is_preview %}<span class="cn-badge cn-badge--success">Free Preview</span>{% endif %}
+        {% if item.tag_list %}
+          {% for tag in item.tag_list[:4] %}
+            <a class="cn-chip cn-chip--sm" href="{{ url_for('public.library', kind='notes', tag=tag) }}">{{ tag }}</a>
+          {% endfor %}
+        {% endif %}
+      </div>
+
+      <h1 class="cn-article__title">{{ item.title }}</h1>
+
+      {% if item.description %}
+        <p class="cn-article__lead">{{ item.description }}</p>
+      {% endif %}
+
+      <dl class="cn-article__meta">
+        {% if item.subject %}
+          <div><dt>Subject</dt><dd>{{ item.subject.name }}</dd></div>
+        {% endif %}
+        {% if item.school_class %}
+          <div><dt>Class</dt><dd>{{ item.school_class.name }}</dd></div>
+        {% endif %}
+        {% if item.chapter %}
+          <div><dt>Chapter</dt><dd>{{ item.chapter.title }}</dd></div>
+        {% endif %}
+        {% if item.topic %}
+          <div><dt>Topic</dt><dd>{{ item.topic }}</dd></div>
+        {% endif %}
+        {% set stamp = item.published_at or item.created_at %}
+        {% if stamp %}
+          <div><dt>Published</dt><dd><time datetime="{{ stamp.isoformat() }}">{{ stamp.strftime('%d %b %Y') }}</time></dd></div>
+        {% endif %}
+      </dl>
+    </header>
+
+    {# ── Media ───────────────────────────────────────────────────── #}
+    {% if item.content_type == 'video_lesson' and item.video_url %}
+      <div class="cn-player">
+        <div class="cn-player__frame">
+          <iframe src="{{ item.video_url }}" title="{{ item.title }}" loading="lazy"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; picture-in-picture"
+                  allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </div>
+      </div>
+    {% elif item.content_type == 'audio' and item.attachment %}
+      <div class="cn-player cn-player--audio">
+        <audio controls preload="none">
+          <source src="{{ url_for('files.serve_file', stored_name=item.attachment) }}">
+          Your browser does not support audio playback.
+        </audio>
+      </div>
+    {% elif item.thumbnail %}
+      <figure class="cn-article__thumb">
+        <img src="{{ url_for('files.serve_file', stored_name=item.thumbnail) }}" alt="" loading="lazy" width="720" height="360">
+      </figure>
+    {% endif %}
+
+    {# ── Body ────────────────────────────────────────────────────── #}
+    {% if item.body_html %}
+      <div class="cn-reading">
+        {{ item.body_html|safe }}
+      </div>
+    {% elif not item.resource_url and not item.video_url %}
+      <div class="cn-empty cn-empty--inline">
+        <p>No written content has been added for this resource yet.</p>
+      </div>
+    {% endif %}
+
+    {# ── Downloads ───────────────────────────────────────────────── #}
+    <section class="cn-article__downloads" aria-labelledby="downloads">
+      <h2 class="cn-section__title" id="downloads">Downloads</h2>
+      <ul class="cn-resource-list">
+        {% for file in item.files %}
+          <li class="cn-resource">
+            <i class="bi bi-paperclip" aria-hidden="true"></i>
+            <a href="{{ url_for('files.serve_file', stored_name=file.stored_name) }}">{{ file.original_name }}</a>
+            <span class="cn-muted cn-text-xs">{{ file.size_display }}</span>
+          </li>
+        {% endfor %}
+        {% if item.attachment %}
+          <li class="cn-resource">
+            <i class="bi bi-download" aria-hidden="true"></i>
+            <a href="{{ url_for('files.serve_file', stored_name=item.attachment) }}">Download</a>
+          </li>
+        {% endif %}
+        {% if item.resource_url %}
+          <li class="cn-resource">
+            <i class="bi bi-link-45deg" aria-hidden="true"></i>
+            <a href="{{ item.resource_url }}" rel="noopener noreferrer nofollow" target="_blank">Open resource</a>
+          </li>
+        {% endif %}
+      </ul>
+      {% if not item.files and not item.attachment and not item.resource_url %}
+        <p class="cn-muted">No downloadable files for this resource.</p>
+      {% endif %}
+    </section>
+
+    {# ── Chapter navigation ──────────────────────────────────────── #}
+    {% if chapters %}
+      <section class="cn-article__nav" aria-labelledby="more-chapters">
+        <h2 class="cn-section__title" id="more-chapters">Other chapters</h2>
+        <ul class="cn-chip-row">
+          {% for chapter in chapters %}
+            {% if chapter.id != item.chapter_id %}
+              <li>
+                <a class="cn-chip" href="{{ url_for('public.chapter_detail', slug=chapter.slug) }}">{{ chapter.title }}</a>
+              </li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+      </section>
+    {% endif %}
+
+    {# ── Related ─────────────────────────────────────────────────── #}
+    {% if related %}
+      <section class="cn-article__related" aria-labelledby="related">
+        <h2 class="cn-section__title" id="related">Related resources</h2>
+        <div class="cn-content-grid">
+          {% for entry in related %}
+            {% with item = entry %}
+              {% include "partials/public_content_card.html" with context %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+  </article>
+
+</div>
+{% endblock %}

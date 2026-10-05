@@ -1,0 +1,53 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page cn-page--narrow">
+
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">Search</h1>
+    <p class="cn-page-lead">
+      Search only returns material you are allowed to see. Locked and unpublished
+      content is never included.
+    </p>
+  </header>
+
+  <form class="cn-search cn-search--page" action="{{ url_for('public.search') }}" method="get" role="search">
+    <label class="cn-sr-only" for="page-search">Search {{ app_name }}</label>
+    <input class="cn-input" type="search" id="page-search" name="q" maxlength="120"
+           placeholder="Search notes, videos, chapters, tags" value="{{ term }}">
+    <button class="cn-btn cn-btn--primary" type="submit">
+      <i class="bi bi-search" aria-hidden="true"></i> Search
+    </button>
+  </form>
+
+  {% if term %}
+    <p class="cn-muted">
+      {{ results|length }} result{{ '' if results|length == 1 else 's' }} for
+      <strong>{{ term }}</strong>
+    </p>
+
+    {% if results %}
+      <div class="cn-content-grid">
+        {% for entry in results %}
+          {% with item = entry %}
+            {% include "partials/public_content_card.html" with context %}
+          {% endwith %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="cn-empty">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <h2>No matches</h2>
+        <p>Try a shorter keyword, or browse by class instead.</p>
+        <a class="cn-btn cn-btn--outline" href="{{ url_for('public.classes') }}">Browse classes</a>
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="cn-empty">
+      <i class="bi bi-search" aria-hidden="true"></i>
+      <p>Type a keyword above to search the library.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}

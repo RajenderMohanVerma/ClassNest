@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "ClassNest - Your Smart Learning Companion",
-  "short_name": "ClassNest",
-  "description": "ClassNest - Your Smart Learning Companion",
+  "name": "ClassNext - Learn • Practice • Achieve",
+  "short_name": "ClassNext",
+  "description": "Classes, notes, videos and courses by Er. Amit Sir.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

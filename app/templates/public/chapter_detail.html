@@ -1,0 +1,42 @@
+{% extends "public/base_public.html" %}
+
+{% block content %}
+<div class="cn-container cn-page">
+
+  <nav class="cn-breadcrumb" aria-label="Breadcrumb">
+    <ol class="cn-breadcrumb__list">
+      <li><a href="{{ url_for('public.index') }}">Home</a></li>
+      {% if item.subject and item.subject.school_class %}
+        <li><a href="{{ url_for('public.class_detail', slug=item.subject.school_class.slug) }}">{{ item.subject.school_class.name }}</a></li>
+      {% endif %}
+      {% if item.subject %}
+        <li><a href="{{ url_for('public.subject_detail', slug=item.subject.slug) }}">{{ item.subject.name }}</a></li>
+      {% endif %}
+      <li aria-current="page">{{ item.title }}</li>
+    </ol>
+  </nav>
+
+  <header class="cn-page-intro">
+    <h1 class="cn-page-title">{{ item.title }}</h1>
+    {% if item.description %}<p class="cn-page-lead">{{ item.description }}</p>{% endif %}
+  </header>
+
+  {% if pagination.items %}
+    <div class="cn-content-grid">
+      {% for entry in pagination.items %}
+        {% with item = entry %}
+          {% include "partials/public_content_card.html" with context %}
+        {% endwith %}
+      {% endfor %}
+    </div>
+    {% include "partials/pagination.html" with context %}
+  {% else %}
+    <div class="cn-empty">
+      <i class="bi bi-journal-x" aria-hidden="true"></i>
+      <h2>No lessons in this chapter yet</h2>
+      <p>Published notes and videos for {{ item.title }} will appear here.</p>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
