@@ -1,4 +1,4 @@
-/* ClassNest — progressive enhancement for the server-rendered UI */
+/* ClassNext — progressive enhancement for the server-rendered UI */
 (function () {
   'use strict';
 
@@ -72,16 +72,16 @@
 
     /* ── Theme toggle ───────────────────────────────────── */
     var themeToggle = document.getElementById('themeToggle');
-    if (themeToggle && window.ClassNestTheme) {
+    if (themeToggle && window.ClassNextTheme) {
       var icon = themeToggle.querySelector('[data-theme-icon]');
       var syncIcon = function () {
-        var dark = window.ClassNestTheme.get() === 'dark';
+        var dark = window.ClassNextTheme.get() === 'dark';
         if (icon) icon.className = dark ? 'bi bi-sun' : 'bi bi-moon-stars';
         themeToggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
       };
       syncIcon();
       themeToggle.addEventListener('click', function () {
-        window.ClassNestTheme.toggle();
+        window.ClassNextTheme.toggle();
         syncIcon();
       });
     }

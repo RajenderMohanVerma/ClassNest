@@ -1,4 +1,4 @@
-/* ClassNest — theme bootstrap (runs before first paint to avoid a flash) */
+/* ClassNext — theme bootstrap (runs before first paint to avoid a flash) */
 (function () {
   'use strict';
   var KEY = 'classnest_theme';
@@ -11,7 +11,7 @@
   var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   var theme = stored || (prefersDark ? 'dark' : 'light');
   document.documentElement.setAttribute('data-theme', theme);
-  window.ClassNestTheme = {
+  window.ClassNextTheme = {
     get: function () {
       return document.documentElement.getAttribute('data-theme') || 'light';
     },

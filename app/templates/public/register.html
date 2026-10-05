@@ -1,89 +1,137 @@
 {% extends "base.html" %}
-{% block title %}Sign Up — {{ app_name }}{% endblock %}
+{% block title %}Create account — {{ app_name }}{% endblock %}
 {% block body %}
-<div class="cn-auth">
-  <div class="cn-auth__card">
-    <div class="cn-auth__logo">
-      <div class="cn-auth__logo-icon">
-        <img src="{{ url_for('static', filename='icons/logo.svg') }}"
-             alt="" width="56" height="56" decoding="async">
-      </div>
-      <h1 class="cn-auth__title">Create Account</h1>
-      <p class="cn-auth__subtitle">Join {{ app_name }} as a student</p>
-    </div>
-
-    {% include 'partials/alerts.html' %}
-
-    <form method="POST" class="cn-form" novalidate>
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-
-      <div class="cn-form-group">
-        <label class="cn-label" for="name">Full Name</label>
-        <input type="text" class="cn-input" id="name" name="name" value="{{ name or '' }}"
-               required autofocus autocomplete="name" minlength="2">
-      </div>
-
-      <div class="cn-form-group">
-        <label class="cn-label" for="reg-email">Email</label>
-        <input type="email" class="cn-input" id="reg-email" name="email" value="{{ email or '' }}"
-               required autocomplete="email" inputmode="email">
-      </div>
-
-      <div class="cn-form-group">
-        <label class="cn-label" for="reg-password">Password</label>
-        <div class="cn-password-wrap">
-          <input type="password" class="cn-input" name="password" id="reg-password" required
-                 autocomplete="new-password" minlength="6">
-          <button type="button" class="cn-password-toggle" aria-label="Show password" tabindex="-1">
-            <i class="bi bi-eye"></i>
-          </button>
-        </div>
-        <small class="cn-hint">At least 6 characters.</small>
-      </div>
-
-      <div class="cn-form-group">
-        <label class="cn-label" for="class_id">Class</label>
-        <select class="cn-input" id="class_id" name="class_id">
-          <option value="">Not decided yet</option>
-          {% for school_class in classes %}
-          <option value="{{ school_class.id }}"
-                  {% if class_id == school_class.id %}selected{% endif %}>
-            {{ school_class.name }}
-          </option>
-          {% endfor %}
-        </select>
-        <small class="cn-hint">You can change this later from your profile.</small>
-      </div>
-
-      <div class="cn-form-group">
-        <label class="cn-label" for="phone">Phone <span class="cn-label--muted">(optional)</span></label>
-        <input type="tel" class="cn-input" id="phone" name="phone" value="{{ phone or '' }}"
-               autocomplete="tel" inputmode="tel">
-      </div>
-
-      <div class="cn-form-group">
-        <label class="cn-label" for="confirm">Confirm Password</label>
-        <div class="cn-password-wrap">
-          <input type="password" class="cn-input" name="confirm_password" id="confirm" required
-                 autocomplete="new-password">
-          <button type="button" class="cn-password-toggle" aria-label="Show password" tabindex="-1">
-            <i class="bi bi-eye"></i>
-          </button>
-        </div>
-      </div>
-
-      <button type="submit" class="cn-btn cn-btn--primary cn-btn--block">
-        <i class="bi bi-person-plus"></i> Create Account
-      </button>
-    </form>
-
-    <a class="cn-btn cn-btn--outline cn-btn--block" href="{{ url_for('public.index') }}">
-      <i class="bi bi-house-door"></i> Go to Home
+<main class="cn-auth cn-auth--register" id="main-content">
+  <aside class="cn-auth__visual" aria-label="About {{ app_name }}">
+    <a class="cn-auth__brand" href="{{ url_for('public.index') }}" aria-label="{{ app_name }} home">
+      <span class="cn-auth__brand-mark">
+        <img src="{{ url_for('static', filename='icons/logo.svg') }}" alt="" width="42" height="42">
+      </span>
+      <span>{{ app_name }}</span>
     </a>
 
-    <div class="cn-auth__footer">
-      <p>Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+    <div class="cn-auth__visual-copy">
+      <span class="cn-auth__eyebrow"><span></span> A GOOD PLACE TO BEGIN</span>
+      <h1>Make room for<br>what you want<br>to <em>learn.</em></h1>
+      <p>Create your student account to find class-wise lessons, notes, and resources.</p>
     </div>
-  </div>
-</div>
+
+    <div class="cn-auth-art" aria-hidden="true">
+      <div class="cn-auth-art__orbit cn-auth-art__orbit--outer"></div>
+      <div class="cn-auth-art__orbit cn-auth-art__orbit--inner"></div>
+      <div class="cn-auth-art__spark cn-auth-art__spark--one"><i class="bi bi-stars"></i></div>
+      <div class="cn-auth-art__spark cn-auth-art__spark--two"><i class="bi bi-sparkle"></i></div>
+      <div class="cn-auth-art__lesson">
+        <div class="cn-auth-art__lesson-top"><span class="cn-auth-art__lesson-icon"><i class="bi bi-play-fill"></i></span><span>VIDEO LESSON</span><i class="bi bi-three-dots"></i></div>
+        <strong>Learn at your own pace.</strong>
+        <div class="cn-auth-art__lesson-line"><span></span></div>
+        <small>Lessons <b>&middot;</b> Notes <b>&middot;</b> Practice</small>
+      </div>
+      <div class="cn-auth-art__note"><span><i class="bi bi-journal-text"></i></span><div><strong>Your learning space</strong><small>Starts with one step</small></div><i class="bi bi-arrow-up-right"></i></div>
+      <div class="cn-auth-art__orb"></div>
+    </div>
+
+    <div class="cn-auth__visual-bottom">
+      <span>Learn <b>&middot;</b> Practice <b>&middot;</b> Achieve</span>
+      <span>Thoughtfully made for learners</span>
+    </div>
+  </aside>
+
+  <section class="cn-auth__main" aria-labelledby="auth-title">
+    <div class="cn-auth__topline">
+      <span>Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></span>
+      <a class="cn-auth__home" href="{{ url_for('public.index') }}"><i class="bi bi-house-door"></i><span>Home</span></a>
+    </div>
+
+    <div class="cn-auth__content cn-auth__content--register">
+      <div class="cn-auth__heading">
+        <span class="cn-auth__mobile-mark"><img src="{{ url_for('static', filename='icons/logo.svg') }}" alt="" width="42" height="42"></span>
+        <p class="cn-auth__kicker">YOUR NEXT CHAPTER</p>
+        <h2 id="auth-title">Create your account</h2>
+        <p class="cn-auth__intro">A few details and your learning space is ready.</p>
+      </div>
+
+      {% include 'partials/alerts.html' %}
+
+      <form method="POST" class="cn-form cn-auth__form" novalidate>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="cn-auth__field-grid">
+          <div class="cn-form-group">
+            <label class="cn-label" for="name">Full name</label>
+            <div class="cn-auth__input-wrap">
+              <i class="bi bi-person" aria-hidden="true"></i>
+              <input type="text" class="cn-input" id="name" name="name" value="{{ name or '' }}"
+                     placeholder="Your name" required autofocus autocomplete="name" minlength="2">
+            </div>
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label" for="reg-email">Email address</label>
+            <div class="cn-auth__input-wrap">
+              <i class="bi bi-envelope" aria-hidden="true"></i>
+              <input type="email" class="cn-input" id="reg-email" name="email" value="{{ email or '' }}"
+                     placeholder="you@example.com" required autocomplete="email" inputmode="email">
+            </div>
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label" for="reg-password">Password</label>
+            <div class="cn-auth__input-wrap cn-auth__input-wrap--password">
+              <i class="bi bi-lock" aria-hidden="true"></i>
+              <input type="password" class="cn-input" name="password" id="reg-password" required
+                     placeholder="At least 6 characters" autocomplete="new-password" minlength="6">
+              <button type="button" class="cn-password-toggle" aria-label="Show password" tabindex="0">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label" for="confirm">Confirm password</label>
+            <div class="cn-auth__input-wrap cn-auth__input-wrap--password">
+              <i class="bi bi-shield-check" aria-hidden="true"></i>
+              <input type="password" class="cn-input" name="confirm_password" id="confirm" required
+                     placeholder="Enter your password again" autocomplete="new-password">
+              <button type="button" class="cn-password-toggle" aria-label="Show password" tabindex="0">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label" for="class_id">Your class <span class="cn-label--muted">(optional)</span></label>
+            <div class="cn-auth__input-wrap">
+              <i class="bi bi-mortarboard" aria-hidden="true"></i>
+              <select class="cn-input" id="class_id" name="class_id" autocomplete="off">
+                <option value="">Choose your class</option>
+                {% for school_class in classes %}
+                <option value="{{ school_class.id }}" {% if class_id == school_class.id %}selected{% endif %}>
+                  {{ school_class.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="cn-form-group">
+            <label class="cn-label" for="phone">Phone <span class="cn-label--muted">(optional)</span></label>
+            <div class="cn-auth__input-wrap">
+              <i class="bi bi-telephone" aria-hidden="true"></i>
+              <input type="tel" class="cn-input" id="phone" name="phone" value="{{ phone or '' }}"
+                     placeholder="Phone number" autocomplete="tel" inputmode="tel">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="cn-btn cn-btn--primary cn-btn--block cn-btn--lg cn-auth__submit">
+          Create my account <i class="bi bi-arrow-right"></i>
+        </button>
+        <p class="cn-auth__terms">By creating an account, you agree to use {{ app_name }} respectfully and securely.</p>
+      </form>
+
+      <p class="cn-auth__switch">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></p>
+    </div>
+  </section>
+</main>
 {% endblock %}

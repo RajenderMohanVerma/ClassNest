@@ -23,6 +23,15 @@ def test_register_page_offers_the_available_classes(client, school_class):
     assert school_class.name.encode() in body
     assert b'name="class_id"' in body
     assert b'name="phone"' in body
+    assert b'Create your account' in body
+    assert b'class="cn-auth__home" href="/"' in body
+
+
+def test_login_page_has_home_navigation_and_responsive_auth_layout(client):
+    body = client.get('/auth/login').data
+    assert b'learning space' in body.lower()
+    assert b'cn-auth__visual' in body
+    assert b'class="cn-auth__home" href="/"' in body
 
 
 def test_registration_creates_a_student_with_the_chosen_class(app, client, school_class):

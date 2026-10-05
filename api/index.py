@@ -1,4 +1,4 @@
-"""Vercel entry point for the ClassNest Flask application."""
+"""Vercel entry point for the ClassNext Flask application."""
 
 import os
 

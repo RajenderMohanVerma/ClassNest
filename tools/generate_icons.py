@@ -1,4 +1,4 @@
-"""Generate the ClassNest logo, app icons and favicons.
+"""Generate the ClassNext logo, app icons and favicons.
 
 One geometry definition drives every asset, so the SVG used on the website and
 the PNGs used by the browser, Android and iOS can never drift apart.
@@ -122,7 +122,7 @@ def render(size, maskable=False, opaque=False):
 
 
 # ── SVG renderer (same geometry, no dependencies) ───────────────────────────
-def svg_markup(size=512, maskable=False, title='ClassNest'):
+def svg_markup(size=512, maskable=False, title='ClassNext'):
     scale = LOGO_SCALE_MASKABLE if maskable else LOGO_SCALE_ANY
     box = size * scale
     offset = (size - box) / 2

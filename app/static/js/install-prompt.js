@@ -1,4 +1,4 @@
-/* ClassNest — PWA install sheet (mobile only, never on desktop) */
+/* ClassNext — PWA install sheet (mobile only, never on desktop) */
 (function () {
   'use strict';
 
@@ -124,17 +124,17 @@
     sheet.className = 'cn-install-sheet';
     sheet.setAttribute('role', 'dialog');
     sheet.setAttribute('aria-modal', 'false');
-    sheet.setAttribute('aria-label', 'Install the ClassNest app');
+    sheet.setAttribute('aria-label', 'Install the ClassNext app');
     sheet.innerHTML =
       '<button type="button" class="cn-install-sheet__close" data-install-dismiss aria-label="Close">&times;</button>' +
       '<div class="cn-install-sheet__header">' +
       '<span class="cn-install-sheet__icon"><i class="bi bi-mortarboard-fill"></i></span>' +
       '<span>' +
-      '<span class="cn-install-sheet__title">ClassNest</span>' +
+      '<span class="cn-install-sheet__title">ClassNext</span>' +
       '<span class="cn-install-sheet__subtitle">Install the app</span>' +
       '</span>' +
       '</div>' +
-      '<p class="cn-install-sheet__benefit">Faster access &mdash; open ClassNest straight from your home screen.</p>' +
+      '<p class="cn-install-sheet__benefit">Faster access &mdash; open ClassNext straight from your home screen.</p>' +
       actions;
 
     document.body.appendChild(overlay);

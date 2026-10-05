@@ -29,7 +29,7 @@ def main():
     with app.app_context():
         db.create_all()
 
-        print('\n=== ClassNest - Create Teacher Account ===\n')
+        print('\n=== ClassNext - Create Teacher Account ===\n')
 
         name = os.environ.get('TEACHER_NAME', '').strip() or input('Teacher name: ').strip()
         email = os.environ.get('TEACHER_EMAIL', '').strip().lower()
