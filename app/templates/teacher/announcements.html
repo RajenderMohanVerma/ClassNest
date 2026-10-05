@@ -10,9 +10,10 @@
 
   <div class="cn-page-header">
     <div>
+      <p class="cn-eyebrow"><i class="bi bi-megaphone" aria-hidden="true"></i> STUDENT COMMUNICATION</p>
       <h1 class="cn-page-header__title">Announcements</h1>
       <p class="cn-page-header__subtitle">
-        {{ pagination.total }} announcement{{ '' if pagination.total == 1 else 's' }}
+        {{ pagination.total }} announcement{{ '' if pagination.total == 1 else 's' }} · Publish class and learning updates for students.
       </p>
     </div>
     <a href="{{ url_for('teacher.create_announcement') }}" class="cn-btn cn-btn--primary">
@@ -20,8 +21,21 @@
     </a>
   </div>
 
+  <form method="GET" class="cn-filter-bar" role="search">
+    <div class="cn-filter-bar__field cn-filter-bar__field--grow">
+      <label class="cn-sr-only" for="announcement-search">Search announcements</label>
+      <div class="cn-search"><i class="bi bi-search cn-search__icon" aria-hidden="true"></i><input type="search" class="cn-search__input" id="announcement-search" name="q" value="{{ search or '' }}" placeholder="Search announcement title or message"></div>
+    </div>
+    <div class="cn-filter-bar__field">
+      <label class="cn-sr-only" for="announcement-status">Filter by status</label>
+      <select class="cn-select" id="announcement-status" name="status"><option value="">All statuses</option><option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option><option value="draft" {% if status_filter == 'draft' %}selected{% endif %}>Drafts</option></select>
+    </div>
+    <button class="cn-btn cn-btn--primary" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Filter</button>
+    {% if search or status_filter %}<a href="{{ url_for('teacher.announcements') }}" class="cn-btn cn-btn--ghost">Clear</a>{% endif %}
+  </form>
+
   {% if pagination.items %}
-  <div class="cn-stack">
+  <div class="cn-admin-announcements">
     {% for ann in pagination.items %}
     <article class="cn-card cn-announcement-card">
       <div class="cn-announcement-card__meta">

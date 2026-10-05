@@ -3,50 +3,74 @@
 {% block content %}
 <div class="cn-container cn-page">
 
-  <header class="cn-page-intro">
-    <p class="cn-eyebrow"><i class="bi bi-mortarboard" aria-hidden="true"></i> EXPLORE THE CATALOG</p>
-    <h1 class="cn-page-title">Start with your class.</h1>
-    <p class="cn-page-lead">
-      Choose a class to find its published subjects, chapters, notes, and lessons.
-      The available list is maintained by {{ teacher_name }}.
-    </p>
-    <div class="cn-page-intro__meta">
-      <span><i class="bi bi-collection" aria-hidden="true"></i> {{ classes|length }} available class{{ '' if classes|length == 1 else 'es' }}</span>
-      <a href="{{ url_for('public.library', kind='free-resources') }}">Browse free resources <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+  <header class="cn-catalog-hero cn-catalog-hero--classes">
+    <div class="cn-catalog-hero__copy">
+      <p class="cn-catalog-hero__eyebrow"><i class="bi bi-mortarboard" aria-hidden="true"></i> CLASSNEXT CATALOG</p>
+      <h1>Start with<br>your class.</h1>
+      <p>Choose a class to see its published subjects, chapters, lessons, and study resources in one organized path.</p>
+      <div class="cn-catalog-hero__actions">
+        <a class="cn-btn cn-btn--hero-primary" href="#available-classes">Choose a class <i class="bi bi-arrow-down" aria-hidden="true"></i></a>
+        <a class="cn-btn cn-btn--hero-ghost" href="{{ url_for('public.library', kind='free-resources') }}">Browse resources <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+      </div>
+      <div class="cn-catalog-hero__meta"><span><i class="bi bi-collection" aria-hidden="true"></i> {{ classes|length }} class{{ '' if classes|length == 1 else 'es' }} available</span><span><i class="bi bi-diagram-3" aria-hidden="true"></i> Class → Subject → Chapter → Content</span></div>
+    </div>
+    <div class="cn-catalog-hero__visual" aria-hidden="true">
+      <div class="cn-catalog-visual-card">
+        <div class="cn-catalog-visual-card__top"><span><i class="bi bi-journal-bookmark-fill"></i></span><small>YOUR STUDY ROUTE</small><i class="bi bi-three-dots"></i></div>
+        <div class="cn-catalog-visual-card__line"><span>01</span><i class="bi bi-mortarboard"></i><strong>Class</strong><i class="bi bi-check2"></i></div>
+        <div class="cn-catalog-visual-card__line"><span>02</span><i class="bi bi-book"></i><strong>Subject</strong><i class="bi bi-chevron-right"></i></div>
+        <div class="cn-catalog-visual-card__line"><span>03</span><i class="bi bi-list-ol"></i><strong>Chapter</strong><i class="bi bi-chevron-right"></i></div>
+        <div class="cn-catalog-visual-card__line"><span>04</span><i class="bi bi-journal-text"></i><strong>Resource</strong><i class="bi bi-arrow-up-right"></i></div>
+      </div>
+      <span class="cn-catalog-hero__spark cn-catalog-hero__spark--one"><i class="bi bi-stars"></i></span>
+      <span class="cn-catalog-hero__spark cn-catalog-hero__spark--two"><i class="bi bi-sparkle"></i></span>
     </div>
   </header>
 
-  <section class="cn-learning-path" aria-label="How the class catalog is organized">
-    <div class="cn-learning-path__intro"><span>YOUR STUDY ROUTE</span><p>Move from a broad class view to the resource you need.</p></div>
-    <ol>
-      <li><span><i class="bi bi-mortarboard" aria-hidden="true"></i></span><strong>Class</strong></li>
-      <li><span><i class="bi bi-book" aria-hidden="true"></i></span><strong>Subject</strong></li>
-      <li><span><i class="bi bi-list-ol" aria-hidden="true"></i></span><strong>Chapter</strong></li>
-      <li><span><i class="bi bi-journal-text" aria-hidden="true"></i></span><strong>Content</strong></li>
-    </ol>
-  </section>
+  <section class="cn-class-browser" id="available-classes" aria-labelledby="class-browser-title">
+    <div class="cn-class-browser__head">
+      <div>
+        <p class="cn-eyebrow">BROWSE THE CATALOG</p>
+        <h2 id="class-browser-title">Available classes</h2>
+        <p>Select a class to see its actual published subjects and learning material.</p>
+      </div>
+      {% if classes %}
+      <label class="cn-class-search">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <span class="cn-sr-only">Find a class</span>
+        <input type="search" placeholder="Find a class" autocomplete="off" data-class-search>
+        <kbd>/</kbd>
+      </label>
+      {% endif %}
+    </div>
 
   {% if classes %}
-    <div class="cn-class-grid cn-class-grid--full">
+    <p class="cn-class-browser__status" data-class-count aria-live="polite">{{ classes|length }} class{{ '' if classes|length == 1 else 'es' }} shown</p>
+    <div class="cn-class-grid cn-class-grid--full" data-class-grid>
       {% for item in classes %}
-        <a class="cn-class-card" href="{{ url_for('public.class_detail', slug=item.slug) }}">
-          <span class="cn-class-card__badge">{{ item.name }}</span>
-          <span class="cn-class-card__desc">{{ item.description or 'Notes, videos and chapters for ' ~ item.name }}</span>
-          <span class="cn-class-card__meta">
-            <i class="bi bi-journal-bookmark" aria-hidden="true"></i>
-            {{ item.subject_count }} subject{{ '' if item.subject_count == 1 else 's' }}
-          </span>
-        </a>
+        <article class="cn-class-tile" data-class-item data-search="{{ (item.name ~ ' ' ~ (item.description or ''))|lower }}">
+          <a class="cn-class-tile__main" href="{{ url_for('public.class_detail', slug=item.slug) }}" aria-label="Open {{ item.name }}">
+            <span class="cn-class-tile__top"><span class="cn-class-tile__icon"><i class="bi bi-mortarboard" aria-hidden="true"></i></span><span class="cn-class-tile__index">{{ '%02d'|format(loop.index) }}</span></span>
+            <span class="cn-class-tile__name">{{ item.name }}</span>
+            <span class="cn-class-tile__description">{{ item.description or 'Explore published subjects, chapters, and resources for this class.' }}</span>
+            <span class="cn-class-tile__subjects"><i class="bi bi-book" aria-hidden="true"></i> {{ item.published_subject_count }} published subject{{ '' if item.published_subject_count == 1 else 's' }}</span>
+            <span class="cn-class-tile__action">Open class <i class="bi bi-arrow-up-right" aria-hidden="true"></i></span>
+          </a>
+        </article>
       {% endfor %}
+    </div>
+    <div class="cn-empty cn-empty--inline" data-class-no-results hidden>
+      <i class="bi bi-search" aria-hidden="true"></i><h2>No matching class</h2><p>Try a shorter class name or clear the search.</p>
     </div>
   {% else %}
     <div class="cn-empty">
       <i class="bi bi-collection" aria-hidden="true"></i>
-      <h2>No classes published yet</h2>
-      <p>Once the teacher publishes a class it will appear here.</p>
-      <a class="cn-btn cn-btn--outline" href="{{ url_for('public.contact') }}">Ask about classes</a>
+      <h2>No classes available yet</h2>
+      <p>Classes appear here after they are published. You can still explore resources that are publicly available.</p>
+      <a class="cn-btn cn-btn--outline" href="{{ url_for('public.library', kind='free-resources') }}">Browse available resources</a>
     </div>
   {% endif %}
+  </section>
 
 </div>
 {% endblock %}

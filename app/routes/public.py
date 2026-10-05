@@ -161,7 +161,7 @@ def index():
         courses=courses,
         notices=notices,
         profile=profile,
-        total_subjects=Subject.query.filter_by(is_enabled=True).count(),
+        total_subjects=sum(item.published_subject_count for item in classes),
     )
 
 
@@ -453,10 +453,22 @@ def premium():
         Course.status == CONTENT_STATUS_PUBLISHED,
         Course.access_level == ACCESS_PREMIUM,
     )
+    class_id = request.args.get('class', type=int)
     if user and user.is_student:
         allowed_classes = access.class_ids_for(user)
-        query = query.filter(Course.class_id.in_(allowed_classes)) if allowed_classes \
-            else query.filter(Course.id == -1)
+        if class_id:
+            query = query.filter(Course.class_id == class_id) if class_id in allowed_classes \
+                else query.filter(Course.id == -1)
+            selected_class = class_id if class_id in allowed_classes else None
+        else:
+            query = query.filter(Course.class_id.in_(allowed_classes)) if allowed_classes \
+                else query.filter(Course.id == -1)
+            selected_class = user.class_id if user.class_id in allowed_classes else None
+    elif class_id:
+        query = query.filter(Course.class_id == class_id)
+        selected_class = class_id
+    else:
+        selected_class = None
     items = query.order_by(Course.is_featured.desc(), Course.published_at.desc().nullslast()).all()
 
     return render_template(
@@ -464,6 +476,8 @@ def premium():
         meta=build_meta(title='Premium Courses', path='/premium',
                         description='Premium courses with secure, server-verified enrollment.'),
         courses=items,
+        classes=access.visible_classes_for(user),
+        selected_class=selected_class,
         premium_enabled=current_app.config['PREMIUM_ENABLED'],
     )
 

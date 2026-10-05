@@ -2,87 +2,60 @@
 
 {% block content %}
 <div class="cn-container cn-page cn-page--narrow">
-
-  <header class="cn-page-intro">
-    <p class="cn-eyebrow">{{ app_tagline }}</p>
-    <h1 class="cn-page-title">About {{ app_name }}</h1>
+  <header class="cn-about-hero">
+    <div class="cn-about-hero__copy">
+      <p class="cn-about-hero__eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> {{ app_tagline|upper }}</p>
+      <h1>A clear place<br>to keep learning.</h1>
+      <p>{{ app_name }} is a class-based learning library by {{ teacher_name }}. Browse published resources through a simple Class → Subject → Chapter → Content path.</p>
+      <div class="cn-btn-row"><a class="cn-btn cn-btn--about-primary" href="{{ url_for('public.classes') }}">Explore classes <i class="bi bi-arrow-right" aria-hidden="true"></i></a><a class="cn-btn cn-btn--about-ghost" href="{{ url_for('public.contact') }}">Get in touch</a></div>
+    </div>
+    <div class="cn-about-hero__visual" aria-hidden="true">
+      <div class="cn-about-path-card">
+        <div class="cn-about-path-card__head"><span><i class="bi bi-journal-bookmark-fill"></i></span><div><small>THE CLASSNEXT APPROACH</small><strong>One step at a time</strong></div></div>
+        <div class="cn-about-path-card__step"><span>01</span><i class="bi bi-mortarboard"></i><strong>Choose a class</strong></div>
+        <div class="cn-about-path-card__step"><span>02</span><i class="bi bi-book"></i><strong>Explore subjects</strong></div>
+        <div class="cn-about-path-card__step"><span>03</span><i class="bi bi-list-ol"></i><strong>Open a chapter</strong></div>
+        <div class="cn-about-path-card__step"><span>04</span><i class="bi bi-journal-text"></i><strong>Find a resource</strong></div>
+      </div>
+      <span class="cn-about-hero__spark"><i class="bi bi-stars"></i></span>
+    </div>
   </header>
 
-  {# Only fields the teacher actually filled in are rendered — nothing invented. #}
-  <div class="cn-about">
-    <section class="cn-about__profile" aria-labelledby="about-teacher">
+  <section class="cn-about-profile" aria-labelledby="about-teacher">
+    <div class="cn-about-profile__identity">
       {% if profile and profile.photo %}
-        <img class="cn-about__photo" src="{{ url_for('files.serve_file', stored_name=profile.photo) }}"
-             alt="{{ profile.display_name }}" width="160" height="160">
-      {% endif %}
-
-      <h2 class="cn-about__name" id="about-teacher">{{ profile.display_name if profile else teacher_name }}</h2>
-      {% if profile and profile.designation %}
-        <p class="cn-about__role">{{ profile.designation }}</p>
-      {% endif %}
-      {% if profile and profile.headline %}
-        <p class="cn-about__headline">{{ profile.headline }}</p>
-      {% endif %}
-
+      <img class="cn-about-profile__photo" src="{{ url_for('files.serve_file', stored_name=profile.photo) }}" alt="{{ profile.display_name }}" width="92" height="92" loading="lazy">
+      {% else %}<span class="cn-about-profile__mark" aria-hidden="true"><i class="bi bi-person-video3"></i></span>{% endif %}
+      <div><p class="cn-eyebrow">YOUR TEACHER</p><h2 id="about-teacher">{{ profile.display_name if profile else teacher_name }}</h2>{% if profile and profile.designation %}<p>{{ profile.designation }}</p>{% endif %}</div>
+    </div>
+    <div class="cn-about-profile__details">
+      {% if profile and profile.headline %}<p class="cn-about-profile__headline">{{ profile.headline }}</p>{% endif %}
+      {% if profile and profile.bio %}<div class="cn-reading cn-reading--compact">{{ profile.bio|safe }}</div>{% elif not profile or not profile.headline %}<p class="cn-about-profile__note">Learning material and class updates on this site are published by {{ teacher_name }}.</p>{% endif %}
       {% if profile and (profile.experience_years or profile.classes_taught) %}
-        <dl class="cn-about__facts">
-          {% if profile.experience_years %}
-            <div><dt>Experience</dt><dd>{{ profile.experience_years }} year{{ '' if profile.experience_years == 1 else 's' }}</dd></div>
-          {% endif %}
-          {% if profile.classes_taught %}
-            <div><dt>Classes</dt><dd>{{ profile.classes_taught }}</dd></div>
-          {% endif %}
-        </dl>
+      <dl class="cn-about-profile__facts">
+        {% if profile.experience_years %}<div><dt>Experience</dt><dd>{{ profile.experience_years }} year{{ '' if profile.experience_years == 1 else 's' }}</dd></div>{% endif %}
+        {% if profile.classes_taught %}<div><dt>Classes</dt><dd>{{ profile.classes_taught }}</dd></div>{% endif %}
+      </dl>
       {% endif %}
+      {% if profile and (profile.email or profile.phone) %}<div class="cn-about-profile__contact">
+        {% if profile.email %}<a href="mailto:{{ profile.email }}"><i class="bi bi-envelope" aria-hidden="true"></i> {{ profile.email }}</a>{% endif %}
+        {% if profile.phone %}<span><i class="bi bi-telephone" aria-hidden="true"></i> {{ profile.phone }}</span>{% endif %}
+      </div>{% endif %}
+    </div>
+  </section>
 
-      {% if profile and profile.bio %}
-        <div class="cn-reading">
-          {{ profile.bio|safe }}
-        </div>
-      {% endif %}
+  <section class="cn-about-platform" aria-labelledby="about-platform-title">
+    <div class="cn-about-platform__heading"><p class="cn-eyebrow">BUILT AROUND THE WAY MATERIAL IS ORGANIZED</p><h2 id="about-platform-title">Study material, easier to find.</h2><p>ClassNext connects each resource to its place in the catalog and checks access when protected content is opened.</p></div>
+    <div class="cn-about-platform__features">
+      <article><span><i class="bi bi-diagram-3" aria-hidden="true"></i></span><div><h3>A browsable catalog</h3><p>Move from a class to its subjects, chapters, and published content.</p><a href="{{ url_for('public.classes') }}">Browse classes <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div></article>
+      <article><span><i class="bi bi-journals" aria-hidden="true"></i></span><div><h3>Different study formats</h3><p>Depending on what is published, resources can include notes, PDFs, videos, audio, links, and images.</p><a href="{{ url_for('public.library', kind='free-resources') }}">Explore resources <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div></article>
+      <article><span><i class="bi bi-shield-check" aria-hidden="true"></i></span><div><h3>Access details up front</h3><p>Published status and account permissions are checked before protected materials are served.</p><a href="{{ url_for('public.faq') }}">Read how access works <i class="bi bi-arrow-right" aria-hidden="true"></i></a></div></article>
+    </div>
+  </section>
 
-      {% if profile and (profile.email or profile.phone) %}
-        <ul class="cn-about__contact">
-          {% if profile.email %}
-            <li><i class="bi bi-envelope" aria-hidden="true"></i>
-              <a href="mailto:{{ profile.email }}">{{ profile.email }}</a></li>
-          {% endif %}
-          {% if profile.phone %}
-            <li><i class="bi bi-telephone" aria-hidden="true"></i> {{ profile.phone }}</li>
-          {% endif %}
-        </ul>
-      {% endif %}
-    </section>
-
-    <section class="cn-about__platform" aria-labelledby="about-platform">
-      <h2 class="cn-section__title" id="about-platform">What {{ app_name }} is</h2>
-      <p>
-        {{ app_name }} is a class-based learning library by {{ teacher_name }}.
-        Its catalog follows a clear structure: <strong>Class → Subject → Chapter →
-        Content</strong>. Browse published material and check each page for its
-        access details.
-      </p>
-      <ul class="cn-about-features">
-        <li><span><i class="bi bi-diagram-3" aria-hidden="true"></i></span><div><strong>A browsable class catalog</strong><small>Move from class to subject, chapter, and individual resource.</small></div></li>
-        <li><span><i class="bi bi-journals" aria-hidden="true"></i></span><div><strong>Different study formats</strong><small>Published material may include notes, PDFs, video, audio, links, and images.</small></div></li>
-        <li><span><i class="bi bi-shield-check" aria-hidden="true"></i></span><div><strong>Access checked on the server</strong><small>Published status and account permissions are checked before protected material is served.</small></div></li>
-      </ul>
-
-      <h3 class="cn-section__title">Getting started</h3>
-      <ol class="cn-check-list cn-check-list--ordered">
-        <li>Choose a class and open one of its published subjects.</li>
-        <li>Browse chapters or search by a topic, title, or keyword.</li>
-        <li>Open a resource and review its availability and access requirements.</li>
-        <li>Create a student account if a resource requires sign-in.</li>
-      </ol>
-
-      <div class="cn-btn-row">
-        <a class="cn-btn cn-btn--primary" href="{{ url_for('public.classes') }}">Browse classes</a>
-        <a class="cn-btn cn-btn--outline" href="{{ url_for('public.library', kind='free-resources') }}">Free resources</a>
-        <a class="cn-btn cn-btn--ghost" href="{{ url_for('public.contact') }}">Contact us</a>
-      </div>
-    </section>
-  </div>
-
+  <section class="cn-about-next">
+    <div><p class="cn-eyebrow">READY TO EXPLORE?</p><h2>Choose a class and begin browsing.</h2><p>Use the catalog to see the resources currently published for each class.</p></div>
+    <a class="cn-btn cn-btn--primary cn-btn--lg" href="{{ url_for('public.classes') }}">Browse classes <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+  </section>
 </div>
 {% endblock %}

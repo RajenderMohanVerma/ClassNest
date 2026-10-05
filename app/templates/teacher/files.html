@@ -10,12 +10,22 @@
 
   <div class="cn-page-header">
     <div>
+      <p class="cn-eyebrow"><i class="bi bi-folder2-open" aria-hidden="true"></i> MEDIA LIBRARY</p>
       <h1 class="cn-page-header__title">Uploaded files</h1>
       <p class="cn-page-header__subtitle">
-        {{ pagination.total }} file{{ '' if pagination.total == 1 else 's' }} stored for your lessons.
+        {{ pagination.total }} file{{ '' if pagination.total == 1 else 's' }} stored for lessons · Files are served through protected routes.
       </p>
     </div>
   </div>
+
+  <form method="GET" class="cn-filter-bar" role="search">
+    <div class="cn-filter-bar__field cn-filter-bar__field--grow">
+      <label class="cn-sr-only" for="file-search">Search uploaded files</label>
+      <div class="cn-search"><i class="bi bi-search cn-search__icon" aria-hidden="true"></i><input type="search" class="cn-search__input" id="file-search" name="q" value="{{ search or '' }}" placeholder="Search file name or type"></div>
+    </div>
+    <button type="submit" class="cn-btn cn-btn--primary"><i class="bi bi-search" aria-hidden="true"></i> Search</button>
+    {% if search %}<a href="{{ url_for('teacher.files') }}" class="cn-btn cn-btn--ghost">Clear</a>{% endif %}
+  </form>
 
   {% if pagination.items %}
   <div class="cn-table-wrap">

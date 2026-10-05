@@ -49,26 +49,59 @@
     </div>
 
     <div class="cn-hero__panel">
-      {% if profile %}
-        <div class="cn-teacher-card">
-          {% if profile.photo %}
-            <img class="cn-teacher-card__photo" src="{{ url_for('files.secure_file', filename=profile.photo) }}"
-                 alt="{{ profile.display_name }}" width="96" height="96" loading="lazy">
-          {% endif %}
-          <h2 class="cn-teacher-card__name">{{ profile.display_name }}</h2>
-          {% if profile.designation %}<p class="cn-teacher-card__role">{{ profile.designation }}</p>{% endif %}
-          {% if profile.headline %}<p class="cn-teacher-card__bio">{{ profile.headline }}</p>{% endif %}
-          <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('public.about') }}">About {{ teacher_name }}</a>
+      <div class="cn-home-preview" aria-label="How ClassNext organizes learning resources">
+        <div class="cn-home-preview__top">
+          <span class="cn-home-preview__mark"><i class="bi bi-journal-bookmark-fill" aria-hidden="true"></i></span>
+          <span><small>CLASSNEXT CATALOG</small><strong>A clear path to each lesson</strong></span>
+          <i class="bi bi-three-dots" aria-hidden="true"></i>
         </div>
-      {% else %}
-        <div class="cn-teacher-card">
-          <h2 class="cn-teacher-card__name">{{ teacher_name }}</h2>
-          <p class="cn-teacher-card__bio">{{ app_tagline }}</p>
-          <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('public.about') }}">About</a>
+        <div class="cn-home-preview__path" aria-label="Class, subject, chapter, content">
+          <a href="{{ url_for('public.classes') }}"><i class="bi bi-mortarboard" aria-hidden="true"></i><span>Class</span></a>
+          <i class="cn-home-preview__connector bi bi-chevron-right" aria-hidden="true"></i>
+          <span><i class="bi bi-book" aria-hidden="true"></i><span>Subject</span></span>
+          <i class="cn-home-preview__connector bi bi-chevron-right" aria-hidden="true"></i>
+          <span><i class="bi bi-list-ol" aria-hidden="true"></i><span>Chapter</span></span>
+          <i class="cn-home-preview__connector bi bi-chevron-right" aria-hidden="true"></i>
+          <a href="{{ url_for('public.library', kind='free-resources') }}"><i class="bi bi-journal-text" aria-hidden="true"></i><span>Content</span></a>
         </div>
-      {% endif %}
+        <a class="cn-home-preview__resource" href="{{ url_for('public.library', kind='notes') }}">
+          <span class="cn-home-preview__resource-icon"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span>
+          <span><small>EXPLORE THE LIBRARY</small><strong>Notes, videos &amp; study resources</strong></span>
+          <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+        </a>
+        <div class="cn-home-preview__foot"><i class="bi bi-shield-check" aria-hidden="true"></i> Published lessons with clear access details</div>
+        <span class="cn-home-preview__spark cn-home-preview__spark--one"><i class="bi bi-stars"></i></span>
+        <span class="cn-home-preview__spark cn-home-preview__spark--two"><i class="bi bi-sparkle"></i></span>
+      </div>
+
+      <div class="cn-teacher-card">
+        {% if profile and profile.photo %}
+          <img class="cn-teacher-card__photo" src="{{ url_for('files.secure_file', filename=profile.photo) }}"
+               alt="{{ profile.display_name }}" width="64" height="64" loading="lazy">
+        {% endif %}
+        <div class="cn-teacher-card__identity">
+          <small>YOUR TEACHER</small>
+          <h2 class="cn-teacher-card__name">{{ profile.display_name if profile else teacher_name }}</h2>
+          {% if profile and profile.designation %}<p class="cn-teacher-card__role">{{ profile.designation }}</p>{% else %}<p class="cn-teacher-card__role">Learn · Practice · Achieve</p>{% endif %}
+        </div>
+        <a class="cn-btn cn-btn--outline cn-btn--sm" href="{{ url_for('public.about') }}" aria-label="About {{ teacher_name }}">About <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+      </div>
     </div>
   </div>
+</section>
+
+<section class="cn-section cn-container cn-home-route" aria-labelledby="home-route-title">
+  <div class="cn-home-route__intro">
+    <p class="cn-eyebrow">A SIMPLE WAY TO EXPLORE</p>
+    <h2 id="home-route-title">Go from class to content.</h2>
+    <p>Find published learning material through the same structure used throughout the ClassNext catalog.</p>
+  </div>
+  <ol class="cn-home-route__steps">
+    <li><a href="{{ url_for('public.classes') }}"><span>01</span><i class="bi bi-mortarboard" aria-hidden="true"></i><strong>Choose a class</strong><small>Browse available classes</small></a></li>
+    <li><a href="{{ url_for('public.classes') }}"><span>02</span><i class="bi bi-book" aria-hidden="true"></i><strong>Open a subject</strong><small>Explore the published catalog</small></a></li>
+    <li><a href="{{ url_for('public.classes') }}"><span>03</span><i class="bi bi-list-ol" aria-hidden="true"></i><strong>Find a chapter</strong><small>See organized lesson topics</small></a></li>
+    <li><a href="{{ url_for('public.library', kind='free-resources') }}"><span>04</span><i class="bi bi-journal-text" aria-hidden="true"></i><strong>Open a resource</strong><small>Check its access details</small></a></li>
+  </ol>
 </section>
 
 {# ── Classes ──────────────────────────────────────────────────────── #}
@@ -86,7 +119,7 @@
           <span class="cn-class-card__desc">{{ item.description or 'Notes, videos and chapters for ' ~ item.name }}</span>
           <span class="cn-class-card__meta">
             <i class="bi bi-journal-bookmark" aria-hidden="true"></i>
-            {{ item.subject_count }} subject{{ '' if item.subject_count == 1 else 's' }}
+            {{ item.published_subject_count }} subject{{ '' if item.published_subject_count == 1 else 's' }}
           </span>
         </a>
       {% endfor %}

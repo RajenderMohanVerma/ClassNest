@@ -21,14 +21,24 @@
 
   {% if faqs %}
     {% set grouped = faqs|groupby('category') %}
+    <section class="cn-faq-tools" aria-label="Search and filter questions">
+      <label class="cn-faq-search"><i class="bi bi-search" aria-hidden="true"></i><span class="cn-sr-only">Search questions</span><input type="search" placeholder="Search a question or topic" autocomplete="off" data-faq-search><kbd>/</kbd></label>
+      <div class="cn-faq-tools__actions"><button class="cn-btn cn-btn--outline cn-btn--sm" type="button" data-faq-expand aria-expanded="false"><i class="bi bi-arrows-expand" aria-hidden="true"></i> Expand all</button><button class="cn-btn cn-btn--ghost cn-btn--sm" type="button" data-faq-collapse><i class="bi bi-arrows-collapse" aria-hidden="true"></i> Collapse all</button></div>
+      <nav class="cn-faq-topics" aria-label="Filter FAQs by topic">
+        <button class="is-active" type="button" data-faq-topic="all" aria-pressed="true">All topics</button>
+        {% for category, items in grouped %}<button type="button" data-faq-topic="{{ category or 'General' }}" aria-pressed="false">{{ category or 'General' }} <span>{{ items|length }}</span></button>{% endfor %}
+      </nav>
+      <p class="cn-faq-search-count" aria-live="polite" data-faq-count>{{ faqs|length }} questions</p>
+    </section>
+
     {% for category, items in grouped %}
-      <section class="cn-section" aria-labelledby="faq-{{ loop.index }}">
+      <section class="cn-section cn-faq-group" aria-labelledby="faq-{{ loop.index }}" data-faq-group="{{ category or 'General' }}">
         <h2 class="cn-section__title" id="faq-{{ loop.index }}">
           {{ category or 'General' }}
         </h2>
         <div class="cn-faq">
           {% for faq in items %}
-            <details class="cn-faq__item">
+            <details class="cn-faq__item" data-faq-entry data-category="{{ category or 'General' }}" data-search="{{ (faq.question ~ ' ' ~ faq.answer|striptags)|lower }}">
               <summary class="cn-faq__question">
                 {{ faq.question }}
                 <i class="bi bi-chevron-down" aria-hidden="true"></i>
@@ -41,6 +51,7 @@
         </div>
       </section>
     {% endfor %}
+    <div class="cn-empty cn-faq-no-results" data-faq-no-results hidden><i class="bi bi-search" aria-hidden="true"></i><h2>No matching questions</h2><p>Try another search, or choose All topics.</p><button type="button" class="cn-btn cn-btn--outline" data-faq-reset>Clear search</button></div>
   {% else %}
     <div class="cn-empty">
       <i class="bi bi-question-circle" aria-hidden="true"></i>

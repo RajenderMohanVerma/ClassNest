@@ -1,71 +1,71 @@
 <nav class="cn-sidebar" id="sidebar" aria-label="Main navigation">
   <a class="cn-sidebar__brand" href="{{ url_for('teacher.dashboard') }}">
-    <img class="cn-sidebar__logo" src="{{ url_for('static', filename='icons/logo.svg') }}" alt="" width="28" height="28">
-    {{ app_name }}
+    <span class="cn-sidebar__brand-mark"><img class="cn-sidebar__logo" src="{{ url_for('static', filename='icons/logo.svg') }}" alt="" width="36" height="36"></span>
+    <span class="cn-sidebar__brand-text"><strong>{{ app_name }}</strong><small>TEACHER WORKSPACE</small></span>
   </a>
   <div class="cn-sidebar__nav">
     <div class="cn-sidebar__section">Main</div>
     <a class="cn-sidebar__link {% if request.endpoint == 'teacher.dashboard' %}active{% endif %}"
        {% if request.endpoint == 'teacher.dashboard' %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.dashboard') }}">
-      <i class="bi bi-grid-1x2"></i> Dashboard
+      <i class="bi bi-grid-1x2"></i><span>Dashboard</span>
     </a>
 
     <div class="cn-sidebar__section">Content</div>
     <a class="cn-sidebar__link {% if request.endpoint in ('teacher.classes', 'teacher.create_class', 'teacher.edit_class') %}active{% endif %}"
        {% if request.endpoint in ('teacher.classes', 'teacher.create_class', 'teacher.edit_class') %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.classes') }}">
-      <i class="bi bi-mortarboard"></i> Classes
+      <i class="bi bi-mortarboard"></i><span>Classes</span>
     </a>
     <a class="cn-sidebar__link {% if request.endpoint in ('teacher.subjects', 'teacher.create_subject', 'teacher.edit_subject', 'teacher.delete_subject') %}active{% endif %}"
        {% if request.endpoint in ('teacher.subjects', 'teacher.create_subject', 'teacher.edit_subject', 'teacher.delete_subject') %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.subjects') }}">
-      <i class="bi bi-bookmark"></i> Subjects
+      <i class="bi bi-bookmark"></i><span>Subjects</span>
     </a>
     <a class="cn-sidebar__link {% if request.endpoint in ('teacher.chapters', 'teacher.create_chapter', 'teacher.edit_chapter', 'teacher.delete_chapter') %}active{% endif %}"
        {% if request.endpoint in ('teacher.chapters', 'teacher.create_chapter', 'teacher.edit_chapter', 'teacher.delete_chapter') %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.chapters') }}">
-      <i class="bi bi-list-ol"></i> Chapters
+      <i class="bi bi-list-ol"></i><span>Chapters</span>
     </a>
     <a class="cn-sidebar__link {% if request.endpoint == 'teacher.content_list' or request.endpoint == 'teacher.create_content' or request.endpoint == 'teacher.edit_content' %}active{% endif %}"
        {% if request.endpoint == 'teacher.content_list' or request.endpoint == 'teacher.create_content' or request.endpoint == 'teacher.edit_content' %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.content_list') }}">
-      <i class="bi bi-file-earmark-text"></i> All Content
+      <i class="bi bi-file-earmark-text"></i><span>All Content</span>
     </a>
     <a class="cn-sidebar__link {% if request.endpoint == 'teacher.create_content' %}active{% endif %}"
        {% if request.endpoint == 'teacher.create_content' %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.create_content') }}">
-      <i class="bi bi-plus-circle"></i> Create Content
+      <i class="bi bi-plus-circle"></i><span>Create Content</span>
     </a>
     <div class="cn-sidebar__section">Communication</div>
     <a class="cn-sidebar__link {% if request.endpoint and 'teacher.announcement' in request.endpoint %}active{% endif %}"
        {% if request.endpoint and 'teacher.announcement' in request.endpoint %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.announcements') }}">
-      <i class="bi bi-megaphone"></i> Announcements
+      <i class="bi bi-megaphone"></i><span>Announcements</span>
     </a>
 
     <div class="cn-sidebar__section">Management</div>
     <a class="cn-sidebar__link {% if request.endpoint == 'teacher.students' %}active{% endif %}"
        {% if request.endpoint == 'teacher.students' %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.students') }}">
-      <i class="bi bi-people"></i> Students
+      <i class="bi bi-people"></i><span>Students</span>
     </a>
     <a class="cn-sidebar__link {% if request.endpoint == 'teacher.files' %}active{% endif %}"
        {% if request.endpoint == 'teacher.files' %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.files') }}">
-      <i class="bi bi-folder2-open"></i> Files
+      <i class="bi bi-folder2-open"></i><span>Files</span>
     </a>
 
     <div class="cn-sidebar__section">Account</div>
     <a class="cn-sidebar__link {% if request.endpoint == 'teacher.profile' %}active{% endif %}"
        {% if request.endpoint == 'teacher.profile' %}aria-current="page"{% endif %}
        href="{{ url_for('teacher.profile') }}">
-      <i class="bi bi-person-circle"></i> Profile
+      <i class="bi bi-person-circle"></i><span>Profile</span>
     </a>
     <form method="POST" action="{{ url_for('auth.logout') }}" class="cn-sidebar__form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" class="cn-sidebar__link cn-sidebar__link--button">
-        <i class="bi bi-box-arrow-left"></i> Logout
+        <i class="bi bi-box-arrow-left"></i><span>Log out</span>
       </button>
     </form>
   </div>

@@ -798,10 +798,25 @@ def delete_content(id):
 @teacher_required
 def announcements():
     page = request.args.get('page', 1, type=int)
-    pagination = Announcement.query.order_by(Announcement.created_at.desc()).paginate(
+    search = request.args.get('q', '').strip()
+    status_filter = request.args.get('status', '').strip()
+    query = Announcement.query
+    if search:
+        pattern = f'%{search}%'
+        query = query.filter(db.or_(
+            Announcement.title.ilike(pattern), Announcement.body.ilike(pattern),
+        ))
+    if status_filter == 'published':
+        query = query.filter_by(is_published=True)
+    elif status_filter == 'draft':
+        query = query.filter_by(is_published=False)
+    pagination = query.order_by(Announcement.created_at.desc()).paginate(
         page=page, per_page=FILE_PER_PAGE, error_out=False
     )
-    return render_template('teacher/announcements.html', pagination=pagination)
+    return render_template(
+        'teacher/announcements.html', pagination=pagination,
+        search=search, status_filter=status_filter,
+    )
 
 
 @teacher_bp.route('/announcements/create', methods=['GET', 'POST'])
@@ -889,17 +904,24 @@ def delete_announcement(id):
 def students():
     page = request.args.get('page', 1, type=int)
     search = request.args.get('q', '').strip()
+    class_filter = request.args.get('class_id', type=int)
     query = User.query.filter_by(role='student')
     if search:
         pattern = f'%{search}%'
         query = query.filter(
             db.or_(User.name.ilike(pattern), User.email.ilike(pattern))
         )
+    if class_filter:
+        query = query.filter(User.class_id == class_filter)
     pagination = query.order_by(User.created_at.desc()).paginate(
         page=page, per_page=STUDENT_PER_PAGE, error_out=False
     )
+    classes = SchoolClass.query.order_by(SchoolClass.display_order, SchoolClass.name).all()
     return render_template(
-        'teacher/students.html', pagination=pagination, search=search
+        'teacher/students.html', pagination=pagination, search=search,
+        class_filter=class_filter,
+        classes=classes,
+        class_names={school_class.id: school_class.name for school_class in classes},
     )
 
 
@@ -908,10 +930,19 @@ def students():
 @teacher_required
 def files():
     page = request.args.get('page', 1, type=int)
-    pagination = UploadedFile.query.order_by(UploadedFile.created_at.desc()).paginate(
+    search = request.args.get('q', '').strip()
+    query = UploadedFile.query
+    if search:
+        pattern = f'%{search}%'
+        query = query.filter(db.or_(
+            UploadedFile.original_name.ilike(pattern),
+            UploadedFile.mime_type.ilike(pattern),
+            UploadedFile.stored_name.ilike(pattern),
+        ))
+    pagination = query.order_by(UploadedFile.created_at.desc()).paginate(
         page=page, per_page=FILE_PER_PAGE, error_out=False
     )
-    return render_template('teacher/files.html', pagination=pagination)
+    return render_template('teacher/files.html', pagination=pagination, search=search)
 
 
 @teacher_bp.route('/files/<int:id>/delete', methods=['POST'])

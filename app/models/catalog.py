@@ -14,6 +14,7 @@ from app.models.enums import (
     ACCESS_LEVELS,
     CONTENT_STATUS_DRAFT,
     CONTENT_STATUSES,
+    CONTENT_STATUS_PUBLISHED,
     CONTENT_STATUS_LABELS,
     label_for,
 )
@@ -76,6 +77,14 @@ class SchoolClass(SlugMixin, db.Model):
     @property
     def subject_count(self):
         return self.subjects.count()
+
+    @property
+    def published_subject_count(self):
+        """Subjects visible in the public catalog for this class."""
+        return self.subjects.filter_by(
+            is_enabled=True,
+            status=CONTENT_STATUS_PUBLISHED,
+        ).count()
 
     def archive(self):
         self.status = 'archived'

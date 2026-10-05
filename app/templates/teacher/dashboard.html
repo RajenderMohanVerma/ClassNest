@@ -8,15 +8,16 @@
 <main class="cn-main" id="main-content">
   {% include 'partials/alerts.html' %}
 
-  <div class="cn-page-header">
-    <div>
+  <header class="cn-page-header cn-admin-welcome">
+    <div class="cn-admin-welcome__copy">
+      <p class="cn-eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> CLASSNEXT TEACHER WORKSPACE</p>
       <h1 class="cn-page-header__title">Welcome, {{ current_user.name }}</h1>
       <p class="cn-page-header__subtitle">Build and publish the catalog, manage announcements, and support students.</p>
+      <div class="cn-admin-welcome__meta"><span><i class="bi bi-shield-check" aria-hidden="true"></i> Signed in as {{ current_user.role_label }}</span><a href="{{ url_for('public.classes') }}">View public catalog <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
     </div>
-    <a href="{{ url_for('teacher.create_content') }}" class="cn-btn cn-btn--primary cn-btn--lg">
-      <i class="bi bi-plus-lg"></i> Create Content
-    </a>
-  </div>
+    <div class="cn-admin-welcome__visual" aria-hidden="true"><span><i class="bi bi-journal-bookmark-fill"></i></span><small>YOUR WORKSPACE</small><strong>From catalog<br>to classroom.</strong><div><i class="bi bi-mortarboard"></i><i class="bi bi-book"></i><i class="bi bi-list-ol"></i><i class="bi bi-journal-text"></i></div></div>
+    <a href="{{ url_for('teacher.create_content') }}" class="cn-btn cn-btn--primary cn-btn--lg cn-admin-welcome__create"><i class="bi bi-plus-lg"></i> Create Content</a>
+  </header>
 
   <section class="cn-catalog-workflow" aria-label="Build the learning catalog">
     <div class="cn-catalog-workflow__intro">
@@ -32,7 +33,7 @@
   </section>
 
   <div class="cn-stats-grid">
-    <div class="cn-card">
+    <a class="cn-card cn-admin-stat-link" href="{{ url_for('teacher.content_list') }}" aria-label="View all {{ total_content }} content items">
       <div class="cn-stat">
         <span class="cn-stat__icon cn-stat__icon--primary"><i class="bi bi-file-earmark-text"></i></span>
         <div>
@@ -40,8 +41,8 @@
           <div class="cn-stat__label">Total content items</div>
         </div>
       </div>
-    </div>
-    <div class="cn-card">
+    </a>
+    <a class="cn-card cn-admin-stat-link" href="{{ url_for('teacher.content_list', status='published') }}" aria-label="View {{ published }} published items">
       <div class="cn-stat">
         <span class="cn-stat__icon cn-stat__icon--success"><i class="bi bi-check-circle"></i></span>
         <div>
@@ -49,8 +50,8 @@
           <div class="cn-stat__label">Published</div>
         </div>
       </div>
-    </div>
-    <div class="cn-card">
+    </a>
+    <a class="cn-card cn-admin-stat-link" href="{{ url_for('teacher.content_list', status='draft') }}" aria-label="View {{ drafts }} draft items">
       <div class="cn-stat">
         <span class="cn-stat__icon cn-stat__icon--warning"><i class="bi bi-pencil"></i></span>
         <div>
@@ -58,8 +59,8 @@
           <div class="cn-stat__label">Drafts</div>
         </div>
       </div>
-    </div>
-    <div class="cn-card">
+    </a>
+    <a class="cn-card cn-admin-stat-link" href="{{ url_for('teacher.subjects') }}" aria-label="Manage {{ total_subjects }} subjects">
       <div class="cn-stat">
         <span class="cn-stat__icon cn-stat__icon--info"><i class="bi bi-bookmark"></i></span>
         <div>
@@ -67,8 +68,8 @@
           <div class="cn-stat__label">Subjects</div>
         </div>
       </div>
-    </div>
-    <div class="cn-card">
+    </a>
+    <a class="cn-card cn-admin-stat-link" href="{{ url_for('teacher.students') }}" aria-label="View {{ total_students }} students">
       <div class="cn-stat">
         <span class="cn-stat__icon cn-stat__icon--info"><i class="bi bi-people"></i></span>
         <div>
@@ -76,8 +77,8 @@
           <div class="cn-stat__label">Students</div>
         </div>
       </div>
-    </div>
-    <div class="cn-card">
+    </a>
+    <a class="cn-card cn-admin-stat-link" href="{{ url_for('teacher.files') }}" aria-label="Manage {{ total_files }} uploaded files">
       <div class="cn-stat">
         <span class="cn-stat__icon cn-stat__icon--primary"><i class="bi bi-folder2-open"></i></span>
         <div>
@@ -85,7 +86,7 @@
           <div class="cn-stat__label">Uploaded files</div>
         </div>
       </div>
-    </div>
+    </a>
   </div>
 
   <div class="cn-dashboard-columns">

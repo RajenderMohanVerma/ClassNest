@@ -2,42 +2,53 @@
 
 {% block content %}
 <div class="cn-container cn-page cn-page--narrow">
-
-  <header class="cn-page-intro">
-    <p class="cn-eyebrow"><i class="bi bi-megaphone" aria-hidden="true"></i> CLASSNEXT UPDATES</p>
-    <h1 class="cn-page-title">Notices &amp; announcements</h1>
-    <p class="cn-page-lead">Published updates from {{ teacher_name }} about classes, resources, and the learning site.</p>
+  <header class="cn-notices-hero">
+    <div>
+      <p class="cn-notices-hero__eyebrow"><i class="bi bi-megaphone" aria-hidden="true"></i> THE CLASSNEXT NOTICEBOARD</p>
+      <h1>Updates worth<br>keeping in view.</h1>
+      <p>Published announcements from {{ teacher_name }} about classes, resources, and the learning site.</p>
+      <a class="cn-btn cn-btn--notice" href="{{ url_for('public.classes') }}">Browse class catalog <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+    </div>
+    <div class="cn-notices-hero__art" aria-hidden="true">
+      <div class="cn-notice-paper"><span><i class="bi bi-megaphone-fill"></i></span><small>CLASSNEXT UPDATE</small><strong>Announcements<br>from your teacher</strong><div><i class="bi bi-check2-circle"></i> Published notices</div></div>
+      <span class="cn-notices-hero__ring cn-notices-hero__ring--one"></span><span class="cn-notices-hero__ring cn-notices-hero__ring--two"></span>
+      <span class="cn-notices-hero__spark"><i class="bi bi-stars"></i></span>
+    </div>
   </header>
 
-  {% if notices %}
-    <ul class="cn-notice-list cn-notice-list--stacked">
-      {% for notice in notices %}
-        <li class="cn-notice cn-notice--card">
-          <i class="bi bi-megaphone" aria-hidden="true"></i>
-          <div>
-            <h2 class="cn-notice__title">{{ notice.title }}</h2>
-            <div class="cn-reading cn-reading--compact">
-              {{ notice.body|safe }}
-            </div>
-            {% if notice.published_at %}
-              <p class="cn-muted cn-text-xs">
-                <time datetime="{{ notice.published_at.isoformat() }}">
-                  {{ notice.published_at.strftime('%d %b %Y') }}
-                </time>
-              </p>
-            {% endif %}
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <div class="cn-empty">
-      <i class="bi bi-megaphone" aria-hidden="true"></i>
-      <h2>No notices right now</h2>
-      <p>New announcements will show up on this page.</p>
-      <a class="cn-btn cn-btn--outline" href="{{ url_for('public.classes') }}">Browse classes</a>
+  <section class="cn-noticeboard" aria-labelledby="noticeboard-title">
+    <div class="cn-noticeboard__head">
+      <div><p class="cn-eyebrow">NOTICEBOARD</p><h2 id="noticeboard-title">Latest updates</h2><p>Open any notice to read its full message.</p></div>
+      {% if notices %}<label class="cn-notice-search"><i class="bi bi-search" aria-hidden="true"></i><span class="cn-sr-only">Search notices</span><input type="search" placeholder="Search notices" autocomplete="off" data-notice-search><kbd>/</kbd></label>{% endif %}
     </div>
-  {% endif %}
 
+    {% if notices %}
+    <p class="cn-noticeboard__count" aria-live="polite" data-notice-count>{{ notices|length }} published notice{{ '' if notices|length == 1 else 's' }}</p>
+    <ol class="cn-notice-timeline" data-notice-list>
+      {% for notice in notices %}
+      {% set stamp = notice.published_at %}
+      <li class="cn-notice-timeline__item" data-notice-item data-search="{{ (notice.title ~ ' ' ~ notice.summary(400))|lower }}">
+        <div class="cn-notice-timeline__date">
+          {% if stamp %}<time datetime="{{ stamp.isoformat() }}"><strong>{{ stamp.strftime('%d') }}</strong><span>{{ stamp.strftime('%b %Y') }}</span></time>{% else %}<span class="cn-notice-timeline__live"><i class="bi bi-broadcast" aria-hidden="true"></i> Published</span>{% endif %}
+        </div>
+        <article class="cn-notice-entry">
+          <div class="cn-notice-entry__top"><span class="cn-notice-entry__icon"><i class="bi bi-megaphone" aria-hidden="true"></i></span><span class="cn-notice-entry__label">TEACHER ANNOUNCEMENT</span><span class="cn-notice-entry__number">{{ '%02d'|format(loop.index) }}</span></div>
+          <h3>{{ notice.title }}</h3>
+          <p class="cn-notice-entry__summary">{{ notice.summary(230) }}</p>
+          <details class="cn-notice-entry__details">
+            <summary>Read full notice <i class="bi bi-chevron-down" aria-hidden="true"></i></summary>
+            <div class="cn-reading cn-reading--compact">{{ notice.body|safe }}</div>
+          </details>
+        </article>
+      </li>
+      {% endfor %}
+    </ol>
+    <div class="cn-empty cn-noticeboard__empty" data-notice-no-results hidden><i class="bi bi-search" aria-hidden="true"></i><h2>No matching notices</h2><p>Try another search phrase.</p></div>
+    {% else %}
+    <div class="cn-notices-empty">
+      <span><i class="bi bi-megaphone" aria-hidden="true"></i></span><p class="cn-eyebrow">NO NEW UPDATES</p><h2>The noticeboard is quiet for now.</h2><p>New announcements will appear here after {{ teacher_name }} publishes them. In the meantime, explore the class catalog.</p><a class="cn-btn cn-btn--primary" href="{{ url_for('public.classes') }}">Explore classes <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    </div>
+    {% endif %}
+  </section>
 </div>
 {% endblock %}

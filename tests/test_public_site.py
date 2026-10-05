@@ -142,6 +142,38 @@ def test_classes_page_lists_enabled_classes(client, school_class):
     assert school_class.name.encode() in body
 
 
+def test_classes_page_has_live_search_and_subject_visibility_count(client, school_class, subject):
+    body = client.get('/classes').data
+    assert b'data-class-search' in body
+    assert b'data-class-item' in body
+    assert b'data-class-count' in body
+    assert b'published_subject_count' not in body
+    assert b'1 published subject' in body
+
+
+def test_homepage_explains_the_catalog_route(client, school_class):
+    body = client.get('/').data
+    assert b'cn-home-preview' in body
+    assert b'cn-home-route__steps' in body
+    assert b'Choose a class' in body
+
+
+def test_library_hero_and_filter_guidance_match_resource_kind(client, school_class):
+    notes = client.get('/notes').data
+    videos = client.get('/videos').data
+    assert b'Make your next' in notes
+    assert b'Watch, pause' in videos
+    assert b'cn-resource-filters' in notes
+    assert b'cn-resource-filters' in videos
+
+
+def test_courses_page_shows_outline_and_access_guidance(client, school_class):
+    body = client.get('/courses').data
+    assert b'COURSE OUTLINE' in body
+    assert b'Access checked for each lesson' in body
+    assert b'No courses published yet' in body
+
+
 def test_disabled_or_archived_class_is_hidden(client, school_class):
     school_class.is_enabled = False
     from app import db

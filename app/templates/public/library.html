@@ -3,59 +3,97 @@
 {% block content %}
 <div class="cn-container cn-page">
 
-  <header class="cn-page-intro">
-    <p class="cn-eyebrow"><i class="bi bi-collection" aria-hidden="true"></i> RESOURCE LIBRARY</p>
-    <h1 class="cn-page-title">
-      {% if kind == 'notes' %}Notes &amp; Study Material
-      {% elif kind == 'videos' %}Video Lessons
-      {% else %}Free Resources{% endif %}
-    </h1>
-    <p class="cn-page-lead">
-      {% if kind == 'notes' %}Browse published notes, PDFs, and study material by class and subject. Downloads follow each resource's access settings.
-      {% elif kind == 'videos' %}Find published video lessons by class and subject. Each resource shows the access available to you.
-      {% else %}Explore currently published resources marked free, including notes, PDFs, video, and audio material.{% endif %}
-    </p>
-    <nav class="cn-library-tabs" aria-label="Resource type">
-      <a class="{% if kind == 'notes' %}is-active{% endif %}" href="{{ url_for('public.library', kind='notes') }}"{% if kind == 'notes' %} aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i> Notes &amp; PDFs</a>
-      <a class="{% if kind == 'videos' %}is-active{% endif %}" href="{{ url_for('public.library', kind='videos') }}"{% if kind == 'videos' %} aria-current="page"{% endif %}><i class="bi bi-play-circle" aria-hidden="true"></i> Video lessons</a>
-      <a class="{% if kind == 'free-resources' %}is-active{% endif %}" href="{{ url_for('public.library', kind='free-resources') }}"{% if kind == 'free-resources' %} aria-current="page"{% endif %}><i class="bi bi-unlock" aria-hidden="true"></i> Free resources</a>
-    </nav>
+  <header class="cn-catalog-hero cn-library-hero cn-library-hero--{{ kind }}">
+    <div class="cn-catalog-hero__copy">
+      <p class="cn-catalog-hero__eyebrow">
+        {% if kind == 'notes' %}<i class="bi bi-journal-text" aria-hidden="true"></i> NOTES &amp; STUDY MATERIAL
+        {% elif kind == 'videos' %}<i class="bi bi-play-circle" aria-hidden="true"></i> VIDEO LIBRARY
+        {% else %}<i class="bi bi-unlock" aria-hidden="true"></i> FREE RESOURCE LIBRARY{% endif %}
+      </p>
+      <h1>
+        {% if kind == 'notes' %}Make your next<br>study session count.
+        {% elif kind == 'videos' %}Watch, pause,<br>and learn your way.
+        {% else %}Start exploring<br>free resources.{% endif %}
+      </h1>
+      <p>
+        {% if kind == 'notes' %}Find published notes and PDFs arranged by class and subject. Every item follows its own access and download rules.
+        {% elif kind == 'videos' %}Browse published video lessons by class, subject, and chapter. Open a lesson to see its availability.
+        {% else %}See resources currently marked free, including available notes, PDFs, videos, audio, and images.{% endif %}
+      </p>
+      <div class="cn-catalog-hero__actions">
+        <a class="cn-btn cn-btn--hero-primary" href="#resource-results">Browse {{ 'notes' if kind == 'notes' else 'videos' if kind == 'videos' else 'resources' }} <i class="bi bi-arrow-down" aria-hidden="true"></i></a>
+        <a class="cn-btn cn-btn--hero-ghost" href="{{ url_for('public.classes') }}">Browse by class <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+      </div>
+      <div class="cn-catalog-hero__meta">
+        <span><i class="bi bi-check2-circle" aria-hidden="true"></i> Published resources only</span>
+        <span><i class="bi bi-shield-check" aria-hidden="true"></i> Access checked before opening</span>
+      </div>
+    </div>
+    <div class="cn-catalog-hero__visual cn-library-hero__visual" aria-hidden="true">
+      <div class="cn-catalog-visual-card cn-library-preview">
+        <div class="cn-catalog-visual-card__top">
+          <span class="cn-library-preview__icon"><i class="bi {% if kind == 'videos' %}bi-play-fill{% elif kind == 'notes' %}bi-file-earmark-text{% else %}bi-collection{% endif %}"></i></span>
+          <small>{% if kind == 'videos' %}VIDEO LESSON{% elif kind == 'notes' %}STUDY NOTES{% else %}FREE RESOURCES{% endif %}</small>
+          <i class="bi bi-three-dots"></i>
+        </div>
+        <div class="cn-library-preview__body">
+          <span><i class="bi bi-mortarboard"></i> Choose a class</span>
+          <span><i class="bi bi-book"></i> Browse a subject</span>
+          <span><i class="bi bi-journal-richtext"></i> Open published material</span>
+        </div>
+        <div class="cn-library-preview__footer"><i class="bi bi-search"></i> Filter by class or subject</div>
+      </div>
+      <span class="cn-catalog-hero__spark cn-catalog-hero__spark--one"><i class="bi bi-stars"></i></span>
+      <span class="cn-catalog-hero__spark cn-catalog-hero__spark--two"><i class="bi bi-sparkle"></i></span>
+    </div>
   </header>
 
-  <form class="cn-filter-bar" method="get" action="{{ url_for('public.library', kind=kind) }}">
-    <div class="cn-filter-bar__field">
-      <label class="cn-label" for="filter-subject">Subject</label>
-      <select class="cn-select" id="filter-subject" name="subject">
-        <option value="">All subjects</option>
-        {% for subject in subjects %}
-          <option value="{{ subject.id }}" {% if selected_subject == subject.id %}selected{% endif %}>
-            {{ subject.name }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
+  <section class="cn-library-browser" id="resource-results" aria-label="Filter published resources">
+    <nav class="cn-library-tabs" aria-label="Resource type">
+      <a class="{% if kind == 'notes' %}is-active{% endif %}" href="{{ url_for('public.library', kind='notes') }}"{% if kind == 'notes' %} aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i><span>Notes &amp; PDFs</span></a>
+      <a class="{% if kind == 'videos' %}is-active{% endif %}" href="{{ url_for('public.library', kind='videos') }}"{% if kind == 'videos' %} aria-current="page"{% endif %}><i class="bi bi-play-circle" aria-hidden="true"></i><span>Video lessons</span></a>
+      <a class="{% if kind == 'free-resources' %}is-active{% endif %}" href="{{ url_for('public.library', kind='free-resources') }}"{% if kind == 'free-resources' %} aria-current="page"{% endif %}><i class="bi bi-unlock" aria-hidden="true"></i><span>Free resources</span></a>
+    </nav>
 
-    <div class="cn-filter-bar__field">
-      <label class="cn-label" for="filter-class">Class</label>
-      <select class="cn-select" id="filter-class" name="class">
-        <option value="">All classes</option>
-        {% for item in classes %}
-          <option value="{{ item.id }}" {% if selected_class == item.id %}selected{% endif %}>
-            {{ item.name }}
-          </option>
-        {% endfor %}
-      </select>
-    </div>
+    <form class="cn-resource-filters" method="get" action="{{ url_for('public.library', kind=kind) }}">
+      <div class="cn-resource-filters__intro"><span><i class="bi bi-sliders" aria-hidden="true"></i></span><div><strong>Refine your browse</strong><small>Filter the published resources available to you.</small></div></div>
+      <div class="cn-resource-filters__controls">
+        <div class="cn-filter-bar__field">
+          <label class="cn-label" for="filter-class">Class</label>
+          <select class="cn-select" id="filter-class" name="class">
+            <option value="">All available classes</option>
+            {% for item in classes %}
+              <option value="{{ item.id }}" {% if selected_class == item.id %}selected{% endif %}>{{ item.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
 
-    <div class="cn-filter-bar__actions">
-      <button class="cn-btn cn-btn--primary" type="submit">Apply</button>
-      <a class="cn-btn cn-btn--ghost" href="{{ url_for('public.library', kind=kind) }}">Reset</a>
-    </div>
-  </form>
+        <div class="cn-filter-bar__field">
+          <label class="cn-label" for="filter-subject">Subject</label>
+          <select class="cn-select" id="filter-subject" name="subject">
+            <option value="">All available subjects</option>
+            {% for subject in subjects %}
+              <option value="{{ subject.id }}" {% if selected_subject == subject.id %}selected{% endif %}>
+                {{ subject.school_class.name if subject.school_class else '' }}{% if subject.school_class %} · {% endif %}{{ subject.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="cn-resource-filters__actions">
+          <button class="cn-btn cn-btn--primary" type="submit"><i class="bi bi-funnel" aria-hidden="true"></i> Apply filters</button>
+          {% if selected_class or selected_subject %}<a class="cn-btn cn-btn--ghost" href="{{ url_for('public.library', kind=kind) }}">Clear</a>{% endif %}
+        </div>
+      </div>
+    </form>
+  </section>
 
   {% if pagination.items %}
-    <p class="cn-results-label">Showing <strong>{{ pagination.total }}</strong> matching resource{{ '' if pagination.total == 1 else 's' }}.</p>
-    <div class="cn-content-grid">
+    <div class="cn-resource-results__head">
+      <div><p class="cn-eyebrow">READY TO EXPLORE</p><h2>{{ pagination.total }} published resource{{ '' if pagination.total == 1 else 's' }}</h2></div>
+      <p>Open a resource to read its description and confirm access options.</p>
+    </div>
+    <div class="cn-content-grid cn-resource-grid">
       {% for entry in pagination.items %}
         {% with item = entry %}
           {% include "partials/public_content_card.html" with context %}
@@ -64,12 +102,18 @@
     </div>
     {% include "partials/pagination.html" with context %}
   {% else %}
-    <div class="cn-empty">
-      <i class="bi bi-folder2-open" aria-hidden="true"></i>
-      <h2>Nothing here yet</h2>
-      <p>No published resources match this filter. Try clearing the filters.</p>
-      <a class="cn-btn cn-btn--outline" href="{{ url_for('public.library', kind=kind) }}">Clear filters</a>
-      <a class="cn-btn cn-btn--ghost" href="{{ url_for('public.classes') }}">Browse by class</a>
+    <div class="cn-library-empty">
+      <div class="cn-library-empty__art" aria-hidden="true"><span><i class="bi {% if kind == 'videos' %}bi-play-btn{% else %}bi-journal-x{% endif %}"></i></span><i class="bi bi-stars"></i></div>
+      <div class="cn-library-empty__copy">
+        <p class="cn-eyebrow">{% if selected_class or selected_subject %}FILTERED RESULTS{% else %}LIBRARY UPDATE{% endif %}</p>
+        <h2>{% if selected_class or selected_subject %}No matches for these filters{% elif kind == 'videos' %}No video lessons published yet{% elif kind == 'notes' %}No notes published yet{% else %}No free resources published yet{% endif %}</h2>
+        <p>{% if selected_class or selected_subject %}Clear one or both filters, or browse a different resource type. Only published resources appear here.{% else %}New material will appear here after it is published. You can also browse available classes or check another section of the library.{% endif %}</p>
+        <div class="cn-btn-row">
+          {% if selected_class or selected_subject %}<a class="cn-btn cn-btn--primary" href="{{ url_for('public.library', kind=kind) }}">Clear filters</a>{% endif %}
+          <a class="cn-btn cn-btn--outline" href="{{ url_for('public.classes') }}">Browse classes</a>
+          {% if kind != 'free-resources' %}<a class="cn-btn cn-btn--ghost" href="{{ url_for('public.library', kind='free-resources') }}">See free resources</a>{% endif %}
+        </div>
+      </div>
     </div>
   {% endif %}
 

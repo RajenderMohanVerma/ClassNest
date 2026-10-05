@@ -8,9 +8,11 @@
 <main class="cn-main" id="main-content">
   <div class="cn-page-header">
     <div>
+      <p class="cn-eyebrow"><i class="bi bi-people" aria-hidden="true"></i> ACCOUNT DIRECTORY</p>
       <h1 class="cn-page-header__title">Students</h1>
       <p class="cn-page-header__subtitle">
         {{ pagination.total }} registered student{{ '' if pagination.total == 1 else 's' }}
+        · Search by name/email or inspect their selected class and account status.
       </p>
     </div>
   </div>
@@ -24,8 +26,17 @@
                value="{{ search or '' }}" placeholder="Search by name or email...">
       </div>
     </div>
+    <div class="cn-filter-bar__field">
+      <label class="cn-sr-only" for="student-class">Filter by selected class</label>
+      <select class="cn-select" id="student-class" name="class_id">
+        <option value="">All classes</option>
+        {% for school_class in classes %}
+        <option value="{{ school_class.id }}" {% if class_filter == school_class.id %}selected{% endif %}>{{ school_class.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
     <button type="submit" class="cn-btn cn-btn--primary"><i class="bi bi-search"></i> Search</button>
-    {% if search %}
+    {% if search or class_filter %}
     <a href="{{ url_for('teacher.students') }}" class="cn-btn cn-btn--ghost">
       <i class="bi bi-x-circle"></i> Clear
     </a>
@@ -39,7 +50,10 @@
         <tr>
           <th scope="col">Student</th>
           <th scope="col">Email</th>
+          <th scope="col">Selected class</th>
+          <th scope="col">Account</th>
           <th scope="col">Joined</th>
+          <th scope="col">Last active</th>
         </tr>
       </thead>
       <tbody>
@@ -51,8 +65,11 @@
               {{ student.name }}
             </span>
           </td>
-          <td>{{ student.email }}</td>
+          <td><a href="mailto:{{ student.email }}">{{ student.email }}</a><small class="cn-block cn-muted">{{ 'Email verified' if student.is_email_verified else 'Email unverified' }}</small></td>
+          <td>{% if student.class_id %}<span class="cn-chip"><i class="bi bi-mortarboard" aria-hidden="true"></i> {{ class_names.get(student.class_id, 'Unavailable class') }}</span>{% else %}<span class="cn-muted">Not selected</span>{% endif %}</td>
+          <td><span class="cn-badge {{ 'cn-badge--success' if student.account_status == 'active' else 'cn-badge--warning' }}">{{ student.account_status_label }}</span></td>
           <td><small>{{ student.created_at.strftime('%b %d, %Y') }}</small></td>
+          <td><small>{{ student.last_login_at.strftime('%b %d, %Y') if student.last_login_at else 'No sign-in yet' }}</small></td>
         </tr>
         {% endfor %}
       </tbody>
