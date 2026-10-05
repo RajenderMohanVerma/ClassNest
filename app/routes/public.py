@@ -316,10 +316,10 @@ def _sibling_chapters(content):
 
 # ── Library listings ────────────────────────────────────────────────────
 
-@public_bp.route('/notes')
-@public_bp.route('/videos')
-@public_bp.route('/free-resources')
-def library(kind='notes'):
+@public_bp.route('/notes', defaults={'kind': 'notes'})
+@public_bp.route('/videos', defaults={'kind': 'videos'})
+@public_bp.route('/free-resources', defaults={'kind': 'free-resources'})
+def library(kind):
     """Notes / videos / free resources share one filtered listing."""
     user = current_user()
     types = _types_for_kind(kind)
@@ -364,9 +364,9 @@ def _title_for_kind(kind):
 
 def _description_for_kind(kind):
     return {
-        'notes': 'Downloadable notes, PDFs and study material organised by class and subject.',
-        'videos': 'Watch free video lessons organised by class, subject and chapter.',
-        'free-resources': 'Every free note, PDF, video and audio resource on ClassNext.',
+        'notes': 'Published notes, PDFs and study material organised by class and subject, with access checked for each resource.',
+        'videos': 'Published video lessons organised by class, subject and chapter.',
+        'free-resources': 'Resources currently marked free, organized by class and subject on ClassNext.',
     }.get(kind, 'Browse the ClassNext library.')
 
 

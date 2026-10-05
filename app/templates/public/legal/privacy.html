@@ -10,14 +10,17 @@
   <div class="cn-reading">
     <h2>What we collect</h2>
     <p>
-      When you create an account we store your name, email address and a hashed
-      password. We never store your password in readable form and we never store
-      card numbers. Payment confirmation is recorded as an order reference only.
+      When you create an account we store your name, email address, a password
+      hash, and any optional profile details you provide. We do not store your
+      password in readable form. Payment details are handled by the configured
+      payment provider; ClassNext records transaction references needed to track
+      an order.
     </p>
     <p>
-      Your learning activity — course enrolments, lesson progress, bookmarks and
-      notification read state — is stored so the platform can show your own
-      dashboard. That data is visible only to you and to the teacher account.
+      We also store information you submit through the site, such as contact
+      enquiries and your selected class. Account and enquiry records are used to
+      operate the requested site features and are available to authorized teacher
+      accounts for support and administration.
     </p>
 
     <h2>Cookies</h2>
@@ -43,9 +46,10 @@
 
     <h2>Your choices</h2>
     <p>
-      You can ask us to correct or delete your account and its learning records at
-      any time through the <a href="{{ url_for('public.contact') }}">contact page</a>.
-      Orders are retained for accounting purposes even after an account is closed.
+      For a question about the information associated with your account, use the
+      <a href="{{ url_for('public.contact') }}">contact page</a>. Requests are
+      reviewed by the teacher. Transaction records, if any, may need to be retained
+      where required for accounting or legal purposes.
     </p>
 
     <h2>Contact</h2>

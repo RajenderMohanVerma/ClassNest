@@ -12,10 +12,14 @@
   </nav>
 
   <header class="cn-page-intro">
+    <p class="cn-eyebrow"><i class="bi bi-mortarboard" aria-hidden="true"></i> CLASS CATALOG</p>
     <h1 class="cn-page-title">{{ item.name }}</h1>
-    {% if item.description %}
-      <p class="cn-page-lead">{{ item.description }}</p>
-    {% endif %}
+    <p class="cn-page-lead">{{ item.description or 'Explore the published subjects and chapters for this class. Open a topic to see its available resources.' }}</p>
+    <div class="cn-page-intro__meta">
+      <span><i class="bi bi-book" aria-hidden="true"></i> {{ subjects|length }} subject{{ '' if subjects|length == 1 else 's' }}</span>
+      <span><i class="bi bi-list-ol" aria-hidden="true"></i> {{ chapters|length }} chapter{{ '' if chapters|length == 1 else 's' }}</span>
+      <a href="{{ url_for('public.library', kind='free-resources', class=item.id) }}">Free resources for this class <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+    </div>
   </header>
 
   {# ── Subjects ────────────────────────────────────────────────── #}

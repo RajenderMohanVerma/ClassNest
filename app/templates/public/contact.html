@@ -4,10 +4,11 @@
 <div class="cn-container cn-page cn-page--narrow">
 
   <header class="cn-page-intro">
-    <h1 class="cn-page-title">Contact</h1>
+    <p class="cn-eyebrow"><i class="bi bi-chat-dots" aria-hidden="true"></i> WE'RE HERE TO HELP</p>
+    <h1 class="cn-page-title">Contact {{ app_name }}</h1>
     <p class="cn-page-lead">
-      Questions about a class, a course or an order? Send a message and it will
-      reach {{ teacher_name }} directly.
+      Ask about a class, a resource, or account access. Include the relevant class
+      or resource name so {{ teacher_name }} can review your message.
     </p>
   </header>
 
@@ -15,8 +16,8 @@
     <div class="cn-alert cn-alert--success">
       <i class="bi bi-check-circle" aria-hidden="true"></i>
       <div>
-        <strong>Message received.</strong>
-        We will get back to you soon.
+        <strong>Message recorded.</strong>
+        Your enquiry has been saved for {{ teacher_name }} to review.
       </div>
     </div>
   {% endif %}
@@ -93,12 +94,11 @@
         </ul>
       </section>
 
-      <section class="cn-card cn-aside__card">
-        <h2 class="cn-aside__title">Response time</h2>
-        <p class="cn-muted">
-          Messages are reviewed in order. Enrolment and payment questions are
-          answered first because they block study.
-        </p>
+      <section class="cn-card cn-aside__card cn-contact-guidance">
+        <span class="cn-contact-guidance__icon"><i class="bi bi-info-circle" aria-hidden="true"></i></span>
+        <h2 class="cn-aside__title">Help us understand</h2>
+        <p class="cn-muted">For a content question, add the class, subject, chapter, and resource title if available. For account help, use the email address linked to your account.</p>
+        <a href="{{ url_for('public.faq') }}">Check common questions <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
       </section>
     </aside>
   </div>

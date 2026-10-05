@@ -31,12 +31,21 @@
     </p>
 
     <h2>Payments and refunds</h2>
+    {% if not premium_enabled %}
     <p>
-      Course prices are shown before purchase. Enrolment is granted only after the
-      payment is verified on our server. If payment fails, no access is granted and
-      you are not charged twice for a single purchase. Refunds follow the
+      Online checkout is not currently enabled on this site. Course pages may
+      display course information and prices, but an online purchase cannot be
+      completed here. Use the <a href="{{ url_for('public.contact') }}">contact page</a>
+      to ask about current access options.
+    </p>
+    {% else %}
+    <p>
+      Where online checkout is available, course prices are shown before purchase
+      and access is granted only after payment has been verified by the server.
+      Refund requests are reviewed under the
       <a href="{{ url_for('public.legal', page='refund-policy') }}">Refund Policy</a>.
     </p>
+    {% endif %}
 
     <h2>Fair use</h2>
     <p>

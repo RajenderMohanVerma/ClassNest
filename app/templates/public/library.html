@@ -4,16 +4,22 @@
 <div class="cn-container cn-page">
 
   <header class="cn-page-intro">
+    <p class="cn-eyebrow"><i class="bi bi-collection" aria-hidden="true"></i> RESOURCE LIBRARY</p>
     <h1 class="cn-page-title">
       {% if kind == 'notes' %}Notes &amp; Study Material
       {% elif kind == 'videos' %}Video Lessons
       {% else %}Free Resources{% endif %}
     </h1>
     <p class="cn-page-lead">
-      {% if kind == 'notes' %}Downloadable notes, PDFs and study material, organised by class and subject.
-      {% elif kind == 'videos' %}Free video lessons you can watch without enrolling.
-      {% else %}Every free note, PDF, video and audio resource available on {{ app_name }}.{% endif %}
+      {% if kind == 'notes' %}Browse published notes, PDFs, and study material by class and subject. Downloads follow each resource's access settings.
+      {% elif kind == 'videos' %}Find published video lessons by class and subject. Each resource shows the access available to you.
+      {% else %}Explore currently published resources marked free, including notes, PDFs, video, and audio material.{% endif %}
     </p>
+    <nav class="cn-library-tabs" aria-label="Resource type">
+      <a class="{% if kind == 'notes' %}is-active{% endif %}" href="{{ url_for('public.library', kind='notes') }}"{% if kind == 'notes' %} aria-current="page"{% endif %}><i class="bi bi-journal-text" aria-hidden="true"></i> Notes &amp; PDFs</a>
+      <a class="{% if kind == 'videos' %}is-active{% endif %}" href="{{ url_for('public.library', kind='videos') }}"{% if kind == 'videos' %} aria-current="page"{% endif %}><i class="bi bi-play-circle" aria-hidden="true"></i> Video lessons</a>
+      <a class="{% if kind == 'free-resources' %}is-active{% endif %}" href="{{ url_for('public.library', kind='free-resources') }}"{% if kind == 'free-resources' %} aria-current="page"{% endif %}><i class="bi bi-unlock" aria-hidden="true"></i> Free resources</a>
+    </nav>
   </header>
 
   <form class="cn-filter-bar" method="get" action="{{ url_for('public.library', kind=kind) }}">
@@ -48,6 +54,7 @@
   </form>
 
   {% if pagination.items %}
+    <p class="cn-results-label">Showing <strong>{{ pagination.total }}</strong> matching resource{{ '' if pagination.total == 1 else 's' }}.</p>
     <div class="cn-content-grid">
       {% for entry in pagination.items %}
         {% with item = entry %}
@@ -62,6 +69,7 @@
       <h2>Nothing here yet</h2>
       <p>No published resources match this filter. Try clearing the filters.</p>
       <a class="cn-btn cn-btn--outline" href="{{ url_for('public.library', kind=kind) }}">Clear filters</a>
+      <a class="cn-btn cn-btn--ghost" href="{{ url_for('public.classes') }}">Browse by class</a>
     </div>
   {% endif %}
 

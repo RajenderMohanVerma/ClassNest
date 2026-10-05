@@ -71,20 +71,21 @@
     });
 
     /* ── Theme toggle ───────────────────────────────────── */
-    var themeToggle = document.getElementById('themeToggle');
-    if (themeToggle && window.ClassNextTheme) {
+    document.querySelectorAll('#themeToggle, [data-theme-toggle]').forEach(function (themeToggle) {
+      if (!window.ClassNextTheme) return;
       var icon = themeToggle.querySelector('[data-theme-icon]');
       var syncIcon = function () {
         var dark = window.ClassNextTheme.get() === 'dark';
         if (icon) icon.className = dark ? 'bi bi-sun' : 'bi bi-moon-stars';
         themeToggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
+        themeToggle.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
       };
       syncIcon();
       themeToggle.addEventListener('click', function () {
         window.ClassNextTheme.toggle();
         syncIcon();
       });
-    }
+    });
 
     /* ── Error page "go back" ───────────────────────────── */
     document.querySelectorAll('[data-go-back]').forEach(function (link) {

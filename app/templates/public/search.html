@@ -4,10 +4,11 @@
 <div class="cn-container cn-page cn-page--narrow">
 
   <header class="cn-page-intro">
-    <h1 class="cn-page-title">Search</h1>
+    <p class="cn-eyebrow"><i class="bi bi-search" aria-hidden="true"></i> SEARCH THE LIBRARY</p>
+    <h1 class="cn-page-title">Find a resource.</h1>
     <p class="cn-page-lead">
-      Search only returns material you are allowed to see. Locked and unpublished
-      content is never included.
+      Search published material by title, topic, or keyword. Results are limited
+      to resources your current account is allowed to see.
     </p>
   </header>
 
@@ -19,6 +20,15 @@
       <i class="bi bi-search" aria-hidden="true"></i> Search
     </button>
   </form>
+
+  {% if not term %}
+    <div class="cn-search-start">
+      <span>Or browse directly</span>
+      <a href="{{ url_for('public.classes') }}"><i class="bi bi-mortarboard" aria-hidden="true"></i> By class</a>
+      <a href="{{ url_for('public.library', kind='notes') }}"><i class="bi bi-journal-text" aria-hidden="true"></i> Notes &amp; PDFs</a>
+      <a href="{{ url_for('public.library', kind='videos') }}"><i class="bi bi-play-circle" aria-hidden="true"></i> Video lessons</a>
+    </div>
+  {% endif %}
 
   {% if term %}
     <p class="cn-muted">

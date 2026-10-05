@@ -17,8 +17,13 @@
   </nav>
 
   <header class="cn-page-intro">
+    <p class="cn-eyebrow"><i class="bi bi-list-ol" aria-hidden="true"></i> CHAPTER RESOURCES</p>
     <h1 class="cn-page-title">{{ item.title }}</h1>
-    {% if item.description %}<p class="cn-page-lead">{{ item.description }}</p>{% endif %}
+    <p class="cn-page-lead">{{ item.description or 'Explore the material published for this chapter. Resource availability is shown on each item.' }}</p>
+    <div class="cn-page-intro__meta">
+      <span><i class="bi bi-journal-text" aria-hidden="true"></i> {{ pagination.total }} published resource{{ '' if pagination.total == 1 else 's' }}</span>
+      {% if item.subject %}<a href="{{ url_for('public.subject_detail', slug=item.subject.slug) }}">More in {{ item.subject.name }} <i class="bi bi-arrow-right" aria-hidden="true"></i></a>{% endif %}
+    </div>
   </header>
 
   {% if pagination.items %}

@@ -21,9 +21,13 @@
 
 ### Public and authentication
 
-The public site uses a shared header, footer, ambient background, responsive
-content width, and softly elevated cards. The home hero, FAQ, and authentication
-pages use a deep navy-to-indigo gradient with restrained decorative geometry.
+The public site uses a shared sticky header with a compact primary navigation,
+Explore disclosure, resource search, role-aware account action, and theme toggle.
+The mobile drawer supports keyboard focus, Escape, outside-click, and responsive
+breakpoints. The footer combines a class-browsing call to action with role-aware
+account links, help, and policy navigation. All public pages share ambient
+backgrounds, responsive content widths, and elevated cards. The home hero, FAQ,
+authentication pages, and footer use a deep navy-to-indigo gradient.
 Login and registration use a split layout: a branded learning panel beside a
 focused form. On mobile the panel becomes compact and the form stacks into one
 column. Forgot-password and reset-password keep a centered single-card layout.
@@ -76,7 +80,7 @@ component can express the design.
 - `app/static/js/theme.js` runs before paint, reads `classnest_theme` from
   `localStorage`, and falls back to `prefers-color-scheme`.
 - `app/static/js/app.js` toggles the theme, persists the choice, and keeps the
-  `#themeToggle` icon in sync with `data-theme-icon`.
+  dashboard `#themeToggle` and public `[data-theme-toggle]` icon in sync.
 - `[data-theme='dark']` in `tokens.css` overrides the color, border, and shadow
   tokens; `components.css` sets `color-scheme: dark`.
 - The choice is applied on `<html data-theme="light|dark">`.
@@ -87,6 +91,7 @@ component can express the design.
 - Provide a skip link to `#main-content`.
 - Track state with `aria-current`, `aria-expanded`, and `aria-pressed`.
 - Keep visible focus indicators.
+- Keep the public Explore menu and mobile navigation operable by keyboard.
 - Maintain readable contrast for text and status badges in both themes.
 - Ensure controls remain usable at approximately 360px viewport width; touch
   targets are at least 40px.
@@ -97,8 +102,8 @@ component can express the design.
 
 ## FAQ content
 
-When no published CMS FAQ entries exist, `/faq` displays ten factual ClassNext
-answers from `app/routes/public.py`. Published database FAQs take precedence.
+When no published database FAQ entries exist, `/faq` displays ten factual
+ClassNext answers from `app/routes/public.py`. Published FAQ rows take precedence.
 The page uses native `<details>` disclosure controls so answers remain keyboard
 accessible without JavaScript.
 
@@ -135,6 +140,7 @@ accessible without JavaScript.
 
 | Date | Change |
 |------|--------|
+| 2026-10-05 | Redesigned the public navigation and footer; added route-specific catalog/help content and corrected resource route selection |
 | 2026-10-05 | Set ClassNext identity and documented the shared gradient visual language, responsive auth split, motion, and ten FAQ defaults |
 | 2026-10-03 | Replaced the stale product identity and framework assumptions with the implemented ClassNest UI system |
 | 2026-10-03 | Documented template shells, CSS token files, responsive behavior, and PWA design |

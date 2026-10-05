@@ -11,9 +11,14 @@
         Learn {{ teacher_name }}'s way — class by class, chapter by chapter.
       </h1>
       <p class="cn-hero__lead">
-        Structured notes, video lessons and full courses for Classes
-        {{ classes[0].name.split()[-1] if classes else '8' }}–{{ classes[-1].name.split()[-1] if classes else '12' }}.
-        Study free, upgrade a course when you need the whole syllabus.
+        {% if classes %}
+          Browse published notes, video lessons and courses for
+          {{ classes[0].name }}{% if classes|length > 1 %} to {{ classes[-1].name }}{% endif %}.
+          Start with a class, then explore its subjects, chapters and resources.
+        {% else %}
+          Browse the class catalog to find published subjects, chapters, notes,
+          video lessons and courses. Available classes are managed by {{ teacher_name }}.
+        {% endif %}
       </p>
       <div class="cn-btn-row">
         <a class="cn-btn cn-btn--primary cn-btn--lg" href="{{ url_for('public.classes') }}">

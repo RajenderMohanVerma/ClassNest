@@ -54,6 +54,14 @@ def test_tagline_is_rendered(client, school_class):
     assert 'Learn • Practice • Achieve'.encode('utf-8') in client.get('/').data
 
 
+def test_home_teacher_card_uses_light_surface_text_contrast(client, school_class):
+    page = client.get('/').data
+    styles = client.get('/static/css/site.css').get_data(as_text=True)
+    assert b'cn-teacher-card' in page
+    assert '.cn-teacher-card { color: var(--cn-text);' in styles
+    assert '.cn-hero__copy .cn-btn--outline' in styles
+
+
 def test_every_nav_link_resolves(client, school_class):
     """No dead links in the header or footer."""
     import re
@@ -71,6 +79,17 @@ def test_every_nav_link_resolves(client, school_class):
         assert client.get(path).status_code == 200, f'nav link {path} is broken'
 
 
+def test_library_routes_show_their_own_resource_kind(client, school_class):
+    videos = client.get('/videos').data
+    notes = client.get('/notes').data
+    free = client.get('/free-resources').data
+
+    assert b'Video Lessons' in videos
+    assert b'Notes &amp; Study Material' in notes
+    assert b'Free Resources' in free
+    assert b'href="/videos" aria-current="page"' in videos
+
+
 def test_footer_legal_links_all_resolve(client, school_class):
     for path in ('/legal/privacy', '/legal/terms', '/legal/refund-policy'):
         assert client.get(path).status_code == 200
@@ -85,6 +104,35 @@ def test_theme_toggle_and_search_controls_exist(client, school_class):
     assert b'data-theme-toggle' in body
     assert b'data-nav-toggle' in body
     assert b'name="q"' in body
+
+
+def test_public_navigation_and_footer_have_responsive_destinations(client, school_class):
+    body = client.get('/').data
+    assert b'cn-site-nav__disclosure' in body
+    assert b'aria-controls="site-nav"' in body
+    assert b'cn-site-footer__cta' in body
+    assert b'cn-site-footer__back-top' in body
+
+
+def test_explore_dropdown_stays_closed_after_following_a_link(client, school_class):
+    body = client.get('/faq').data
+    assert b'<details class="cn-site-nav__disclosure">' in body
+    assert b'<details class="cn-site-nav__disclosure" open>' not in body
+    assert b'href="/faq" aria-current="page"' in body
+
+
+def test_signed_in_student_gets_student_navigation_in_public_footer(client, student, login_student):
+    login_student()
+    body = client.get('/about').data
+    assert b'Student dashboard' in body
+    assert b'Teacher dashboard' not in body
+
+
+def test_signed_in_teacher_gets_teacher_navigation_in_public_footer(client, teacher, login_teacher):
+    login_teacher()
+    body = client.get('/about').data
+    assert b'Teacher dashboard' in body
+    assert b'Student dashboard' not in body
 
 
 # ── Catalogue ───────────────────────────────────────────────────────────

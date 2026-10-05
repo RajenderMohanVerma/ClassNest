@@ -15,8 +15,13 @@
   </nav>
 
   <header class="cn-page-intro">
+    <p class="cn-eyebrow"><i class="bi bi-bookmark" aria-hidden="true"></i> SUBJECT LIBRARY{% if item.school_class %} · {{ item.school_class.name|upper }}{% endif %}</p>
     <h1 class="cn-page-title">{{ item.name }}</h1>
-    {% if item.description %}<p class="cn-page-lead">{{ item.description }}</p>{% endif %}
+    <p class="cn-page-lead">{{ item.description or 'Browse published notes, lessons, and other resources for this subject.' }}</p>
+    <div class="cn-page-intro__meta">
+      <span><i class="bi bi-file-earmark-text" aria-hidden="true"></i> {{ pagination.total }} published resource{{ '' if pagination.total == 1 else 's' }}</span>
+      <span><i class="bi bi-list-ol" aria-hidden="true"></i> {{ chapters|length }} chapter{{ '' if chapters|length == 1 else 's' }}</span>
+    </div>
   </header>
 
   <div class="cn-two-column">
