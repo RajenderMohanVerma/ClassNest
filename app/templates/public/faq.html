@@ -3,9 +3,20 @@
 {% block content %}
 <div class="cn-container cn-page cn-page--narrow">
 
-  <header class="cn-page-intro">
-    <h1 class="cn-page-title">Frequently Asked Questions</h1>
-    <p class="cn-page-lead">Everything students usually ask before they start.</p>
+  <header class="cn-page-intro cn-faq-intro">
+    <div>
+      <p class="cn-faq-intro__eyebrow"><i class="bi bi-stars" aria-hidden="true"></i> CLASSNEXT HELP CENTER</p>
+      <h1 class="cn-page-title">Questions,<br>answered.</h1>
+      <p class="cn-page-lead">A quick guide to finding resources, using your account, and getting help.</p>
+      <span class="cn-faq-intro__count"><i class="bi bi-chat-square-text" aria-hidden="true"></i> {{ faqs|length }} helpful answers</span>
+    </div>
+    <div class="cn-faq-intro__art" aria-hidden="true">
+      <div class="cn-faq-intro__ring cn-faq-intro__ring--one"></div>
+      <div class="cn-faq-intro__ring cn-faq-intro__ring--two"></div>
+      <div class="cn-faq-intro__book"><i class="bi bi-question-lg"></i></div>
+      <span class="cn-faq-intro__spark cn-faq-intro__spark--one"><i class="bi bi-stars"></i></span>
+      <span class="cn-faq-intro__spark cn-faq-intro__spark--two"><i class="bi bi-sparkle"></i></span>
+    </div>
   </header>
 
   {% if faqs %}
@@ -37,6 +48,12 @@
       <p>Ask a question on the <a href="{{ url_for('public.contact') }}">contact page</a> and it will be answered there.</p>
     </div>
   {% endif %}
+
+  <section class="cn-faq-contact" aria-label="More help">
+    <span class="cn-faq-contact__icon"><i class="bi bi-chat-dots"></i></span>
+    <div><h2>Still need a hand?</h2><p>Send a message and include the resource or class you need help with.</p></div>
+    <a class="cn-btn cn-btn--outline" href="{{ url_for('public.contact') }}">Contact us <i class="bi bi-arrow-up-right"></i></a>
+  </section>
 
 </div>
 {% endblock %}

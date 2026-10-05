@@ -125,6 +125,7 @@
   background: linear-gradient(145deg, rgba(255,255,255,.19), rgba(255,255,255,.09));
   box-shadow: 0 24px 55px rgba(5, 12, 41, .27);
   backdrop-filter: blur(12px);
+  animation: cn-auth-float 7s ease-in-out infinite;
 }
 .cn-auth-art__lesson-top { display: flex; align-items: center; gap: 9px; color: #dce0ff; font-size: .59rem; font-weight: 750; letter-spacing: .12em; }
 .cn-auth-art__lesson-top > i { margin-left: auto; font-size: 1rem; }
@@ -134,7 +135,7 @@
 .cn-auth-art__lesson-line span { display: block; width: 61%; height: 100%; border-radius: inherit; background: #a8f0d8; }
 .cn-auth-art__lesson small { display: block; margin-top: 10px; color: #d3d8f3; font-size: .68rem; }
 .cn-auth-art__lesson small b { padding: 0 4px; color: #9ba7e2; }
-.cn-auth-art__note { position: absolute; z-index: 2; top: 56%; right: 5%; display: flex; align-items: center; gap: 11px; padding: 12px 14px; transform: rotate(4deg); border: 1px solid rgba(255,255,255,.18); border-radius: 14px; background: rgba(247, 248, 255, .96); box-shadow: 0 16px 36px rgba(5, 12, 41, .2); color: #18254d; }
+.cn-auth-art__note { position: absolute; z-index: 2; top: 56%; right: 5%; display: flex; align-items: center; gap: 11px; padding: 12px 14px; transform: rotate(4deg); border: 1px solid rgba(255,255,255,.18); border-radius: 14px; background: rgba(247, 248, 255, .96); box-shadow: 0 16px 36px rgba(5, 12, 41, .2); color: #18254d; animation: cn-auth-note-float 6s -1.4s ease-in-out infinite; }
 .cn-auth-art__note > span { display: grid; width: 36px; height: 36px; place-items: center; border-radius: 11px; background: #e9eaff; color: #5548d9; font-size: 1.1rem; }
 .cn-auth-art__note div { display: grid; gap: 3px; }
 .cn-auth-art__note strong { font-size: .75rem; }
@@ -143,7 +144,13 @@
 .cn-auth-art__spark { position: absolute; z-index: 2; color: #b7bcff; }
 .cn-auth-art__spark--one { top: 8%; right: 21%; font-size: 1.5rem; }
 .cn-auth-art__spark--two { bottom: 14%; left: 16%; color: #a8f0d8; font-size: 1.25rem; }
+.cn-auth-art__spark--one { animation: cn-auth-spark 4s ease-in-out infinite; }
+.cn-auth-art__spark--two { animation: cn-auth-spark 4s -1.7s ease-in-out infinite; }
 .cn-auth__visual-bottom { position: relative; z-index: 2; display: flex; justify-content: space-between; gap: 18px; color: #b8c0e1; font-size: .72rem; }
+.cn-auth__visual-copy { animation: cn-page-arrive .55s ease-out both; }
+@keyframes cn-auth-float { 0%,100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-9px) rotate(-2deg); } }
+@keyframes cn-auth-note-float { 0%,100% { transform: translateY(0) rotate(4deg); } 50% { transform: translateY(7px) rotate(2deg); } }
+@keyframes cn-auth-spark { 0%,100% { opacity: .7; scale: .92; } 50% { opacity: 1; scale: 1.08; } }
 .cn-auth__visual-bottom b { padding: 0 3px; color: #8ee5cf; }
 .cn-auth__main { display: flex; min-width: 0; flex-direction: column; padding: clamp(22px, 3vw, 42px) clamp(24px, 5vw, 76px); border: 1px solid rgba(226, 232, 240, .75); border-radius: 26px; background: var(--cn-surface); }
 .cn-auth__topline { display: flex; align-items: center; justify-content: flex-end; gap: 16px; color: var(--cn-text-secondary); font-size: .82rem; }
@@ -271,6 +278,10 @@
   .cn-auth__main { padding-right: 16px; padding-left: 16px; }
   .cn-auth__topline { font-size: .69rem; }
   .cn-auth__home { gap: 5px; padding: 0 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-auth__visual-copy, .cn-auth-art__lesson, .cn-auth-art__note, .cn-auth-art__spark { animation: none; }
+  .cn-auth__submit i { transition: none; }
 }
 @media (max-width: 768px) {
   .cn-page-header__title { font-size: var(--cn-font-size-xl); }

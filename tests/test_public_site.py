@@ -447,8 +447,11 @@ def test_faq_page_groups_by_category(client, app, teacher):
     assert b'Is there a free trial?' in body
 
 
-def test_faq_page_shows_empty_state_without_faqs(client, school_class):
-    assert b'No FAQs published yet' in client.get('/faq').data
+def test_faq_page_shows_ten_project_faqs_without_cms_entries(client, school_class):
+    body = client.get('/faq').data
+    assert body.count(b'class="cn-faq__item"') == 10
+    assert b'How is the learning material organized?' in body
+    assert b'How can I report a problem or ask for help?' in body
 
 
 # ── Empty states (no fake data anywhere) ────────────────────────────────

@@ -46,6 +46,61 @@ VIDEO_TYPES = ('video_lesson',)
 AUDIO_TYPES = ('audio',)
 IMAGE_TYPES = ('image',)
 
+# A small, factual public FAQ keeps the help page useful before an editor has
+# published custom answers. Published database entries replace these defaults.
+DEFAULT_FAQS = [
+    {
+        'category': 'Getting started',
+        'question': 'What is ClassNext?',
+        'answer': '<p>ClassNext is Er. Amit Sir\'s learning platform for finding class-wise lessons, notes, and other study resources.</p>',
+    },
+    {
+        'category': 'Getting started',
+        'question': 'How is the learning material organized?',
+        'answer': '<p>Material follows the structure <strong>Class → Subject → Chapter → Content</strong>. Browse a class to find its subjects, then open a chapter or resource.</p>',
+    },
+    {
+        'category': 'Getting started',
+        'question': 'Which classes are available?',
+        'answer': '<p>The Classes page lists classes currently enabled on ClassNext. The list is managed by the teacher, so it can change as classes are added or updated.</p>',
+    },
+    {
+        'category': 'Study resources',
+        'question': 'What kinds of resources can I find?',
+        'answer': '<p>Depending on what has been published, the library can include video lessons, notes, PDF resources, links, audio, and images.</p>',
+    },
+    {
+        'category': 'Study resources',
+        'question': 'Do I need an account to browse lessons?',
+        'answer': '<p>You can browse public pages and resources without signing in. Some protected learning material may require an active student account and the access granted to that account.</p>',
+    },
+    {
+        'category': 'Study resources',
+        'question': 'Can I download every PDF or file?',
+        'answer': '<p>Downloads are available only when the resource is published and your account is allowed to access it. ClassNext checks access before serving protected files.</p>',
+    },
+    {
+        'category': 'Accounts and access',
+        'question': 'How do I create a student account?',
+        'answer': '<p>Open Sign up, enter your name, email, and password, then optionally choose your class and add a phone number. Public registration creates student accounts only.</p>',
+    },
+    {
+        'category': 'Accounts and access',
+        'question': 'What if I forget my password?',
+        'answer': '<p>Use “Forgot password?” on the sign-in page and enter your email address. A reset link can be sent when the site email service is configured; otherwise contact the teacher for help.</p>',
+    },
+    {
+        'category': 'Accounts and access',
+        'question': 'Are premium courses and payments available?',
+        'answer': '<p>Course pages may show course information and access labels. Online checkout is available only after a payment provider is configured; if checkout is not enabled, contact the teacher for current availability.</p>',
+    },
+    {
+        'category': 'Help and support',
+        'question': 'How can I report a problem or ask for help?',
+        'answer': '<p>Use the Contact page to send your name, email address, and message. Include the class, subject, or resource name so the team can understand the issue.</p>',
+    },
+]
+
 
 def current_user():
     """Session user, or ``None`` for anonymous visitors."""
@@ -477,6 +532,8 @@ def about():
 def faq():
     items = Faq.query.filter_by(status=CONTENT_STATUS_PUBLISHED) \
         .order_by(Faq.category, Faq.display_order, Faq.id).all()
+    if not items:
+        items = DEFAULT_FAQS
     return render_template(
         'public/faq.html',
         meta=build_meta(title='FAQ', path='/faq',

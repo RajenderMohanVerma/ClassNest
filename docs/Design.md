@@ -1,9 +1,9 @@
-# ClassNest Design System
+# ClassNext Design System
 
 ## Product identity
 
-- **Name:** ClassNest
-- **Tagline:** Teacher & Student Learning Portal
+- **Name:** ClassNext
+- **Tagline:** Learn • Practice • Achieve
 - **Audience:** teachers and students
 - **UI language:** English; content can contain user-authored Unicode text
 - **Primary experience:** responsive server-rendered web application with PWA support
@@ -21,8 +21,12 @@
 
 ### Public and authentication
 
-The landing page redirects users to the appropriate experience. Login and
-registration use focused forms with validation feedback and flash messages.
+The public site uses a shared header, footer, ambient background, responsive
+content width, and softly elevated cards. The home hero, FAQ, and authentication
+pages use a deep navy-to-indigo gradient with restrained decorative geometry.
+Login and registration use a split layout: a branded learning panel beside a
+focused form. On mobile the panel becomes compact and the form stacks into one
+column. Forgot-password and reset-password keep a centered single-card layout.
 
 ### Teacher shell
 
@@ -58,6 +62,11 @@ The implemented visual language includes:
 - Consistent spacing, border-radius, shadows, and focus rings
 - Responsive content grids and readable lesson typography
 - A dark theme: `[data-theme='dark']` token overrides plus `color-scheme: dark`
+- Subtle indigo/teal ambient page backgrounds and navy gradient feature panels
+- Consistent elevated cards, focus treatments, animated entrance, and hover
+  feedback across public, student, and teacher layouts
+- Lightweight floating details and FAQ disclosure motion; all motion respects
+  `prefers-reduced-motion`
 
 Do not introduce new one-off colors or spacing values when an existing token or
 component can express the design.
@@ -81,9 +90,17 @@ component can express the design.
 - Maintain readable contrast for text and status badges in both themes.
 - Ensure controls remain usable at approximately 360px viewport width; touch
   targets are at least 40px.
+- Stack registration fields and the shared visual panel cleanly on narrow screens.
 - Avoid horizontal overflow in tables, cards, and reading pages.
 - Keep entered form values available after validation errors.
 - Honor `prefers-reduced-motion` by collapsing transitions to `0ms`.
+
+## FAQ content
+
+When no published CMS FAQ entries exist, `/faq` displays ten factual ClassNext
+answers from `app/routes/public.py`. Published database FAQs take precedence.
+The page uses native `<details>` disclosure controls so answers remain keyboard
+accessible without JavaScript.
 
 ## PWA behavior
 
@@ -118,6 +135,7 @@ component can express the design.
 
 | Date | Change |
 |------|--------|
+| 2026-10-05 | Set ClassNext identity and documented the shared gradient visual language, responsive auth split, motion, and ten FAQ defaults |
 | 2026-10-03 | Replaced the stale product identity and framework assumptions with the implemented ClassNest UI system |
 | 2026-10-03 | Documented template shells, CSS token files, responsive behavior, and PWA design |
 | 2026-10-03 | Added dark mode, the offline page, extended error states, skip link, ARIA state, and reduced-motion rules |
