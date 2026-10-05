@@ -1,8 +1,33 @@
-# ClassNest: Teacher–Student Learning Portal
+# 🚀 ClassNext — Teacher–Student Learning Portal
 
-A modern, production-ready educational content management system built with Flask, PostgreSQL, and vanilla HTML/CSS/JavaScript. ClassNest enables teachers to create and publish learning materials, manage students, and send announcements, while students can browse content, search, and track their learning journey.
+<p align="center">
+  <a href="https://class-next-byamit.getvoroa.com/"><img src="https://img.shields.io/badge/🌐%20Live%20Website-Open%20ClassNext-4F46E5?style=for-the-badge" alt="Live Website" /></a>
+  <a href="https://github.com/RajenderMohanVerma/ClassNext"><img src="https://img.shields.io/badge/GitHub-Repository-111827?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Repository" /></a>
+</p>
 
-## Features
+<p align="center">
+  <strong>Production-ready educational content management platform for teachers and students.</strong><br/>
+  <sub>Manage subjects, publish learning resources, send announcements, and access content through a responsive, secure PWA.</sub>
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> ·
+  <a href="#tech-stack">Tech Stack</a> ·
+  <a href="#installation--setup">Setup</a> ·
+  <a href="#usage-guide">Usage</a> ·
+  <a href="#deployment">Deployment</a> ·
+  <a href="#testing">Testing</a>
+</p>
+
+> 🌐 **Live Demo:** https://class-next-byamit.getvoroa.com/
+
+> **Project Repository:** https://github.com/RajenderMohanVerma/ClassNext
+
+ClassNext is a modern, production-ready educational content management system built with Flask, PostgreSQL, and vanilla HTML/CSS/JavaScript. It enables teachers to create and publish learning materials, manage students, and send announcements, while students can browse content, search, and track their learning journey.
+
+A modern, production-ready educational content management system built with Flask, PostgreSQL, and vanilla HTML/CSS/JavaScript. ClassNext enables teachers to create and publish learning materials, manage students, and send announcements, while students can browse content, search, and track their learning journey.
+
+## ✨ Features
 
 ### 👨‍🏫 Teacher Dashboard
 - **Dashboard** — Overview with statistics (total content, published, drafts, subjects, students)
@@ -56,7 +81,7 @@ A modern, production-ready educational content management system built with Flas
 - **110 automated tests** covering auth, roles, CRUD, publication, uploads, search, pagination, error handling, and PWA assets
 - **Isolated test database** — in-memory SQLite via `TestingConfig`, never touches Supabase
 
-## Tech Stack
+## 🧰 Tech Stack
 
 - **Backend**: Flask 3.1 + SQLAlchemy 2.x ORM
 - **Database**: Supabase PostgreSQL
@@ -64,14 +89,14 @@ A modern, production-ready educational content management system built with Flas
 - **Authentication**: Werkzeug password hashing + Flask session
 - **Deployment**: Gunicorn (Procfile) or Vercel serverless (`api/index.py` + `vercel.json`)
 
-## Prerequisites
+## 📋 Prerequisites
 
 - **Python 3.9+** (Flask 3.1 requirement)
 - **Supabase PostgreSQL** (Session Pooler connection recommended for Vercel)
 - **pip** (Python package manager)
 - **virtualenv** (recommended)
 
-## Installation & Setup
+## ⚙️ Installation & Setup
 
 ### 1. Clone the Repository
 
@@ -125,7 +150,7 @@ RATE_LIMIT_STORAGE_URI=memory://
 RATE_LIMIT_DEFAULT=300 per hour
 
 # Branding
-APP_NAME=ClassNest
+APP_NAME=ClassNext
 APP_TAGLINE=Teacher & Student Learning Portal
 
 # Flask environment
@@ -174,10 +199,10 @@ Visit `http://localhost:5000` in your browser.
 
 ---
 
-## Project Structure
+## 🗂️ Project Structure
 
 ```
-Amit Academy/
+ClassNext/
 ├── app/
 │   ├── __init__.py          # Flask app factory, blueprints, error handlers, healthz
 │   ├── config.py            # Dev/production/testing configuration + validation
@@ -238,7 +263,7 @@ Amit Academy/
 
 ---
 
-## Usage Guide
+## 📚 Usage Guide
 
 ### For Teachers
 
@@ -282,7 +307,7 @@ Amit Academy/
 
 ---
 
-## Database Models
+## 🗄️ Database Models
 
 ### User
 - `id` (Primary Key)
@@ -333,7 +358,7 @@ Amit Academy/
 
 ---
 
-## API Endpoints
+## 🔌 API Endpoints
 
 ### Public & App Routes
 - `GET /` — Redirects to login (or dashboard if logged in)
@@ -388,7 +413,7 @@ Amit Academy/
 
 ---
 
-## Deployment
+## 🚀 Deployment
 
 ### Vercel Deployment
 
@@ -406,7 +431,7 @@ request to the Flask application entry point.
    python init_db.py
    python create_teacher.py
    ```
-4. Import `RajenderMohanVerma/ClassNest` into Vercel.
+4. Import `RajenderMohanVerma/ClassNext` into Vercel.
 5. Add these Vercel environment variables for the Production environment:
    `DATABASE_URL`, `SECRET_KEY`, `FLASK_ENV=production`, `FLASK_DEBUG=0`,
    `APP_NAME`, `APP_TAGLINE`, `SESSION_HOURS`, `MAX_UPLOAD_MB`,
@@ -472,7 +497,7 @@ for Flask-Limiter when running multiple instances.
 
 ---
 
-## Security Notes
+## 🔒 Security Notes
 
 - **CSRF**: All forms include CSRF tokens; globally enabled via Flask-WTF
 - **SQL Injection**: All queries use SQLAlchemy ORM (no string interpolation)
@@ -488,7 +513,7 @@ for Flask-Limiter when running multiple instances.
 
 ---
 
-## Testing
+## 🧪 Testing
 
 ```bash
 pip install -r requirements-dev.txt
@@ -502,7 +527,7 @@ CSRF are disabled there and are verified manually.
 
 ---
 
-## Troubleshooting
+## 🛠️ Troubleshooting
 
 ### Database Connection Error
 ```
@@ -531,7 +556,7 @@ files out of the old `app/static/uploads` folder into the current upload directo
 
 ---
 
-## Development Tips
+## 💻 Development Tips
 
 ### Run with Auto-Reload
 ```bash
@@ -583,7 +608,7 @@ with app.app_context():
 
 ---
 
-## Performance Optimization
+## ⚡ Performance Optimization
 
 - **Database Indexing**: Email, slugs, status, topic, `published_at`, `is_published`, `size_bytes`, `content_id`; unique indexes on `content.slug` and `subjects.slug`
 - **Pagination**: Content 12/page, teacher files 20/page, teacher students 20/page, teacher announcements 20/page, student announcements 10/page; filters and sort are preserved across pages
@@ -594,7 +619,7 @@ with app.app_context():
 
 ---
 
-## Future Enhancements
+## 🔮 Future Enhancements
 
 - [ ] Rich-text editor (TinyMCE / Quill) for content creation
 - [ ] Email notifications for announcements
@@ -609,13 +634,13 @@ with app.app_context():
 
 ---
 
-## License
+## 📄 License
 
 MIT License. See LICENSE file for details.
 
 ---
 
-## Support
+## 🤝 Support
 
 For issues or questions:
 1. Check the troubleshooting section above
